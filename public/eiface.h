@@ -60,6 +60,7 @@ class CSteamID;
 class IReplayFactory;
 class IReplaySystem;
 class IServer;
+class IGet;
 
 typedef struct player_info_s player_info_t;
 
@@ -463,6 +464,9 @@ class IServerGCLobby;
 abstract_class IServerGameDLL
 {
 public:
+	// Why Garry's Mod, why?!! Not backwards compatible...
+	virtual void			PreInit( CreateInterfaceFn, IGet * ) = 0;
+
 	// Initialize the game (one-time call when the DLL is first loaded )
 	// Return false if there is an error during startup.
 	virtual bool			DLLInit(	CreateInterfaceFn engineFactory, 
@@ -582,6 +586,9 @@ public:
 	// Get gamedata string to send to the master serer updater.
 	virtual const char *GetServerBrowserGameData() = 0;
 
+	virtual bool GMOD_CheckPassword( unsigned long long, const char *, const char *, const char *, const char *, char *, unsigned int ) = 0;
+
+	/*
 	// Called to add output to the status command
 	virtual void 			Status( void (*print) (const char *fmt, ...) ) = 0;
 
@@ -594,8 +601,8 @@ public:
 	//   file representing this map name. ( e.g. /path/to/steamapps/workshop/cp_mymap.ugc12345.bsp )
 	//
 	// This call is blocking, and may block for extended periods. See AsyncPrepareLevelResources below.
-	virtual void PrepareLevelResources( /* in/out */ char *pszMapName, size_t nMapNameSize,
-	                                    /* in/out */ char *pszMapFile, size_t nMapFileSize ) = 0;
+	virtual void PrepareLevelResources( char *pszMapName, size_t nMapNameSize,
+	                                    char *pszMapFile, size_t nMapFileSize ) = 0;
 
 	// Asynchronous version of PrepareLevelResources. Returns preparation status of map when called.
 	// If passed, flProgress is filled with the current progress percentage [ 0.f to 1.f ] for the InProgress
@@ -607,8 +614,8 @@ public:
 		// Game DLL is async preparing (e.g. streaming resources). flProgress will be filled if passed.
 		ePrepareLevelResources_InProgress
 	};
-	virtual ePrepareLevelResourcesResult AsyncPrepareLevelResources( /* in/out */ char *pszMapName, size_t nMapNameSize,
-	                                                                 /* in/out */ char *pszMapFile, size_t nMapFileSize,
+	virtual ePrepareLevelResourcesResult AsyncPrepareLevelResources( char *pszMapName, size_t nMapNameSize,
+	                                                                 char *pszMapFile, size_t nMapFileSize,
 	                                                                 float *flProgress = NULL ) = 0;
 
 	// Ask the game DLL to evaluate what it would do with this map name were it passed to PrepareLevelResources.
@@ -625,10 +632,11 @@ public:
 		// PrepareLevelResources, it is not possible to say whether it is available.
 		eCanProvideLevel_Possibly
 	};
-	virtual eCanProvideLevelResult CanProvideLevel( /* in/out */ char *pMapName, int nMapNameMax ) = 0;
+	virtual eCanProvideLevelResult CanProvideLevel( char *pMapName, int nMapNameMax ) = 0;
 
 	// Called to see if the game server is okay with a manual changelevel or map command
 	virtual bool			IsManualMapChangeOkay( const char **pszReason ) = 0;
+	*/
 };
 
 typedef IServerGameDLL IServerGameDLL008;

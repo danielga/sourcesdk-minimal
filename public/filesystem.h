@@ -919,6 +919,7 @@ public:
 	// Called when we unload a file, to remove that file's info for pure server purposes.
 	virtual void			NotifyFileUnloaded( const char *pszFilename, const char *pPathId ) = 0;
 
+	/*
 	// Returns true on successfully retrieve case-sensitive full path, otherwise false
 	// Prefer using the GetCaseCorrectFullPath template wrapper to calling this directly
 	virtual bool			GetCaseCorrectFullPath_Ptr( const char *pFullPath, OUT_Z_CAP( maxLenInChars ) char *pDest, int maxLenInChars ) = 0;
@@ -926,6 +927,7 @@ public:
 	{
 		return GetCaseCorrectFullPath_Ptr( pFullPath, pDest, (int)maxLenInChars );
 	}
+	*/
 };
 
 //-----------------------------------------------------------------------------

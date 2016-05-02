@@ -46,10 +46,10 @@ inline PixRGBAF PixRGBA8_to_F( PixRGBA8 const &x )
 inline PixRGBA8 PixRGBAF_to_8( PixRGBAF const &f )
 {
 	PixRGBA8 x;
-	x.Red = max( 0, min( 255.0,255.0*f.Red ) );
-	x.Green = max( 0, min( 255.0,255.0*f.Green ) );
-	x.Blue = max( 0, min( 255.0,255.0*f.Blue ) );
-	x.Alpha = max( 0, min( 255.0,255.0*f.Alpha ) );
+	x.Red = vmax( 0, vmin( 255.0,255.0*f.Red ) );
+	x.Green = vmax( 0, vmin( 255.0,255.0*f.Green ) );
+	x.Blue = vmax( 0, vmin( 255.0,255.0*f.Blue ) );
+	x.Alpha = vmax( 0, vmin( 255.0,255.0*f.Alpha ) );
 	return x;
 }
 
@@ -296,7 +296,7 @@ public:
 			if (face_maps[f].RGBAData)
 			{
 				nfaces++;
-				ret=max(ret,face_maps[f].BrightestColor());
+				ret=vmax(ret,face_maps[f].BrightestColor());
 			}
 			return ret;
 	}

@@ -575,7 +575,7 @@ int	studiohdr_t::GetActivityListVersion( void )
 
 		Assert( pStudioHdr );
 
-		version = min( version, pStudioHdr->activitylistversion );
+		version = vmin( version, pStudioHdr->activitylistversion );
 	}
 
 	return version;
@@ -1218,7 +1218,7 @@ int	CStudioHdr::GetActivityListVersion( void )
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		version = min( version, pStudioHdr->activitylistversion );
+		version = vmin( version, pStudioHdr->activitylistversion );
 	}
 
 	return version;
@@ -1261,7 +1261,7 @@ int	CStudioHdr::GetEventListVersion( void )
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		version = min( version, pStudioHdr->eventsindexed );
+		version = vmin( version, pStudioHdr->eventsindexed );
 	}
 
 	return version;
@@ -1426,8 +1426,8 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 				k--; 
 				break;
 			case STUDIO_NEG: stack[k-1] = -stack[k-1]; break;
-			case STUDIO_MAX: stack[k-2] = max( stack[k-2], stack[k-1] ); k--; break;
-			case STUDIO_MIN: stack[k-2] = min( stack[k-2], stack[k-1] ); k--; break;
+			case STUDIO_MAX: stack[k-2] = vmax( stack[k-2], stack[k-1] ); k--; break;
+			case STUDIO_MIN: stack[k-2] = vmin( stack[k-2], stack[k-1] ); k--; break;
 			case STUDIO_CONST: stack[k] = pops->d.value; k++; break;
 			case STUDIO_FETCH1: 
 				{ 
@@ -1697,7 +1697,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 		HashValueType &element = m_ActToSeqHash[handle];
 		element.startingIdx = sequenceCount;
 		sequenceCount += element.count;
-		topActivity = max(topActivity, element.activityIdx);
+		topActivity = vmax(topActivity, element.activityIdx);
 	}
 	
 

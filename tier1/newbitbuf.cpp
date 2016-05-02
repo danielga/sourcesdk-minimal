@@ -383,7 +383,7 @@ bool CBitRead::Seek( int nPosition )
 			m_nBitsAvail = 1;
 		}
 		m_nInBufWord >>= ( nAdjPosition & 31 );
-		m_nBitsAvail = min( m_nBitsAvail, 32 - ( nAdjPosition & 31 ) );	// in case grabnextdword overflowed
+		m_nBitsAvail = vmin( m_nBitsAvail, 32 - ( nAdjPosition & 31 ) );	// in case grabnextdword overflowed
 	}
 	return bSucc;
 }

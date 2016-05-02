@@ -439,20 +439,20 @@ FORCEINLINE fltx4 ArcTan2SIMD( const fltx4 &a, const fltx4 &b )
 FORCEINLINE fltx4 MaxSIMD( const fltx4 & a, const fltx4 & b )				// max(a,b)
 {
 	fltx4 retVal;
-	SubFloat( retVal, 0 ) = max( SubFloat( a, 0 ), SubFloat( b, 0 ) );
-	SubFloat( retVal, 1 ) = max( SubFloat( a, 1 ), SubFloat( b, 1 ) );
-	SubFloat( retVal, 2 ) = max( SubFloat( a, 2 ), SubFloat( b, 2 ) );
-	SubFloat( retVal, 3 ) = max( SubFloat( a, 3 ), SubFloat( b, 3 ) );
+	SubFloat( retVal, 0 ) = vmax( SubFloat( a, 0 ), SubFloat( b, 0 ) );
+	SubFloat( retVal, 1 ) = vmax( SubFloat( a, 1 ), SubFloat( b, 1 ) );
+	SubFloat( retVal, 2 ) = vmax( SubFloat( a, 2 ), SubFloat( b, 2 ) );
+	SubFloat( retVal, 3 ) = vmax( SubFloat( a, 3 ), SubFloat( b, 3 ) );
 	return retVal;
 }
 
 FORCEINLINE fltx4 MinSIMD( const fltx4 & a, const fltx4 & b )				// min(a,b)
 {
 	fltx4 retVal;
-	SubFloat( retVal, 0 ) = min( SubFloat( a, 0 ), SubFloat( b, 0 ) );
-	SubFloat( retVal, 1 ) = min( SubFloat( a, 1 ), SubFloat( b, 1 ) );
-	SubFloat( retVal, 2 ) = min( SubFloat( a, 2 ), SubFloat( b, 2 ) );
-	SubFloat( retVal, 3 ) = min( SubFloat( a, 3 ), SubFloat( b, 3 ) );
+	SubFloat( retVal, 0 ) = vmin( SubFloat( a, 0 ), SubFloat( b, 0 ) );
+	SubFloat( retVal, 1 ) = vmin( SubFloat( a, 1 ), SubFloat( b, 1 ) );
+	SubFloat( retVal, 2 ) = vmin( SubFloat( a, 2 ), SubFloat( b, 2 ) );
+	SubFloat( retVal, 3 ) = vmin( SubFloat( a, 3 ), SubFloat( b, 3 ) );
 	return retVal;
 }
 
@@ -858,7 +858,7 @@ FORCEINLINE void TransposeSIMD( fltx4 & x, fltx4 & y, fltx4 & z, fltx4 & w )
 // and replicate it to the whole return value.
 FORCEINLINE fltx4 FindLowestSIMD3( const fltx4 & a )
 {
-	float lowest = min( min( SubFloat(a, 0), SubFloat(a, 1) ), SubFloat(a, 2));
+	float lowest = vmin( vmin( SubFloat(a, 0), SubFloat(a, 1) ), SubFloat(a, 2));
 	return ReplicateX4(lowest);
 }
 
@@ -866,7 +866,7 @@ FORCEINLINE fltx4 FindLowestSIMD3( const fltx4 & a )
 // and replicate it to the whole return value.
 FORCEINLINE fltx4 FindHighestSIMD3( const fltx4 & a )
 {
-	float highest = max( max( SubFloat(a, 0), SubFloat(a, 1) ), SubFloat(a, 2));
+	float highest = vmax( vmax( SubFloat(a, 0), SubFloat(a, 1) ), SubFloat(a, 2));
 	return ReplicateX4(highest);
 }
 

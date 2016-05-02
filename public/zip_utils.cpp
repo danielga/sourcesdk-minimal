@@ -657,7 +657,7 @@ void CZipFile::ParseFromBuffer( void *buffer, int bufferlength )
 			if ( rec.commentLength )
 			{
 				char commentString[128];
-				int commentLength = min( rec.commentLength, sizeof( commentString ) );
+				int commentLength = vmin( rec.commentLength, sizeof( commentString ) );
 				buf.Get( commentString, commentLength );
 				if ( commentLength == sizeof( commentString ) )
 					--commentLength;
@@ -814,7 +814,7 @@ HANDLE CZipFile::ParseFromDisk( const char *pFilename )
 			if ( rec.commentLength )
 			{
 				char commentString[128];
-				int commentLength = min( rec.commentLength, sizeof( commentString ) );
+				int commentLength = vmin( rec.commentLength, sizeof( commentString ) );
 				CWin32File::FileRead( hFile, commentString, commentLength );
 				if ( commentLength == sizeof( commentString ) )
 					--commentLength;

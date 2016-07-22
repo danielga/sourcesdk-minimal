@@ -138,7 +138,7 @@ bool CLZMAStream::CreateDecoderState( const unsigned char *pProperties )
 		FreeDecoderState();
 	}
 
-	m_pDecoderState = new CLzmaDec();
+	m_pDecoderState = new CLzmaDec;
 
 	LzmaDec_Construct( m_pDecoderState );
 	if ( LzmaDec_Allocate( m_pDecoderState, pProperties, LZMA_PROPS_SIZE, &g_Alloc) != SZ_OK )

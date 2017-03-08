@@ -50,6 +50,9 @@ bool netadr_t::CompareAdr (const netadr_t &a, bool onlyBase) const
 			return true;
 	}
 
+	if ( type == NA_STEAM && m_SteamID == a.m_SteamID )
+		return true;
+
 	return false;
 }
 
@@ -128,6 +131,17 @@ const char * netadr_t::ToString(bool baseOnly) const
 			Q_snprintf (s, sizeof( s ), "%i.%i.%i.%i:%i", ip[0], ip[1], ip[2], ip[3], ntohs(port));
 		}
 	}
+	else if (type == NA_STEAM)
+	{
+		EAccountType type = m_SteamID.GetEAccountType();
+		if (type == k_EAccountTypeInvalid || type == k_EAccountTypeIndividual)
+		{
+			AccountID_t accountID = m_SteamID.GetAccountID();
+			Q_snprintf (s, sizeof( s ), "STEAM_0:%u:%u", accountID % 2, accountID / 2);
+		}
+		else
+			Q_snprintf (s, sizeof( s ), "%llu", m_SteamID.ConvertToUint64());
+	}
 
 	return s;
 }
@@ -146,6 +160,7 @@ bool netadr_t::IsLoopback() const
 
 void netadr_t::Clear()
 {
+	m_SteamID.Clear();
 	ip[0] = ip[1] = ip[2] = ip[3] = 0;
 	port = 0;
 	type = NA_NULL;
@@ -177,6 +192,11 @@ netadrtype_t netadr_t::GetType() const
 unsigned short netadr_t::GetPort() const
 {
 	return BigShort( port );
+}
+
+const CSteamID &netadr_t::GetSteamID() const
+{
+	return m_SteamID;
 }
 
 unsigned int netadr_t::GetIPNetworkByteOrder() const
@@ -232,8 +252,8 @@ bool netadr_t::SetFromSockadr(const struct sockaddr * s)
 
 bool netadr_t::IsValid() const
 {
-	return ( (port !=0 ) && (type != NA_NULL) &&
-			 ( ip[0] != 0 || ip[1] != 0 || ip[2] != 0 || ip[3] != 0 ) );
+	return type != NA_NULL && ( type == NA_STEAM ? m_SteamID.IsValid() :
+		( port != 0 && ( ip[0] != 0 || ip[1] != 0 || ip[2] != 0 || ip[3] != 0 ) ) );
 }
 
 #ifdef _WIN32

@@ -13,6 +13,7 @@
 #endif
 
 #include "tier0/platform.h"
+#include "steam/steamclientpublic.h"
 #undef SetPort
 
 typedef enum
@@ -21,6 +22,7 @@ typedef enum
 	NA_LOOPBACK,
 	NA_BROADCAST,
 	NA_IP,
+	NA_STEAM,
 } netadrtype_t;
 
 typedef struct netadr_s
@@ -45,6 +47,7 @@ public:
 
 	netadrtype_t	GetType() const;
 	unsigned short	GetPort() const;
+	const CSteamID &GetSteamID() const;
 	const char*		ToString( bool onlyBase = false ) const; // returns xxx.xxx.xxx.xxx:ppppp
 	void			ToSockadr(struct sockaddr *s) const;
 	unsigned int	GetIPHostByteOrder() const;
@@ -63,6 +66,7 @@ public:	// members are public to avoid to much changes
 	netadrtype_t	type;
 	unsigned char	ip[4];
 	unsigned short	port;
+	CSteamID		m_SteamID;
 } netadr_t;
 
 #endif // NETADR_H

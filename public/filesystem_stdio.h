@@ -313,6 +313,7 @@ public:
 	virtual int LastFilesystemRefresh( ) = 0;
 	virtual void AddVPKFileFromPath( const char *, const char *, unsigned int ) = 0;
 	virtual void GMOD_SetupDefaultPaths( const char *, const char * ) = 0;
+	virtual void GMOD_FixPathCase( char *, uint ) = 0;
 	virtual FileHandle_t Open( const char *pFileName, const char *pOptions, const char *pathID = nullptr ) = 0;
 	virtual void Close( FileHandle_t file ) = 0;
 	virtual void Seek( FileHandle_t file, int pos, FileSystemSeek_t seekType ) = 0;

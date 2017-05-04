@@ -59,6 +59,9 @@ class IFileList;
 class CRenamedRecvTableInfo;
 class CMouthInfo;
 class IConVar;
+class IClientEntity;
+class CGMODVariant;
+class IGMODDataTable;
 
 //-----------------------------------------------------------------------------
 // Purpose: This data structure is filled in by the engine when the client .dll requests information about
@@ -185,8 +188,8 @@ struct OcclusionParams_t
 #define VENGINE_CLIENT_RANDOM_INTERFACE_VERSION	"VEngineRandom001"
 
 // change this when the new version is incompatable with the old
-#define VENGINE_CLIENT_INTERFACE_VERSION		"VEngineClient014"
 #define VENGINE_CLIENT_INTERFACE_VERSION_13		"VEngineClient013"
+#define VENGINE_CLIENT_INTERFACE_VERSION		"VEngineClient015"
 
 //-----------------------------------------------------------------------------
 // Purpose: Interface exposed from the engine to the client .dll
@@ -549,7 +552,17 @@ public:
 	// Unlike Key_LookupBinding, leading '+' characters are not stripped from bindings.
 	virtual	const char			*Key_LookupBindingExact( const char *pBinding ) = 0;
 	
-	virtual void				AddPhonemeFile( const char *pszPhonemeFile ) = 0;
+	virtual void GMOD_SetTimeManipulator( float fScaleFramerate );
+	virtual	void GMOD_SendToServer( void *data, unsigned int dataSize, bool reliable );
+	virtual void GMOD_PlaceDecalMaterial( IMaterial *, bool, int, IClientEntity *, const Vector &, const Vector &, const color32_s &, float, float );
+	virtual void GMOD_GetSpew( char *buffer, unsigned int bufferSize );
+	virtual void GMOD_SetViewEntity( uint );
+	virtual void GMOD_BrushMaterialOverride( IMaterial *matOverride );
+	virtual void GMOD_R_RedownloadAllLightmaps( bool );
+	virtual void GMOD_RawClientCmd_Unrestricted( const char *command );
+	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) );
+	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable );
+	virtual void GMOD_LoadModel( const char *path );
 
 };
 
@@ -570,7 +583,7 @@ public:
 
 	virtual void DisconnectInternal() = 0;
 
-	virtual int GetInstancesRunningCount( ) = 0;
+	virtual bool IsInCommentaryMode( ) = 0;
 };
 
 

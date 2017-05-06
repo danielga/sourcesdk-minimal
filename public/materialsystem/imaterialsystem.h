@@ -1084,7 +1084,7 @@ public:
 //-----------------------------------------------------------------------------
 // 
 //-----------------------------------------------------------------------------
-abstract_class IMatRenderContext : public IRefCounted
+abstract_class IMatRenderContext
 {
 public:
 	virtual void				BeginRender() = 0;
@@ -1732,9 +1732,9 @@ inline const E& CMatRenderData<E>::operator[]( int i ) const
 
 //-----------------------------------------------------------------------------
 
-class CMatRenderContextPtr : public CRefPtr<IMatRenderContext>
+class CMatRenderContextPtr : public CBaseAutoPtr<IMatRenderContext>
 {
-	typedef CRefPtr<IMatRenderContext> BaseClass;
+	typedef CBaseAutoPtr<IMatRenderContext> BaseClass;
 public:
 	CMatRenderContextPtr()																					{}
 	CMatRenderContextPtr( IMatRenderContext *pInit )			: BaseClass( pInit )						{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->BeginRender(); }
@@ -1743,8 +1743,8 @@ public:
 
 	IMatRenderContext *operator=( IMatRenderContext *p )		{ if ( p ) p->BeginRender(); return BaseClass::operator=( p ); }
 
-	void SafeRelease()											{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->EndRender(); BaseClass::SafeRelease(); }
-	void AssignAddRef( IMatRenderContext *pFrom )				{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->EndRender(); BaseClass::AssignAddRef( pFrom ); BaseClass::m_pObject->BeginRender(); }
+	void SafeRelease()											{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->EndRender(); }
+	void AssignAddRef( IMatRenderContext *pFrom )				{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->EndRender(); BaseClass::m_pObject->BeginRender(); }
 
 	void GetFrom( IMaterialSystem *pFrom )						{ AssignAddRef( pFrom->GetRenderContext() ); }
 

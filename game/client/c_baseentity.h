@@ -59,6 +59,8 @@ class CEntityMapData;
 class ConVar;
 class CDmgAccumulator;
 class IHasAttributes;
+class ILuaObject;
+struct gamevcollisionevent_t;
 
 struct CSoundParameters;
 
@@ -1676,7 +1678,7 @@ private:
 public:
 	float							m_fRenderingClipPlane[4]; //world space clip plane when drawing
 	bool							m_bEnableRenderingClipPlane; //true to use the custom clip plane when drawing
-	float *							GetRenderClipPlane( void ); // Rendering clip plane, should be 4 floats, return value of NULL indicates a disabled render clip plane
+	virtual float *					GetRenderClipPlane( void ); // Rendering clip plane, should be 4 floats, return value of NULL indicates a disabled render clip plane
 
 protected:
 
@@ -1704,6 +1706,53 @@ protected:
 	RenderMode_t m_PreviousRenderMode;
 	color32 m_PreviousRenderColor;
 #endif
+
+public:
+	virtual void OnOwnerChanged();
+	virtual void *VPhysicsGetElement( int );
+	virtual bool IsARagdoll();
+	virtual void SetMaterialOverride( const char * );
+	virtual void SetMaterialOverridePointer( IMaterial * );
+	virtual IMaterial *GetMaterialOverridePointer();
+	virtual const char *GetMaterialOverride();
+	virtual void StartMaterialOverride();
+	virtual void EndMaterialOverride();
+	virtual double GetCreationTime();
+	virtual bool IsPredicted() const;
+	virtual bool IsWeapon() const;
+	virtual bool IsVehicle() const;
+	virtual bool IsJeep() const;
+	virtual bool UsesLua();
+	virtual int GetLuaEntityType();
+	virtual void PushEntity();
+	virtual void Push_This_Entity();
+	virtual void SetEntity( const char *, C_BaseEntity * );
+	virtual int GetParentPhysicsNum();
+	virtual void SetParentPhysicsNum( int );
+	virtual void StartMotionController();
+	virtual void StopMotionController();
+	virtual void AttachObjectToMotionController( IPhysicsObject * );
+	virtual void DetachObjectFromMotionController( IPhysicsObject * );
+	virtual void GetCustomisedRenderBounds( Vector &, Vector & );
+	virtual void SetCustomisedRenderBounds( Vector *, Vector * );
+	virtual const char *GetLuaScriptName();
+	virtual void SpawnedViaLua();
+	virtual void OverridePosition();
+	virtual void InitializeScriptedEntity( const char * );
+	virtual void ClearLuaData();
+	virtual ILuaObject *GetLuaTable();
+	virtual void *GetLuaEntity();
+	virtual void SetLuaTable( ILuaObject * );
+	virtual void Lua_OnEntityInitialized();
+	virtual bool HasLuaTable();
+	virtual void LuaEntityInitialized();
+	virtual void ForcePhysicsDropObject();
+	virtual void StartDriving( C_BasePlayer * );
+	virtual void FinishDriving( C_BasePlayer * );
+	virtual bool GMod_ShouldRenderEntity();
+	virtual void OnClientsideLuaRestored();
+	virtual void *Lua_GetLuaClass();
+	virtual void VPhysicsCollision( int, gamevcollisionevent_t * );
 };
 
 EXTERN_RECV_TABLE(DT_BaseEntity);

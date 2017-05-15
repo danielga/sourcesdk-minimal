@@ -1688,7 +1688,7 @@ private:
 	int				m_nPushEnumCount;
 
 	Vector			m_vecAbsOrigin;
-	//CNetworkVectorForDerived( m_vecVelocity );
+	CNetworkVector( m_vecVelocity );
 	
 	//Adrian
 	CNetworkVar( unsigned char, m_iTextureFrameIndex );

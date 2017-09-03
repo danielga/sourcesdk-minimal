@@ -105,7 +105,7 @@ public:
 	virtual bool			IsOk( FileHandle_t file ) OVERRIDE													{ return m_pFileSystemPassThru->IsOk( file ); }
 	virtual bool			EndOfFile( FileHandle_t file ) OVERRIDE												{ return m_pFileSystemPassThru->EndOfFile( file ); }
 	virtual char			*ReadLine( char *pOutput, int maxChars, FileHandle_t file ) OVERRIDE				{ return m_pFileSystemPassThru->ReadLine( pOutput, maxChars, file ); }
-	virtual int				FPrintf( FileHandle_t file, PRINTF_FORMAT_STRING const char *pFormat, ... ) 
+	virtual int				FPrintf( FileHandle_t file, PRINTF_FORMAT_STRING const char *pFormat, ... ) OVERRIDE 
 	{ 
 		char str[8192];
 		va_list marker;
@@ -117,9 +117,9 @@ public:
 	virtual CSysModule 		*LoadModule( const char *pFileName, const char *pPathID, bool bValidatedDllOnly ) OVERRIDE { return m_pFileSystemPassThru->LoadModule( pFileName, pPathID, bValidatedDllOnly ); }
 	virtual void			UnloadModule( CSysModule *pModule ) OVERRIDE										{ m_pFileSystemPassThru->UnloadModule( pModule ); }
 	virtual const char		*FindFirst( const char *pWildCard, FileFindHandle_t *pHandle ) OVERRIDE				{ return m_pFileSystemPassThru->FindFirst( pWildCard, pHandle ); }
-	virtual const char		*FindNext( FileFindHandle_t handle )												{ return m_pFileSystemPassThru->FindNext( handle ); }
-	virtual bool			FindIsDirectory( FileFindHandle_t handle )											{ return m_pFileSystemPassThru->FindIsDirectory( handle ); }
-	virtual void			FindClose( FileFindHandle_t handle )												{ m_pFileSystemPassThru->FindClose( handle ); }
+	virtual const char		*FindNext( FileFindHandle_t handle ) OVERRIDE										{ return m_pFileSystemPassThru->FindNext( handle ); }
+	virtual bool			FindIsDirectory( FileFindHandle_t handle ) OVERRIDE									{ return m_pFileSystemPassThru->FindIsDirectory( handle ); }
+	virtual void			FindClose( FileFindHandle_t handle ) OVERRIDE										{ m_pFileSystemPassThru->FindClose( handle ); }
 	virtual const char		*GetLocalPath( const char *pFileName, OUT_Z_CAP(maxLenInChars) char *pDest, int maxLenInChars ) OVERRIDE { return m_pFileSystemPassThru->GetLocalPath( pFileName, pDest, maxLenInChars ); }
 	virtual bool			FullPathToRelativePath( const char *pFullpath, OUT_Z_CAP(maxLenInChars) char *pDest, int maxLenInChars ) OVERRIDE { return m_pFileSystemPassThru->FullPathToRelativePath( pFullpath, pDest, maxLenInChars ); }
 	//virtual bool			GetCaseCorrectFullPath_Ptr( const char *pFullPath, OUT_Z_CAP(maxLenInChars) char *pDest, int maxLenInChars ) { return m_pFileSystemPassThru->GetCaseCorrectFullPath_Ptr( pFullPath, pDest, maxLenInChars ); }

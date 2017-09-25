@@ -333,7 +333,7 @@ public:
 	// Construction/destruction:
 	VectorByValue(void) : Vector() {} 
 	VectorByValue(vec_t X, vec_t Y, vec_t Z) : Vector( X, Y, Z ) {}
-	VectorByValue(const VectorByValue& vOther) { *this = vOther; }
+	VectorByValue(const VectorByValue& vOther) : Vector( vOther.x, vOther.y, vOther.z ) {}
 };
 
 
@@ -1843,7 +1843,7 @@ public:
 	// Construction/destruction:
 	QAngleByValue(void) : QAngle() {} 
 	QAngleByValue(vec_t X, vec_t Y, vec_t Z) : QAngle( X, Y, Z ) {}
-	QAngleByValue(const QAngleByValue& vOther) { *this = vOther; }
+	QAngleByValue(const QAngleByValue& vOther) : QAngle( vOther.x, vOther.y, vOther.z ) {}
 };
 
 

@@ -140,9 +140,9 @@ public:
 	// the name of the player model in use
 	virtual const char *GetModelName() = 0;
 	// current player health
-	virtual const int GetHealth() = 0;
+	virtual int GetHealth() = 0;
 	// max health value
-	virtual const int GetMaxHealth() = 0;
+	virtual int GetMaxHealth() = 0;
 	// the last user input from this player
 	virtual CBotCmd GetLastUserCommand() = 0;
 

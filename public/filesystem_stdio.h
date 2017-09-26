@@ -122,8 +122,8 @@ public:
 
 	enum
 	{
-		MAGIC = 'CFHa',
-		FREE_MAGIC = 'FreM'
+		MAGIC = 1128679521, // 'CFHa'
+		FREE_MAGIC = 1181902157 // 'FreM'
 	};
 
 	uint32_t m_nMagic;
@@ -186,7 +186,7 @@ public:
 	void *m_pPreloadData; // 4b
 	CByteswap m_swap; // 4b
 
-	const Placeholder4 placeholders[13];
+	Placeholder4 placeholders[13];
 };
 
 class WilloxHallOfShame

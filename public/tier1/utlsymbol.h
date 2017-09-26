@@ -52,7 +52,7 @@ public:
 	bool IsValid() const { return m_Id != UTL_INVAL_SYMBOL; }
 	
 	// Gets at the symbol
-	operator UtlSymId_t const() const { return m_Id; }
+	operator UtlSymId_t() const { return m_Id; }
 	
 	// Gets the string associated with the symbol
 	const char* String( ) const;

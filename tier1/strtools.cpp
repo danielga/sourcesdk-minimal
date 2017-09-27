@@ -523,7 +523,7 @@ float V_atof (const char *str)
 			else if (c >= 'A' && c <= 'F')
 				val = (val*16) + c - 'A' + 10;
 			else
-				return val*sign;
+				return (float)(val*sign);
 		}
 	}
 
@@ -532,7 +532,7 @@ float V_atof (const char *str)
 	//
 	if (str[0] == '\'')
 	{
-		return sign * str[1];
+		return (float)(sign * str[1]);
 	}
 
 	//
@@ -571,14 +571,14 @@ float V_atof (const char *str)
 		val *= pow( 10.0, exponent );
 	}
 	if (decimal == -1)
-		return val*sign;
+		return (float)(val*sign);
 	while (total > decimal)
 	{
 		val /= 10;
 		total--;
 	}
 
-	return val*sign;
+	return (float)(val*sign);
 }
 
 //-----------------------------------------------------------------------------
@@ -1136,7 +1136,7 @@ char *V_pretifynum( int64 inputValue )
 	}
 
 	// Print the leading batch of one to three digits.
-	int toPrint = value / divisor;
+	int toPrint = (int)(value / divisor);
 	V_snprintf( pchRender, outEnd - pchRender, "%d", toPrint );
 
 	for (;;)
@@ -1150,7 +1150,7 @@ char *V_pretifynum( int64 inputValue )
 			break;
 
 		// The remaining blocks of digits always include a comma and three digits.
-		toPrint = value / divisor;
+		toPrint = (int)(value / divisor);
 		V_snprintf( pchRender, outEnd - pchRender, ",%03d", toPrint );
 	}
 

@@ -652,15 +652,6 @@ typedef void * HINSTANCE;
 #define NO_DEFAULT default: UNREACHABLE();
 
 
-#ifdef _WIN32
-
-// Remove warnings from warning level 4.
-#pragma warning(disable : 4100) // warning C4100: 'hwnd' : unreferenced formal parameter
-#pragma warning(disable : 4324) // Padding was added at the end of a structure
-#pragma warning(disable : 4244) // type conversion warning.
-
-#endif // _WIN32
-
 #if defined( LINUX ) && ((__GNUC__ * 100) + __GNUC_MINOR__) >= 406
   // based on some Jonathan Wakely macros on the net...
   #define GCC_DIAG_STR(s) #s

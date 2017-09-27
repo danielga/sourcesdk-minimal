@@ -790,7 +790,7 @@ public:
 
 	static bool TryLock()			{ return true; }
 	static bool AssertOwnedByCurrentThread() { return true; }
-	static void SetTrace( bool b )	{}
+	static void SetTrace( bool )	{}
 
 	static uint32 GetOwnerId() 		{ return 0;	}
 	static int	GetDepth() 			{ return 0; }
@@ -1157,6 +1157,7 @@ private:
 
 	volatile LockInfo_t m_lockInfo;
 	CInterlockedInt m_nWriters;
+	int __padding;
 } ALIGN8_POST;
 
 //-----------------------------------------------------------------------------
@@ -1585,10 +1586,13 @@ inline bool CThreadMutex::AssertOwnedByCurrentThread()
 
 //---------------------------------------------------------
 
+#ifdef THREAD_MUTEX_TRACING_ENABLED
 inline void CThreadMutex::SetTrace( bool bTrace )
 {
-#ifdef THREAD_MUTEX_TRACING_ENABLED
 	m_bTrace = bTrace;
+#else
+inline void CThreadMutex::SetTrace( bool )
+{
 #endif
 }
 

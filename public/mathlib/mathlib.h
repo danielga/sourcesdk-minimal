@@ -77,7 +77,7 @@ public:
 private:
 	unsigned int mOldValues;
 #else
-	FPExceptionEnabler(unsigned int enableBits = 0)
+	FPExceptionEnabler(unsigned int = 0)
 	{
 	}
 	~FPExceptionEnabler()
@@ -208,9 +208,9 @@ public:
 	{
 		m_Plane[i].normal = vecNormal;
 		m_Plane[i].dist = dist;
-		m_Plane[i].type = nType;
-		m_Plane[i].signbits = SignbitsForPlane( &m_Plane[i] );
-		m_AbsNormal[i].Init( fabs(vecNormal.x), fabs(vecNormal.y), fabs(vecNormal.z) );
+		m_Plane[i].type = (byte)nType;
+		m_Plane[i].signbits = (byte)SignbitsForPlane( &m_Plane[i] );
+		m_AbsNormal[i].Init( fabsf(vecNormal.x), fabsf(vecNormal.y), fabsf(vecNormal.z) );
 	}
 
 	inline const cplane_t *GetPlane( int i ) const { return &m_Plane[i]; }
@@ -431,7 +431,7 @@ qboolean VectorsEqual( const float *v1, const float *v2 );
 
 inline vec_t RoundInt (vec_t in)
 {
-	return floor(in + 0.5f);
+	return floorf(in + 0.5f);
 }
 
 int Q_log2(int val);
@@ -1721,7 +1721,7 @@ void Parabolic_Spline_NormalizeX(
 FORCEINLINE float QuinticInterpolatingPolynomial(float t)
 {
 	// 6t^5-15t^4+10t^3
-	return t * t * t *( t * ( t* 6.0 - 15.0 ) + 10.0 );
+	return t * t * t *( t * ( t* 6.0f - 15.0f ) + 10.0f );
 }
 
 // given a table of sorted tabulated positions, return the two indices and blendfactor to linear
@@ -1749,7 +1749,7 @@ void CalcSqrDistAndClosestPointOnAABB( const Vector &mins, const Vector &maxs, c
 inline float CalcDistanceToAABB( const Vector &mins, const Vector &maxs, const Vector &point )
 {
 	float flDistSqr = CalcSqrDistanceToAABB( mins, maxs, point );
-	return sqrt(flDistSqr);
+	return sqrtf(flDistSqr);
 }
 
 // Get the closest point from P to the (infinite) line through vLineA and vLineB and
@@ -2017,13 +2017,13 @@ FORCEINLINE float * UnpackNormal_UBYTE4( const unsigned int *pPackedNormal, floa
 	unsigned char cX, cY;
 	if ( bIsTangent )
 	{
-		cX = *pPackedNormal >> 16;					// Unpack Z
-		cY = *pPackedNormal >> 24;					// Unpack W
+		cX = (unsigned char)(*pPackedNormal >> 16);					// Unpack Z
+		cY = (unsigned char)(*pPackedNormal >> 24);					// Unpack W
 	}
 	else
 	{
-		cX = *pPackedNormal >>  0;					// Unpack X
-		cY = *pPackedNormal >>  8;					// Unpack Y
+		cX = (unsigned char)(*pPackedNormal >>  0);					// Unpack X
+		cY = (unsigned char)(*pPackedNormal >>  8);					// Unpack Y
 	}
 
 	float x = cX - 128.0f;
@@ -2049,7 +2049,7 @@ FORCEINLINE float * UnpackNormal_UBYTE4( const unsigned int *pPackedNormal, floa
 	y = ( y*ySign - ySignBit ) / 63.0f;
 	z = 1.0f - x - y;
 
-	float oolen	 = 1.0f / sqrt( x*x + y*y + z*z );	// Normalize and
+	float oolen	 = 1.0f / sqrtf( x*x + y*y + z*z );	// Normalize and
 	x			*= oolen * xSign;					// Recover signs
 	y			*= oolen * ySign;
 	z			*= oolen * zSign;

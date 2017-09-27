@@ -954,7 +954,7 @@ float bf_read::ReadBitAngle( int numbits )
 	shift = (float)( BitForBitnum(numbits) );
 
 	i = ReadUBitLong( numbits );
-	fReturn = (float)i * (360.0 / shift);
+	fReturn = (float)i * (360.0f / shift);
 
 	return fReturn;
 }
@@ -1066,7 +1066,7 @@ int32 bf_read::ReadSignedVarInt32()
 
 int64 bf_read::ReadSignedVarInt64()
 {
-	uint32 value = ReadVarInt64();
+	uint32 value = (uint32)ReadVarInt64();
 	return bitbuf::ZigZagDecode64( value );
 }
 
@@ -1113,7 +1113,7 @@ float bf_read::ReadBitCoord (void)
 		}
 
 		// Calculate the correct floating point value
-		value = intval + ((float)fractval * COORD_RESOLUTION);
+		value = (float)(intval + fractval * COORD_RESOLUTION);
 
 		// Fixup the sign if negative.
 		if ( signbit )
@@ -1144,7 +1144,7 @@ float bf_read::ReadBitCoordMP( bool bIntegral, bool bLowPrecision )
 			unsigned int bits = ReadUBitLong( (flags & INBOUNDS) ? COORD_INTEGER_BITS_MP+1 : COORD_INTEGER_BITS+1 );
 			// Remap from [0,N] to [1,N+1]
 			int intval = (bits >> 1) + 1;
-			return (bits & 1) ? -intval : intval;
+			return (float)((bits & 1) ? -intval : intval);
 		}
 		return 0.f;
 	}
@@ -1297,7 +1297,7 @@ float bf_read::ReadBitNormal (void)
 	unsigned int fractval = ReadUBitLong( NORMAL_FRACTIONAL_BITS );
 
 	// Calculate the correct floating point value
-	float value = (float)fractval * NORMAL_RESOLUTION;
+	float value = (float)(fractval * NORMAL_RESOLUTION);
 
 	// Fixup the sign if negative.
 	if ( signbit )
@@ -1326,7 +1326,7 @@ void bf_read::ReadBitVec3Normal( Vector& fa )
 
 	float fafafbfb = fa[0] * fa[0] + fa[1] * fa[1];
 	if (fafafbfb < 1.0f)
-		fa[2] = sqrt( 1.0f - fafafbfb );
+		fa[2] = sqrtf( 1.0f - fafafbfb );
 	else
 		fa[2] = 0.0f;
 

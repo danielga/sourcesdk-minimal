@@ -1553,7 +1553,7 @@ Color KeyValues::GetColor( const char *keyName )
 		}
 		else if ( dat->m_iDataType == TYPE_FLOAT )
 		{
-			color[0] = dat->m_flValue;
+			color[0] = (unsigned char)dat->m_flValue;
 		}
 		else if ( dat->m_iDataType == TYPE_INT )
 		{
@@ -2839,7 +2839,7 @@ void KeyValues::UnpackIntoStructure( KeyValuesUnpackStructure const *pUnpackTabl
 			{
 				Assert( dest_field + sizeof( float ) < pDestEnd );
 
-				float default_value=(pUnpackTable->m_pKeyDefault)?atof(pUnpackTable->m_pKeyDefault):0.0;
+				float default_value=(pUnpackTable->m_pKeyDefault)?(float)atof(pUnpackTable->m_pKeyDefault):0.0f;
 				*( ( float *) dest_field)=GetFloat( pUnpackTable->m_pKeyName, default_value );
 				break;
 			}
@@ -2919,9 +2919,9 @@ void KeyValues::UnpackIntoStructure( KeyValuesUnpackStructure const *pUnpackTabl
 				if (find_it)
 				{
 					Color c=GetColor( pUnpackTable->m_pKeyName );
-					dest_v->x = c.r();
-					dest_v->y = c.g();
-					dest_v->z = c.b();
+					dest_v->x = (vec_t)c.r();
+					dest_v->y = (vec_t)c.g();
+					dest_v->z = (vec_t)c.b();
 				}
 				else
 				{

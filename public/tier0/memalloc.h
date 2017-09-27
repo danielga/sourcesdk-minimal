@@ -337,11 +337,11 @@ inline size_t MemAlloc_GetSizeAligned( void *pMemBlock )
 #define MemAlloc_RegisterAllocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) g_pMemAlloc->RegisterAllocation( pFileName, nLine, nLogicalSize, nActualSize, nTime )
 #define MemAlloc_RegisterDeallocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) g_pMemAlloc->RegisterDeallocation( pFileName, nLine, nLogicalSize, nActualSize, nTime )
 #else
-#define MEM_ALLOC_CREDIT_(tag)	((void)0)
-#define MemAlloc_PushAllocDbgInfo( pszFile, line ) ((void)0)
+#define MEM_ALLOC_CREDIT_(tag)	((void)tag)
+#define MemAlloc_PushAllocDbgInfo( pszFile, line ) ((void)pszFile, (void)line)
 #define MemAlloc_PopAllocDbgInfo() ((void)0)
-#define MemAlloc_RegisterAllocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) ((void)0)
-#define MemAlloc_RegisterDeallocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) ((void)0)
+#define MemAlloc_RegisterAllocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) ((void)pFileName, (void)nLine, (void)nLogicalSize, (void)nActualSize, (void)nTime)
+#define MemAlloc_RegisterDeallocation( pFileName, nLine, nLogicalSize, nActualSize, nTime ) ((void)pFileName, (void)nLine, (void)nLogicalSize, (void)nActualSize, (void)nTime)
 #endif
 
 #define MemAlloc_DumpStats() g_pMemAlloc->DumpStats()
@@ -563,14 +563,14 @@ PLATFORM_INTERFACE void SetMemoryMark( void );
 PLATFORM_INTERFACE void DumpChangedMemory( int nThresh );
 
 #else
-FORCEINLINE void MemoryLogMessage( char const *s )
+FORCEINLINE void MemoryLogMessage( char const * )
 {
 }
 
-FORCEINLINE void EnableMemoryLogging( bool bOnOff )
+FORCEINLINE void EnableMemoryLogging( bool )
 {
 }
-FORCEINLINE void DumpMemoryLog( int nThresh )
+FORCEINLINE void DumpMemoryLog( int )
 {
 }
 FORCEINLINE void DumpMemorySummary( void )
@@ -579,7 +579,7 @@ FORCEINLINE void DumpMemorySummary( void )
 FORCEINLINE void SetMemoryMark( void )
 {
 }
-FORCEINLINE void DumpChangedMemory( int nThresh )
+FORCEINLINE void DumpChangedMemory( int )
 {
 }
 

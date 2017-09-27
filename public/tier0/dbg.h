@@ -614,9 +614,9 @@ FORCEINLINE void AssertValidReadWritePtr( const void* ptr, int count = 1 )	{ _As
 
 #else
 
-FORCEINLINE void AssertValidReadPtr( const void* ptr, int count = 1 )			 { }
-FORCEINLINE void AssertValidWritePtr( const void* ptr, int count = 1 )		     { }
-FORCEINLINE void AssertValidReadWritePtr( const void* ptr, int count = 1 )	     { }
+FORCEINLINE void AssertValidReadPtr( const void*, int = 1 )			 { }
+FORCEINLINE void AssertValidWritePtr( const void*, int = 1 )		     { }
+FORCEINLINE void AssertValidReadWritePtr( const void*, int = 1 )	     { }
 #define AssertValidStringPtr AssertValidReadPtr
 
 #endif

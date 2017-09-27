@@ -387,9 +387,9 @@ inline void	bf_write::WriteOneBitAt( int iBit, int nValue )
 #endif
 }
 
+#ifdef _DEBUG
 BITBUF_INLINE void bf_write::WriteUBitLong( unsigned int curData, int numbits, bool bCheckRange ) RESTRICT
 {
-#ifdef _DEBUG
 	// Make sure it doesn't overflow.
 	if ( bCheckRange && numbits < 32 )
 	{
@@ -399,6 +399,9 @@ BITBUF_INLINE void bf_write::WriteUBitLong( unsigned int curData, int numbits, b
 		}
 	}
 	Assert( numbits >= 0 && numbits <= 32 );
+#else
+BITBUF_INLINE void bf_write::WriteUBitLong( unsigned int curData, int numbits, bool ) RESTRICT
+{
 #endif
 
 	if ( GetNumBitsLeft() < numbits )

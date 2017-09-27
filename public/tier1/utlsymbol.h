@@ -262,6 +262,9 @@ public:
 private:
 	//CCountedStringPool	m_StringPool;
 	HashTable* m_Strings;
+#if defined(_M_IX86) || defined(___i386__) || defined(__i386) || defined(__X86__) || defined(_X86_) || defined(__I86__)
+	int __padding;
+#endif
 	mutable CThreadSpinRWLock m_lock;
 };
 

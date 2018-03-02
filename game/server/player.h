@@ -210,8 +210,8 @@ public:
 	virtual const Vector GetPlayerMaxs();
 	virtual const char *GetWeaponName();
 	virtual const char *GetModelName();
-	virtual const int GetHealth();
-	virtual const int GetMaxHealth();
+	virtual int GetHealth();
+	virtual int GetMaxHealth();
 
 	// bot specific functions	
 	virtual void SetAbsOrigin( Vector & vec );

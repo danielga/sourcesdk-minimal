@@ -525,7 +525,7 @@ public:
 	Vector48& operator=(const Vector &vOther);
 	operator Vector ();
 
-	const float operator[]( int i ) const { return (((float16 *)this)[i]).GetFloat(); }
+	float operator[]( int i ) const { return (((float16 *)this)[i]).GetFloat(); }
 
 	float16 x;
 	float16 y;

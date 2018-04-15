@@ -419,8 +419,8 @@ public:
 
 //-----------------------------------------------------------------------------
 
-JOB_INTERFACE IThreadPool *CreateThreadPool();
-JOB_INTERFACE void DestroyThreadPool( IThreadPool *pPool );
+JOB_INTERFACE IThreadPool *V_CreateThreadPool();
+JOB_INTERFACE void V_DestroyThreadPool( IThreadPool *pPool );
 
 //-------------------------------------
 

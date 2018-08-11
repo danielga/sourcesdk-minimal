@@ -15,13 +15,13 @@ namespace IAddonSystem
 	{
 		std::string title;
 		std::string file;
-		std::string placeholder1;
+		std::string tags;
+		uint64_t time_updated;
 		uint64_t wsid;
 		uint64_t creator;
-		uint64_t placeholder2;
-		uint64_t placeholder3;
+		uint64_t hcontent_file;
 		uint64_t placeholder4;
-		uint64_t placeholder5;
+		uint64_t hcontent_preview;
 		uint64_t placeholder6;
 		uint64_t placeholder7;
 		uint16_t placeholder8;

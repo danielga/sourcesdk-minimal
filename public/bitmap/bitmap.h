@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,10 +15,16 @@
 
 
 #include "bitmap/imageformat.h"
-#include "Color.h"
+#include "color.h"
 #include "dbg.h"
 
 class CUtlBuffer;
+
+//-----------------------------------------------------------------------------
+// Forward declarations
+//-----------------------------------------------------------------------------
+class CUtlBuffer;
+
 
 //-----------------------------------------------------------------------------
 // A Bitmap
@@ -137,6 +143,30 @@ inline const unsigned char *Bitmap_t::GetPixel( int x, int y ) const
 
 	return m_pBits + (y*m_nStride) + x* m_nPixelSize;
 }
+
+
+//-----------------------------------------------------------------------------
+// Loads a bitmap from an arbitrary file: could be a TGA, PSD, or PFM.
+// LoadBitmap autodetects which type, and returns it
+//-----------------------------------------------------------------------------
+enum BitmapFileType_t 
+{ 
+	BITMAP_FILE_TYPE_UNKNOWN = -1, 
+	BITMAP_FILE_TYPE_PSD = 0, 
+	BITMAP_FILE_TYPE_TGA, 
+	BITMAP_FILE_TYPE_PFM, 
+}; 
+
+BitmapFileType_t LoadBitmapFile( CUtlBuffer &buf, Bitmap_t *pBitmap );
+
+
+//-----------------------------------------------------------------------------
+// PFM file loading related methods
+//-----------------------------------------------------------------------------
+bool PFMReadFileR32F( CUtlBuffer &fileBuffer, Bitmap_t &bitmap, float pfmScale );
+bool PFMReadFileRGB323232F( CUtlBuffer &fileBuffer, Bitmap_t &bitmap, float pfmScale );
+bool PFMReadFileRGBA32323232F( CUtlBuffer &fileBuffer, Bitmap_t &bitmap, float pfmScale );
+bool PFMGetInfo_AndAdvanceToTextureBits( CUtlBuffer &pfmBuffer, int &nWidth, int &nHeight, ImageFormat &imageFormat );
 
 
 #endif // BITMAP_H

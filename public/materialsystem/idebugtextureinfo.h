@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,7 +15,6 @@ class KeyValues;
 
 
 // This interface is actually exported by the shader API DLL.
-#define DEBUG_TEXTURE_INFO_VERSION "DebugTextureInfo001"
 
 
 abstract_class IDebugTextureInfo
@@ -39,7 +38,9 @@ public:
 	//    Width  - Width of the texture
 	//    Height - Height of the texture
 	// It is required to enable debug texture list to get this.
-	virtual KeyValues* GetDebugTextureList() = 0;
+	// You MUST release the texture list after having copied it or whatever so that it can be updated again on a separate thread.
+	virtual KeyValues* LockDebugTextureList( void ) = 0;
+	virtual void UnlockDebugTextureList( void ) = 0;
 
 	// Texture memory usage
 	enum TextureMemoryType

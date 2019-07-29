@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,10 +15,37 @@
 
 #include "tier0/platform.h"
 #include "bitmap/imageformat.h" // ImageFormat defn.
+#include "materialsystem/imaterialsystem.h"
 
 class IVTFTexture;
 class ITexture;
 struct Rect_t;
+
+#ifdef _X360
+enum RTMultiSampleCount360_t
+{
+	RT_MULTISAMPLE_NONE = 0,
+	RT_MULTISAMPLE_2_SAMPLES = 2,
+	RT_MULTISAMPLE_4_SAMPLES = 4,
+	RT_MULTISAMPLE_MATCH_BACKBUFFER
+};
+#endif
+
+struct AsyncTextureContext_t
+{
+	ITexture		*m_pTexture;
+
+	// snapshot at the point of async start
+	// used to resolve disparity at moment of latent async arrival
+	unsigned int	m_nInternalFlags;
+	int				m_nDesiredTempDimensionLimit;
+	int				m_nActualDimensionLimit;
+
+	// Keeps track of the VTF texture in case the shader api texture gets
+	// created the next frame. Generating the texture from the file can 
+	// then be split in multiple parts across frames.
+	IVTFTexture		*m_pVTFTexture;
+};
 
 //-----------------------------------------------------------------------------
 // This will get called on procedural textures to re-fill the textures
@@ -40,9 +67,8 @@ public:
 	// which will happen when the texture is destroyed
 	virtual void Release() = 0;
 
-	// (erics): This should have a virtual destructor, but would be ABI breaking (non-versioned interface implemented
-	//          by the game)
-//	virtual ~ITextureRegenerator(){}
+	virtual bool HasPreallocatedScratchTexture() const { return false; }
+	virtual IVTFTexture *GetPreallocatedScratchTexture() { return NULL; }
 };
 
 abstract_class ITexture
@@ -76,7 +102,7 @@ public:
 	inline void Release() { DecrementReferenceCount(); }
 
 	// Used to modify the texture bits (procedural textures only)
-	virtual void SetTextureRegenerator( ITextureRegenerator *pTextureRegen ) = 0;
+	virtual void SetTextureRegenerator( ITextureRegenerator *pTextureRegen, bool releaseExisting = true ) = 0;
 
 	// Reconstruct the texture bits in HW memory
 
@@ -98,19 +124,19 @@ public:
 	virtual int GetActualDepth() const = 0;
 
 	virtual ImageFormat GetImageFormat() const = 0;
-	virtual NormalDecodeMode_t GetNormalDecodeMode() const = 0;
 
 	// Various information about the texture
 	virtual bool IsRenderTarget() const = 0;
 	virtual bool IsCubeMap() const = 0;
 	virtual bool IsNormalMap() const = 0;
 	virtual bool IsProcedural() const = 0;
+	virtual bool IsDefaultPool() const = 0;
 
 	virtual void DeleteIfUnreferenced() = 0;
 
 #if defined( _X360 )
 	virtual bool ClearTexture( int r, int g, int b, int a ) = 0;
-	virtual bool CreateRenderTargetSurface( int width, int height, ImageFormat format, bool bSameAsTexture ) = 0;
+	virtual bool CreateRenderTargetSurface( int width, int height, ImageFormat format, bool bSameAsTexture, RTMultiSampleCount360_t multiSampleCount = RT_MULTISAMPLE_NONE ) = 0;
 #endif
 
 	// swap everything except the name with another texture
@@ -122,15 +148,22 @@ public:
 	// Force LOD override (automatically downloads the texture)
 	virtual void ForceLODOverride( int iNumLodsOverrideUpOrDown ) = 0;
 
-	// Save texture to a file.
-	virtual bool SaveToFile( const char *fileName ) = 0;
+	// Force exclude override (automatically downloads the texture)
+	virtual void ForceExcludeOverride( int iExcludeOverride ) = 0;
 
-	// Copy this texture, which must be a render target or a renderable texture, to the destination texture, 
-	// which must have been created with the STAGING bit.
-	virtual void CopyToStagingTexture( ITexture* pDstTex ) = 0;
+	//swap out the active texture surface, only valid for MultiRenderTarget textures
+	virtual void AddDownsizedSubTarget( const char *szName, int iDownsizePow2, MaterialRenderTargetDepth_t depth ) = 0;
+	virtual void SetActiveSubTarget( const char *szName ) = 0; //NULL to return to base target
 
-	// Set that this texture should return true for the call "IsError"
-	virtual void SetErrorTexture( bool bIsErrorTexture ) = 0;
+	virtual int GetReferenceCount() const = 0;
+
+	virtual bool IsTempExcluded() const = 0;
+	virtual bool CanBeTempExcluded() const = 0;
+
+	virtual bool FinishAsyncDownload( AsyncTextureContext_t *pContext, void *pData, int nNumReadBytes, bool bAbort, float flMaxTimeMs ) = 0;
+
+	virtual bool IsForceExcluded() const = 0;
+	virtual bool ClearForceExclusion() = 0;
 };
 
 

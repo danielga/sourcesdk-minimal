@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,6 +20,7 @@ abstract_class IMaterialProxyFactory
 public:
 	virtual IMaterialProxy *CreateProxy( const char *proxyName ) = 0;
 	virtual void DeleteProxy( IMaterialProxy *pProxy ) = 0;
+	virtual CreateInterfaceFn GetFactory() = 0;
 };
 
 #endif // IMATERIALPROXYFACTORY_H

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -13,35 +13,28 @@
 #pragma once
 #endif
 
+#if defined( DX_TO_GL_ABSTRACTION )
+#define IsPlatformOpenGL() true
+#else
+#define IsPlatformOpenGL() false
+#endif
 
 #include "tier1/interface.h"
-
+//#include "tier2/tier2.h"
+#include "bitmap/imageformat.h"
+#include "imaterialsystem.h"
 //-----------------------------------------------------------------------------
-// GL helpers
+// Material system interface version
 //-----------------------------------------------------------------------------
-FORCEINLINE bool IsEmulatingGL()
-{
-	static bool bIsEmulatingGL = ( Plat_GetCommandLineA() ) ? ( strstr( Plat_GetCommandLineA(), "-r_emulate_gl" ) != NULL ) : false;
-	return bIsEmulatingGL;
-}
 
 FORCEINLINE bool IsOpenGL( void )
 {
-	return IsPlatformOpenGL() || IsEmulatingGL();
+	return IsPlatformOpenGL();
 }
 
 //-----------------------------------------------------------------------------
 // Material system interface version
 //-----------------------------------------------------------------------------
-#define MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION		"MaterialSystemHardwareConfig012"
-
-// HDRFIXME NOTE: must match common_ps_fxc.h
-enum HDRType_t
-{
-	HDR_TYPE_NONE,
-	HDR_TYPE_INTEGER,
-	HDR_TYPE_FLOAT,
-};
 
 // For now, vertex compression is simply "on or off" (for the sake of simplicity
 // and MeshBuilder perf.), but later we may support multiple flavours.
@@ -68,7 +61,7 @@ enum VertexCompressionType_t
 // use DEFCONFIGMETHOD to define time-critical methods that we want to make just return constants
 // on the 360, so that the checks will happen at compile time. Not all methods are defined this way
 // - just the ones that I perceive as being called often in the frame interval.
-#ifdef _X360
+#ifdef _GAMECONSOLE
 #define DEFCONFIGMETHOD( ret_type, method, xbox_return_value )		\
 FORCEINLINE ret_type method const 									\
 {																	\
@@ -81,7 +74,59 @@ FORCEINLINE ret_type method const 									\
 virtual ret_type method const = 0;
 #endif
 
+//-----------------------------------------------------------------------------
+// Shadow filter types
+// Important notes: These enums directly correspond to combo indices.
+// If you change these, make the corresponding change in common_ps_fxc.h
+// Cheap ones are at the end on purpose, and are only run on ps2b
+// SHADOWFILTERMODE_DEFAULT must be 0.
+//-----------------------------------------------------------------------------
+enum ShadowFilterMode_t
+{
+	SHADOWFILTERMODE_DEFAULT = 0,
 
+	NVIDIA_PCF = 0,
+	ATI_NO_PCF_FETCH4 = 1,
+	NVIDIA_PCF_CHEAP = 2,
+	ATI_NOPCF = 3,
+
+	// Game consoles use a different set of combo indices to control shadow filtering.
+	GAMECONSOLE_NINE_TAP_PCF = 0,
+	GAMECONSOLE_SINGLE_TAP_PCF = 1,
+
+	// All modes >= SHADOWFILTERMODE_FIRST_CHEAP_MODE are considered the "cheap" modes.
+
+#if defined( _GAMECONSOLE )
+	SHADOWFILTERMODE_FIRST_CHEAP_MODE = GAMECONSOLE_SINGLE_TAP_PCF,
+#else
+	SHADOWFILTERMODE_FIRST_CHEAP_MODE = NVIDIA_PCF_CHEAP,
+#endif
+};
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+
+enum CSMQualityMode_t
+{
+	CSMQUALITY_VERY_LOW,
+	CSMQUALITY_LOW,
+	CSMQUALITY_MEDIUM,
+	CSMQUALITY_HIGH,
+
+	CSMQUALITY_TOTAL_MODES
+};
+
+// CSMShaderMode_t must match the CSM_MODE static combo in the pixel shaders
+enum CSMShaderMode_t
+{
+	CSMSHADERMODE_LOW_OR_VERY_LOW	= 0,
+	CSMSHADERMODE_MEDIUM			= 1,
+	CSMSHADERMODE_HIGH				= 2,
+	CSMSHADERMODE_ATIFETCH4			= 3,
+
+	CSMSHADERMODE_TOTAL_MODES
+};
 
 //-----------------------------------------------------------------------------
 // Material system configuration
@@ -89,40 +134,20 @@ virtual ret_type method const = 0;
 class IMaterialSystemHardwareConfig
 {
 public:
-	// on xbox, some methods are inlined to return constants
-
-	DEFCONFIGMETHOD( bool, HasDestAlphaBuffer(), true );
-	DEFCONFIGMETHOD( bool, HasStencilBuffer(), true );
 	virtual int	 GetFrameBufferColorDepth() const = 0;
 	virtual int  GetSamplerCount() const = 0;
 	virtual bool HasSetDeviceGammaRamp() const = 0;
-	DEFCONFIGMETHOD( bool, SupportsCompressedTextures(), true );
-	virtual VertexCompressionType_t SupportsCompressedVertices() const = 0;
-	DEFCONFIGMETHOD( bool, SupportsNormalMapCompression(), true );
-	DEFCONFIGMETHOD( bool, SupportsVertexAndPixelShaders(), true );
-	DEFCONFIGMETHOD( bool, SupportsPixelShaders_1_4(), true );
 	DEFCONFIGMETHOD( bool, SupportsStaticControlFlow(), true );
-	DEFCONFIGMETHOD( bool, SupportsPixelShaders_2_0(), true );
-	DEFCONFIGMETHOD( bool,  SupportsVertexShaders_2_0(), true );
+	virtual VertexCompressionType_t SupportsCompressedVertices() const = 0;
 	virtual int  MaximumAnisotropicLevel() const = 0;	// 0 means no anisotropic filtering
 	virtual int  MaxTextureWidth() const = 0;
 	virtual int  MaxTextureHeight() const = 0;
 	virtual int	 TextureMemorySize() const = 0;
-	virtual bool SupportsOverbright() const = 0;
-	virtual bool SupportsCubeMaps() const = 0;
 	virtual bool SupportsMipmappedCubemaps() const = 0;
-	virtual bool SupportsNonPow2Textures() const = 0;
 
-	// The number of texture stages represents the number of computations
-	// we can do in the fixed-function pipeline, it is *not* related to the
-	// simultaneous number of textures we can use
-	virtual int  GetTextureStageCount() const = 0;
 	virtual int	 NumVertexShaderConstants() const = 0;
 	virtual int	 NumPixelShaderConstants() const = 0;
 	virtual int	 MaxNumLights() const = 0;
-	virtual bool SupportsHardwareLighting() const = 0;
-	virtual int	 MaxBlendMatrices() const = 0;
-	virtual int	 MaxBlendMatrixIndices() const = 0;
 	virtual int	 MaxTextureAspectRatio() const = 0;
 	virtual int	 MaxVertexShaderBlendMatrices() const = 0;
 	virtual int	 MaxUserClipPlanes() const = 0;
@@ -140,17 +165,8 @@ public:
 
 	DEFCONFIGMETHOD( bool, SupportsHDR(), true );
 
-	virtual bool HasProjectedBumpEnv() const = 0;
-	virtual bool SupportsSpheremapping() const = 0;
 	virtual bool NeedsAAClamp() const = 0;
 	virtual bool NeedsATICentroidHack() const = 0;
-
-	virtual bool SupportsColorOnSecondStream() const = 0;
-	virtual bool SupportsStaticPlusDynamicLighting() const = 0;
-
-	// Does our card have a hard time with fillrate 
-	// relative to other cards w/ the same dx level?
-	virtual bool PreferReducedFillrate() const = 0;
 
 	// This is the max dx support level supported by the card
 	virtual int	 GetMaxDXSupportLevel() const = 0;
@@ -168,7 +184,7 @@ public:
 	virtual bool IsAAEnabled() const = 0;	// Is antialiasing being used?
 
 	// NOTE: Anything after this was added after shipping HL2.
-	virtual int GetVertexTextureCount() const = 0;
+	virtual int GetVertexSamplerCount() const = 0;
 	virtual int GetMaxVertexTextureDimension() const = 0;
 
 	virtual int  MaxTextureDepth() const = 0;
@@ -176,7 +192,6 @@ public:
 	virtual HDRType_t GetHDRType() const = 0;
 	virtual HDRType_t GetHardwareHDRType() const = 0;
 
-	DEFCONFIGMETHOD( bool, SupportsPixelShaders_2_b(), true );
 	virtual bool SupportsStreamOffset() const = 0;
 
 	virtual int StencilBufferBits() const = 0;
@@ -184,18 +199,14 @@ public:
 
 	virtual void OverrideStreamOffsetSupport( bool bOverrideEnabled, bool bEnableSupport ) = 0;
 
-	virtual int GetShadowFilterMode() const = 0;
+	virtual ShadowFilterMode_t GetShadowFilterMode( bool bForceLowQualityShadows, bool bPS30 ) const = 0;
 
 	virtual int NeedsShaderSRGBConversion() const = 0;
 
-	DEFCONFIGMETHOD( bool, UsesSRGBCorrectBlending(), true );
+	DEFCONFIGMETHOD( bool, UsesSRGBCorrectBlending(), IsX360() );
 
-	virtual bool SupportsShaderModel_3_0() const = 0;
 	virtual bool HasFastVertexTextures() const = 0;
 	virtual int MaxHWMorphBatchCount() const = 0;
-
-	// Does the board actually support this?
-	DEFCONFIGMETHOD( bool, ActuallySupportsPixelShaders_2_b(), true );
 
 	virtual bool SupportsHDRMode( HDRType_t nHDRMode ) const = 0;
 
@@ -204,6 +215,41 @@ public:
 
 	virtual bool SupportsBorderColor( void ) const = 0;
 	virtual bool SupportsFetch4( void ) const = 0;
+
+	virtual float GetShadowDepthBias() const = 0;
+	virtual float GetShadowSlopeScaleDepthBias() const = 0;
+
+	virtual bool PreferZPrepass() const = 0;
+
+	virtual bool SuppressPixelShaderCentroidHackFixup() const = 0;
+	virtual bool PreferTexturesInHWMemory() const = 0;
+	virtual bool PreferHardwareSync() const = 0;
+	virtual bool ActualHasFastVertexTextures() const = 0;
+
+	virtual bool SupportsShadowDepthTextures( void ) const = 0;
+	virtual ImageFormat GetShadowDepthTextureFormat( void ) const = 0;
+	virtual ImageFormat GetHighPrecisionShadowDepthTextureFormat( void ) const = 0;
+	virtual ImageFormat GetNullTextureFormat( void ) const = 0;
+	virtual int	GetMinDXSupportLevel() const = 0;
+	virtual bool IsUnsupported() const = 0;
+
+	virtual float GetLightMapScaleFactor() const = 0;
+
+	virtual bool SupportsCascadedShadowMapping() const = 0;
+	virtual CSMQualityMode_t GetCSMQuality() const = 0;
+	virtual bool SupportsBilinearPCFSampling() const = 0;
+	virtual CSMShaderMode_t GetCSMShaderMode( CSMQualityMode_t nQualityLevel ) const = 0;
+	virtual bool GetCSMAccurateBlending( void ) const = 0;
+	virtual void SetCSMAccurateBlending( bool bEnable ) = 0;
+
+	virtual bool SupportsResolveDepth() const = 0;
+	virtual bool HasFullResolutionDepthTexture() const = 0;
+
+	// Backward compat for stdshaders
+#if defined ( STDSHADER_DBG_DLL_EXPORT ) || defined( STDSHADER_DX9_DLL_EXPORT )
+	inline bool SupportsPixelShaders_2_b() const { return GetDXSupportLevel() >= 92; }
+	inline bool SupportsPixelShaders_3_0() const { return GetDXSupportLevel() >= 95; }
+#endif
 
 	inline bool ShouldAlwaysUseShaderModel2bShaders() const { return IsOpenGL(); }
 	inline bool PlatformRequiresNonNullPixelShaders() const { return IsOpenGL(); }

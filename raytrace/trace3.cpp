@@ -1,8 +1,11 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
 
 #include "raytrace.h"
 #include <bspfile.h>
 #include "bsplib.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 static Vector VertCoord(dface_t const &f, int vnum)
 {

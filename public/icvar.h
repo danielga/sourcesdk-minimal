@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright � 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -10,8 +10,10 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "tier1/iconvar.h"
+#include "tier1/utlvector.h"
+
 
 class ConCommandBase;
 class ConCommand;
@@ -34,6 +36,8 @@ public:
 	virtual void ColorPrint( const Color& clr, const char *pMessage ) = 0;
 	virtual void Print( const char *pMessage ) = 0;
 	virtual void DPrint( const char *pMessage ) = 0;
+
+	virtual void GetConsoleText( char *pchText, size_t bufSize ) const = 0;
 };
 
 
@@ -47,7 +51,6 @@ public:
 	// Can these two convars be aliased?
 	virtual bool AreConVarsLinkable( const ConVar *child, const ConVar *parent ) = 0;
 };
-
 
 //-----------------------------------------------------------------------------
 // Purpose: DLL interface to ConVars/ConCommands
@@ -75,9 +78,7 @@ public:
 	virtual ConCommand		*FindCommand( const char *name ) = 0;
 	virtual const ConCommand *FindCommand( const char *name ) const = 0;
 
-	// Get first ConCommandBase to allow iteration
-	virtual ConCommandBase	*GetCommands( void ) = 0;
-	virtual const ConCommandBase *GetCommands( void ) const = 0;
+
 
 	// Install a global change callback (to be called when any convar changes) 
 	virtual void			InstallGlobalChangeCallback( FnChangeCallback_t callback ) = 0;
@@ -99,9 +100,20 @@ public:
 	// well after ICVar, so we can't use the standard connect pattern
 	virtual void			InstallCVarQuery( ICvarQuery *pQuery ) = 0;
 
-#if defined( _X360 )
+#if defined( USE_VXCONSOLE )
 	virtual void			PublishToVXConsole( ) = 0;
 #endif
+
+	virtual void			SetMaxSplitScreenSlots( int nSlots ) = 0;
+	virtual int				GetMaxSplitScreenSlots() const = 0;
+
+	virtual void			AddSplitScreenConVars() = 0;
+	virtual void			RemoveSplitScreenConVars( CVarDLLIdentifier_t id ) = 0;
+
+	virtual int				GetConsoleDisplayFuncCount() const = 0;
+	virtual void			GetConsoleText( int nDisplayFuncIndex, char *pchText, size_t bufSize ) const = 0;
+
+	// Utilities for convars accessed by the material system thread
 	virtual bool			IsMaterialThreadSetAllowed( ) const = 0;
 	virtual void			QueueMaterialThreadSetValue( ConVar *pConVar, const char *pValue ) = 0;
 	virtual void			QueueMaterialThreadSetValue( ConVar *pConVar, int nValue ) = 0;
@@ -132,10 +144,10 @@ public:
 	public:
 		inline Iterator(ICvar *icvar);
 		inline ~Iterator(void);
-		inline void		SetFirst( void );
-		inline void		Next( void );
-		inline bool		IsValid( void );
-		inline ConCommandBase *Get( void );
+		inline void		SetFirst( void ) RESTRICT;
+		inline void		Next( void ) RESTRICT;
+		inline bool		IsValid( void ) RESTRICT;
+		inline ConCommandBase *Get( void ) RESTRICT;
 	private:
 		ICVarIteratorInternal *m_pIter;
 	};
@@ -145,12 +157,13 @@ protected:
 	class ICVarIteratorInternal
 	{
 	public:
-		// warning: delete called on 'ICvar::ICVarIteratorInternal' that is abstract but has non-virtual destructor [-Wdelete-non-virtual-dtor]
-		virtual ~ICVarIteratorInternal() {}
-		virtual void		SetFirst( void ) = 0;
-		virtual void		Next( void ) = 0;
-		virtual	bool		IsValid( void ) = 0;
-		virtual ConCommandBase *Get( void ) = 0;
+		// This should be a virtual destructor to avoid undefined behavior and many warnings, but doing so
+		// causes plugins to break. It's not worth the trouble at this point.
+        //virtual ~ICVarIteratorInternal() {}
+		virtual void		SetFirst( void ) RESTRICT = 0;
+		virtual void		Next( void ) RESTRICT = 0;
+		virtual	bool		IsValid( void ) RESTRICT = 0;
+		virtual ConCommandBase *Get( void ) RESTRICT = 0;
 	};
 
 	virtual ICVarIteratorInternal	*FactoryInternalIterator( void ) = 0;
@@ -167,27 +180,25 @@ inline ICvar::Iterator::~Iterator( void )
 	delete m_pIter;
 }
 
-inline void ICvar::Iterator::SetFirst( void )
+inline void ICvar::Iterator::SetFirst( void ) RESTRICT
 {
 	m_pIter->SetFirst();
 }
 
-inline void ICvar::Iterator::Next( void )
+inline void ICvar::Iterator::Next( void ) RESTRICT
 {
 	m_pIter->Next();
 }
 
-inline bool ICvar::Iterator::IsValid( void )
+inline bool ICvar::Iterator::IsValid( void ) RESTRICT
 {
 	return m_pIter->IsValid();
 }
 
-inline ConCommandBase * ICvar::Iterator::Get( void )
+inline ConCommandBase * ICvar::Iterator::Get( void ) RESTRICT
 {
 	return m_pIter->Get();
 }
-
-#define CVAR_INTERFACE_VERSION "VEngineCvar004"
 
 
 //-----------------------------------------------------------------------------
@@ -196,8 +207,8 @@ inline ConCommandBase * ICvar::Iterator::Get( void )
 //-----------------------------------------------------------------------------
 
 // These are marked DLL_EXPORT for Linux.
-extern ICvar *cvar;
-extern ICvar *g_pCVar;
+DECLARE_TIER1_INTERFACE( ICvar, cvar );
+DECLARE_TIER1_INTERFACE( ICvar, g_pCVar );
 
 
 #endif // ICVAR_H

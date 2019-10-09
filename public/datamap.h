@@ -256,15 +256,6 @@ struct typedescription_t;
 
 enum
 {
-	PC_NON_NETWORKED_ONLY = 0,
-	PC_NETWORKED_ONLY,
-
-	PC_COPYTYPE_COUNT,
-	PC_EVERYTHING = PC_COPYTYPE_COUNT,
-};
-
-enum
-{
 	TD_OFFSET_NORMAL = 0,
 	TD_OFFSET_PACKED = 1,
 

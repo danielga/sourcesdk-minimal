@@ -270,7 +270,7 @@ DECLARE_TIER3_INTERFACE( IDmeMakefileUtils, g_pDmeMakefileUtils );
 #define VPHYSICS_COLLISION_INTERFACE_VERSION	"VPhysicsCollision007"
 DECLARE_TIER3_INTERFACE( IPhysicsCollision, g_pPhysicsCollision );
 
-#define SOUNDEMITTERSYSTEM_INTERFACE_VERSION	"VSoundEmitter003"
+#define SOUNDEMITTERSYSTEM_INTERFACE_VERSION	"VSoundEmitter002"
 DECLARE_TIER3_INTERFACE( ISoundEmitterSystemBase, g_pSoundEmitterSystem );
 
 #define WORLD_RENDERER_MGR_INTERFACE_VERSION	"WorldRendererMgr001"

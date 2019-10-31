@@ -470,8 +470,8 @@ BITBUF_INLINE void bf_write::WriteBitFloat(float val)
 {
 	long intVal;
 
-	Assert(sizeof(long) == sizeof(float));
-	Assert(sizeof(float) == 4);
+	static_assert(sizeof(long) == sizeof(float));
+	static_assert(sizeof(float) == 4);
 
 	intVal = *((long*)&val);
 	WriteUBitLong( intVal, 32 );

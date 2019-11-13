@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "tier1/strtools.h"
 #include "FileSystem_Tools.h"
 #include "tier1/utlstring.h"

@@ -13,7 +13,7 @@
 #include "tier1/interface.h"
 #include "tier1/utlvector.h"
 #include "tier1/utlsymbol.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "datamodel/dmattributetypes.h"
 
 

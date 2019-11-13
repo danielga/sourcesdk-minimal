@@ -12,7 +12,7 @@
 #endif
 
 #include "tier1/utlbuffer.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 //
 // Forward interface declarations

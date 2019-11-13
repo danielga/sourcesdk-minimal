@@ -15,7 +15,7 @@
 #endif
 
   
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations

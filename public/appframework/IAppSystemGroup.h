@@ -23,7 +23,7 @@
 #include "tier1/interface.h"
 #include "tier1/utlvector.h"
 #include "tier1/utldict.h"
-#include "IAppSystem.h"
+#include "iappsystem.h"
 
 //-----------------------------------------------------------------------------
 // forward declarations

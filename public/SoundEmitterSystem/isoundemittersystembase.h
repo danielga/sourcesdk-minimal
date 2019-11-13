@@ -15,7 +15,7 @@
 #include "vstdlib/random.h"
 #include "soundflags.h"
 #include "mathlib/compressed_vector.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 
 #define SOUNDEMITTERSYSTEM_INTERFACE_VERSION	"VSoundEmitter002"

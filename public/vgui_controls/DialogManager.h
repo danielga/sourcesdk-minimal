@@ -13,7 +13,7 @@
 #endif
 
 #include <utllinkedlist.h>
-#include <KeyValues.h>
+#include <keyvalues.h>
 #include <vgui_controls/PHandle.h>
 
 namespace vgui

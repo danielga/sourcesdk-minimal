@@ -15,7 +15,7 @@
  
 #include "tier0/platform.h"
 #include "tier1/interface.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 
 //-----------------------------------------------------------------------------

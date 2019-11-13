@@ -14,7 +14,7 @@
 
 #include <vgui/VGUI.h>
 #include <vgui/IPanel.h>
-#include <vstdlib/IKeyValuesSystem.h>
+#include <vstdlib/ikeyvaluessystem.h>
 
 #include "tier1/interface.h"
 #include "vgui/MouseCode.h"

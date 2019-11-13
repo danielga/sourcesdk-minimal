@@ -12,7 +12,7 @@
 #endif
 
 #include "tier0/platform.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 class CFunctor;
 

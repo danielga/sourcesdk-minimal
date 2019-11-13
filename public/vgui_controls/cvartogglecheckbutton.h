@@ -14,7 +14,7 @@
 #include "vgui/VGUI.h"
 #include "vgui_controls/CheckButton.h"
 #include "tier1/utlstring.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 namespace vgui
 {
 

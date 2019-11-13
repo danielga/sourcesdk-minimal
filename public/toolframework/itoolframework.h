@@ -10,11 +10,11 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "materialsystem/imaterialproxy.h"
 #include "toolframework/itoolentity.h"
 #include "mathlib/vector.h"
-#include "Color.h"
+#include "color.h"
 #include "toolframework/itoolentity.h" // HTOOLHANDLE defn
 
 //-----------------------------------------------------------------------------

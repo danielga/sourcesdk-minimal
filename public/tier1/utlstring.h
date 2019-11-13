@@ -15,31 +15,6 @@
 #include "tier1/strtools.h"
 #include "limits.h"
 
-#if defined( OSX )
-inline wchar_t *wcsdup(const wchar_t *pString)
-{
-	wchar_t *pMemory;
-
-	if (!pString)
-		return NULL;
-
-	size_t len = (wcslen(pString) + 1);
-	if ((pMemory = (wchar_t *)malloc(len * sizeof(wchar_t))) != NULL)
-	{
-		return wcscpy( pMemory, pString );
-	}
-
-	return NULL;
-}
-
-inline size_t strnlen(const char *s, size_t n)
-{
-	const char *p = (const char *)memchr(s, 0, n);
-	return (p ? p - s : n);
-}
-
-#endif
-
 //-----------------------------------------------------------------------------
 // Simple string class. 
 // NOTE: This is *not* optimal! Use in tools, but not runtime code

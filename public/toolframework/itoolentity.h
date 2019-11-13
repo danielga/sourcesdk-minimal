@@ -12,7 +12,7 @@
 
 #include "tier1/interface.h"
 #include "tier1/utlvector.h"
-#include "Color.h"
+#include "color.h"
 #include "basehandle.h"
 #include "iclientrenderable.h"
 #include "engine/ishadowmgr.h"

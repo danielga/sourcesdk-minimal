@@ -11,7 +11,7 @@
 #endif
 
 #include "tier0/platform.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 #include "inputsystem/InputEnums.h"
 #include "inputsystem/ButtonCode.h"

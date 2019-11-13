@@ -7,7 +7,7 @@
 #ifndef IHAMMER_H
 #define IHAMMER_H
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 typedef struct tagMSG MSG;
 

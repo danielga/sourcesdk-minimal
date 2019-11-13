@@ -14,7 +14,7 @@
 #endif
 
 #include "tier1/interface.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "bitmap/imageformat.h"
 #include "tier1/utlbuffer.h"
 #include "materialsystem/imaterial.h"

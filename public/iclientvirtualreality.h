@@ -16,7 +16,7 @@
 
 #include "tier1/interface.h"
 #include "tier1/refcount.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 //-----------------------------------------------------------------------------
 // forward declarations

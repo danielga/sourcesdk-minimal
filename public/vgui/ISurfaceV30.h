@@ -22,7 +22,7 @@
 #include "interface.h"
 #include "IVguiMatInfo.h"
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "bitmap/ImageFormat.h"
 #include "Vector2D.h"  // must be before the namespace line
 

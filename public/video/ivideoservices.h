@@ -17,7 +17,7 @@
 #endif
 
 #include <math.h>  
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "tier0/platform.h"
 
 #include <stdint.h>

@@ -6,7 +6,7 @@
 #endif
 
 #include "tier0/platform.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 #define HAPTICS_INTERFACE_VERSION "HapticsInterface001"
 #define HAPTICS_DLL_NAME "haptics"

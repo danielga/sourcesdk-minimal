@@ -17,7 +17,7 @@
 #include "tier1/interface.h"
 #include "bitmap/imageformat.h"
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "mathlib/vector2d.h"  // must be before the namespace line
 
 #include "IVguiMatInfo.h"

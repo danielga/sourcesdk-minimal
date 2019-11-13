@@ -13,7 +13,7 @@
 #include "tier1/utlsymbol.h"
 #include "tier1/utlvector.h"
 #include "tier1/utlstring.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 
 //-----------------------------------------------------------------------------

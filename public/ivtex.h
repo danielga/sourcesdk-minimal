@@ -13,7 +13,7 @@
 #endif
 
 #include "tier1/interface.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 
 class IVTex : public IAppSystem

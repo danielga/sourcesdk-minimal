@@ -5,7 +5,7 @@
 //=============================================================================
 #include "keyvaluescompiler.h"
 #include "filesystem.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 
 extern IFileSystem *g_pFullFileSystem;
 

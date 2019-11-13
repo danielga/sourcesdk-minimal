@@ -16,7 +16,7 @@
 
 
 #include "tier0/dbg.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 class IDataCache;
 

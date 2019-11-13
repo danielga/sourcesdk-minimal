@@ -13,7 +13,7 @@
 #if defined( USE_SDL )
 
 #include "tier0/threadtools.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 #if defined( DX_TO_GL_ABSTRACTION )
 #include "togl/linuxwin/glmgrbasics.h"

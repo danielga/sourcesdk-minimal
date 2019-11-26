@@ -353,7 +353,7 @@ public:
 	virtual SteamAPICall_t DeleteItem( PublishedFileId_t nPublishedFileID ) = 0;
 };
 
-#define STEAMUGC_INTERFACE_VERSION "STEAMUGC_INTERFACE_VERSION013"
+#define STEAMUGC_INTERFACE_VERSION "STEAMUGC_INTERFACE_VERSION012"
 
 // Global interface accessor
 inline ISteamUGC *SteamUGC();

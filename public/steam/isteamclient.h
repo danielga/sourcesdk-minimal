@@ -160,7 +160,7 @@ public:
 	virtual ISteamRemotePlay *GetISteamRemotePlay( HSteamUser hSteamUser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
 
 };
-#define STEAMCLIENT_INTERFACE_VERSION		"SteamClient019"
+#define STEAMCLIENT_INTERFACE_VERSION		"SteamClient018"
 
 #ifndef STEAM_API_EXPORTS
 

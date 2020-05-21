@@ -133,8 +133,8 @@ const char * netadr_t::ToString(bool baseOnly) const
 	}
 	else if (type == NA_STEAM)
 	{
-		EAccountType type = m_SteamID.GetEAccountType();
-		if (type == k_EAccountTypeInvalid || type == k_EAccountTypeIndividual)
+		EAccountType acctype = m_SteamID.GetEAccountType();
+		if (acctype == k_EAccountTypeInvalid || acctype == k_EAccountTypeIndividual)
 		{
 			AccountID_t accountID = m_SteamID.GetAccountID();
 			Q_snprintf (s, sizeof( s ), "STEAM_0:%u:%u", accountID % 2, accountID / 2);

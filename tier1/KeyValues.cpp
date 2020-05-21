@@ -1765,8 +1765,10 @@ void KeyValues::CopyKeyValuesFromRecursive( const KeyValues& rootSrc )
 
 	CUtlQueue<CopyStruct> nodeQ;
 #if _MSC_VER < 1800
-	CopyStruct temp = { this, &rootSrc };
-	nodeQ.Insert( temp );
+	{
+		CopyStruct temp = { this, &rootSrc };
+		nodeQ.Insert( temp );
+	}
 #else
 	nodeQ.Insert({ this, &rootSrc });
 #endif
@@ -1787,8 +1789,10 @@ void KeyValues::CopyKeyValuesFromRecursive( const KeyValues& rootSrc )
 			if( cs.src->m_pSub ) {
 				cs.dst->m_pSub = localDst = new KeyValues( NULL );
 #if _MSC_VER < 1800
-				CopyStruct temp = { localDst, cs.src->m_pSub };
-				nodeQ.Insert( temp );
+				{
+					CopyStruct temp = { localDst, cs.src->m_pSub };
+					nodeQ.Insert( temp );
+				}
 #else
 				nodeQ.Insert({ localDst, cs.src->m_pSub });
 #endif

@@ -137,7 +137,11 @@
 	#define NO_STEAM_GAMECOORDINATOR
 #endif
 
+#ifdef OSX
+	#include <malloc/malloc.h>
+#else
 	#include <malloc.h>
+#endif
 	#include <memory.h>
 	#include <limits.h>
 	#include <float.h>

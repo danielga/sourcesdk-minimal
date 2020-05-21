@@ -104,22 +104,22 @@ enum JobPriority_t
 #define TP_MAX_POOL_THREADS	64
 struct ThreadPoolStartParams_t
 {
-	ThreadPoolStartParams_t( bool bIOThreads = false, unsigned nThreads = (unsigned)-1, int *pAffinities = NULL, ThreeState_t fDistribute = TRS_NONE, unsigned nStackSize = (unsigned)-1, int iThreadPriority = SHRT_MIN )
-		: bIOThreads( bIOThreads ), nThreads( nThreads ), nThreadsMax( -1 ), fDistribute( fDistribute ), nStackSize( nStackSize ), iThreadPriority( iThreadPriority )
+	ThreadPoolStartParams_t( bool IOThreads = false, unsigned Threads = (unsigned)-1, int *Affinities = NULL, ThreeState_t Distribute = TRS_NONE, unsigned StackSize = (unsigned)-1, int ThreadPriority = SHRT_MIN )
+		: bIOThreads( IOThreads ), nThreads( Threads ), nThreadsMax( -1 ), fDistribute( Distribute ), nStackSize( StackSize ), iThreadPriority( ThreadPriority )
 	{
 		bExecOnThreadPoolThreadsOnly = false;
 #if defined( DEDICATED ) && IsPlatformLinux()
 		bEnableOnLinuxDedicatedServer = false; // by default, thread pools don't start up on Linux DS
 #endif
 
-		bUseAffinityTable = ( pAffinities != NULL ) && ( fDistribute == TRS_TRUE ) && ( nThreads != (unsigned)-1 );
+		bUseAffinityTable = ( Affinities != NULL ) && ( Distribute == TRS_TRUE ) && ( Threads != (unsigned)-1 );
 		if ( bUseAffinityTable )
 		{
 			// user supplied an optional 1:1 affinity mapping to override normal distribute behavior
-			nThreads = MIN( TP_MAX_POOL_THREADS, nThreads );
-			for ( unsigned int i = 0; i < nThreads; i++ )
+			Threads = MIN( TP_MAX_POOL_THREADS, Threads );
+			for ( unsigned int i = 0; i < Threads; i++ )
 			{
-				iAffinityTable[i] = pAffinities[i];
+				iAffinityTable[i] = Affinities[i];
 			}
 		}
 	}

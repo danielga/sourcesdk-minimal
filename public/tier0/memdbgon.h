@@ -32,7 +32,11 @@
 	#endif
 	#include <string.h>
 	#ifndef _PS3
-		#include <malloc.h>
+		#ifdef OSX
+			#include <malloc/malloc.h>
+		#else
+			#include <malloc.h>
+		#endif
 	#endif
 #include "tier0/valve_on.h"
 

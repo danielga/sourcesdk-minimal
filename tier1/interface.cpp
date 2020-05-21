@@ -336,7 +336,7 @@ static HMODULE Sys_LoadLibraryGuts( const char *pLibraryName )
 static HMODULE Sys_LoadLibrary( const char *pLibraryName )
 {
 	// load a library. If a library suffix is set, look for the library first with that name
-	char *pSuffix = NULL;
+	const char *pSuffix = NULL;
 	
 	if ( CommandLine()->FindParm( "-xlsp" ) )
 	{
@@ -414,7 +414,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName )
 	}
 	else
 	{
-		alteredFilename; // just to quash the warning
+		(void)alteredFilename; // just to quash the warning
 	}
 
 	if ( !Q_IsAbsolutePath( pModuleName ) )

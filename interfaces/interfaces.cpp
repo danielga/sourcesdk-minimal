@@ -1,4 +1,4 @@
-//===== Copyright © 2005-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 2005-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: A higher level link library for general use in the game and tools.
 //
@@ -15,7 +15,6 @@
 ICvar *cvar = 0;
 ICvar *g_pCVar = 0;
 IProcessUtils *g_pProcessUtils = 0;
-static bool s_bConnected = false;
 IPhysics2 *g_pPhysics2 = 0;
 IPhysics2ActorManager *g_pPhysics2ActorManager = 0;
 IPhysics2ResourceManager *g_pPhysics2ResourceManager = 0;
@@ -250,7 +249,7 @@ void ConnectInterfaces( CreateInterfaceFn *pFactoryList, int nFactoryCount )
 	{
 		for ( int i = 0; i < nFactoryCount; ++i )
 		{
-			for ( int j = 0; j < ARRAYSIZE( g_pInterfaceGlobals ); ++j )
+			for ( size_t j = 0; j < ARRAYSIZE( g_pInterfaceGlobals ); ++j )
 			{
 				RegisterInterface( pFactoryList[i], g_pInterfaceGlobals[j].m_pInterfaceName, (void**)g_pInterfaceGlobals[j].m_ppGlobal );
 			}
@@ -262,7 +261,7 @@ void ConnectInterfaces( CreateInterfaceFn *pFactoryList, int nFactoryCount )
 		// Warning("APPSYSTEM: ConnectInterfaces() was called twice for the same DLL.\nThis is expected behavior in building reslists, but questionable otherwise.\n");
 		for ( int i = 0; i < nFactoryCount; ++i )
 		{
-			for ( int j = 0; j < ARRAYSIZE( g_pInterfaceGlobals ); ++j )
+			for ( size_t j = 0; j < ARRAYSIZE( g_pInterfaceGlobals ); ++j )
 			{
 				ReconnectInterface( pFactoryList[i], g_pInterfaceGlobals[j].m_pInterfaceName, (void**)g_pInterfaceGlobals[j].m_ppGlobal );
 			}
@@ -293,7 +292,7 @@ void DisconnectInterfaces()
 //-----------------------------------------------------------------------------
 void ReconnectInterface( CreateInterfaceFn factory, const char *pInterfaceName )
 {
-	for ( int i = 0; i < ARRAYSIZE( g_pInterfaceGlobals ); ++i )
+	for ( size_t i = 0; i < ARRAYSIZE( g_pInterfaceGlobals ); ++i )
 	{
 		if ( strcmp( g_pInterfaceGlobals[i].m_pInterfaceName, pInterfaceName ) )
 			continue;		

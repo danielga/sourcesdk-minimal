@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -804,9 +804,9 @@ template<class Data, class HashFuncs>
 	int bucketCount = m_aBuckets.Count();
 	for ( int bucket = iter.bucket+1 ; bucket < bucketCount ; ++bucket )
 	{
-		UtlHashFastHandle_t next = m_aBuckets[bucket]; // get the head of the bucket
-		if (next != invalidIndex)
-			return UtlHashFastIterator_t( bucket, next );
+		UtlHashFastHandle_t nextbucket = m_aBuckets[bucket]; // get the head of the bucket
+		if (nextbucket != invalidIndex)
+			return UtlHashFastIterator_t( bucket, nextbucket );
 	}
 
 	// if we're here, there's no more data to be had

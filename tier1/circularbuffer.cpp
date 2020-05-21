@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Circular Buffer
 //
@@ -185,7 +185,7 @@ int CCircularBuffer::Advance(int nCount)
 int CCircularBuffer::Read(void *pchDestIn, int nCount)
 {
 	int nPeeked;
-	int m_nRead;
+	int nRead;
 
 	char *pchDest = (char*)pchDestIn;
 
@@ -193,17 +193,17 @@ int CCircularBuffer::Read(void *pchDestIn, int nCount)
 
 	if (nPeeked != 0)
 	{
-		m_nRead = Advance(nPeeked);
+		nRead = Advance(nPeeked);
 
-		Assert(m_nRead == nPeeked);
+		Assert(nRead == nPeeked);
 	}
 	else
 	{
-		m_nRead = 0;
+		nRead = 0;
 	}
 
 	AssertValid();
-	return(m_nRead);
+	return(nRead);
 }
 
 

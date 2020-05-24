@@ -34,6 +34,28 @@ class KeyValues;
 class IFileList;
 class IThreadPool;
 class CMemoryFileBacking;
+class IGet;
+class CLanguage;
+
+namespace Addon
+{
+	class FileSystem;
+}
+
+namespace Gamemode
+{
+	class System;
+}
+
+namespace GameDepot
+{
+	class System;
+}
+
+namespace LegacyAddons
+{
+	class System;
+}
 
 typedef void * FileHandle_t;
 typedef void * FileCacheHandle_t;
@@ -919,15 +941,18 @@ public:
 	// Called when we unload a file, to remove that file's info for pure server purposes.
 	virtual void			NotifyFileUnloaded( const char *pszFilename, const char *pPathId ) = 0;
 
-	/*
-	// Returns true on successfully retrieve case-sensitive full path, otherwise false
-	// Prefer using the GetCaseCorrectFullPath template wrapper to calling this directly
-	virtual bool			GetCaseCorrectFullPath_Ptr( const char *pFullPath, OUT_Z_CAP( maxLenInChars ) char *pDest, int maxLenInChars ) = 0;
-	template <size_t maxLenInChars> bool GetCaseCorrectFullPath( const char *pFullPath, OUT_Z_ARRAY char( &pDest )[maxLenInChars] )
-	{
-		return GetCaseCorrectFullPath_Ptr( pFullPath, pDest, (int)maxLenInChars );
-	}
-	*/
+	virtual void RemoveSearchPathsByGroup( int ) = 0;
+	virtual void SetGet( IGet * ) = 0;
+	virtual Addon::FileSystem *Addons( ) = 0;
+	virtual Gamemode::System *Gamemodes( ) = 0;
+	virtual GameDepot::System *Games( ) = 0;
+	virtual LegacyAddons::System *LegacyAddons( ) = 0;
+	virtual CLanguage *Language( ) = 0;
+	virtual void DoFilesystemRefresh( ) = 0;
+	virtual int LastFilesystemRefresh( ) = 0;
+	virtual void AddVPKFileFromPath( const char *, const char *, unsigned int ) = 0;
+	virtual void GMOD_SetupDefaultPaths( const char *, const char * ) = 0;
+	virtual void GMOD_FixPathCase( char *, size_t ) = 0;
 };
 
 //-----------------------------------------------------------------------------

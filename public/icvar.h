@@ -153,6 +153,12 @@ public:
 	};
 
 protected:
+
+#if defined( _MSC_VER )
+#pragma warning( push )
+#pragma warning( disable : 5205 )
+#endif
+
 	// internals for  ICVarIterator
 	class ICVarIteratorInternal
 	{
@@ -165,6 +171,10 @@ protected:
 		virtual	bool		IsValid( void ) RESTRICT = 0;
 		virtual ConCommandBase *Get( void ) RESTRICT = 0;
 	};
+
+#ifdef MSC_VERSION
+#pragma warning( pop )
+#endif
 
 	virtual ICVarIteratorInternal	*FactoryInternalIterator( void ) = 0;
 	friend class Iterator;

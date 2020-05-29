@@ -3,17 +3,15 @@ group("SourceSDK")
 		kind("StaticLib")
 		warnings("Default")
 		location("../projects/" .. os.target() .. "/" .. _ACTION)
+		defines("MATHLIB_LIB")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		defines({"RAD_TELEMETRY_DISABLED", "MATHLIB_LIB"})
-		sysincludedirs({
-			"../public",
-			"../public/mathlib",
-			"../public/tier0"
-		})
+		sysincludedirs({"../public", "../public/mathlib", "../public/tier0"})
 		files({
+			"expressioncalculator.cpp",
 			"color_conversion.cpp",
+			"cholesky.cpp",
 			"halton.cpp",
 			"lightdesc.cpp",
 			"mathlib_base.cpp",
@@ -25,53 +23,71 @@ group("SourceSDK")
 			"anorms.cpp",
 			"bumpvects.cpp",
 			"IceKey.cpp",
+			"kdop.cpp",
 			"imagequant.cpp",
+			"spherical.cpp",
 			"polyhedron.cpp",
 			"quantize.cpp",
 			"randsse.cpp",
-			"spherical.cpp",
 			"simdvectormatrix.cpp",
-			"vector.cpp",
 			"vmatrix.cpp",
-			"almostequal.cpp"
+			"almostequal.cpp",
+			"simplex.cpp",
+			"eigen.cpp",
+			"box_buoyancy.cpp",
+			"camera.cpp",
+			"planefit.cpp",
+			"polygon.cpp",
+			"volumeculler.cpp",
+			"transform.cpp",
+			"sphere.cpp",
+			"capsule.cpp",
+			"noisedata.h",
+			"sse.h",
+			"../public/mathlib/anorms.h",
+			"../public/mathlib/bumpvects.h",
+			"../public/mathlib/beziercurve.h",
+			"../public/mathlib/camera.h",
+			"../public/mathlib/compressed_3d_unitvec.h",
+			"../public/mathlib/compressed_light_cube.h",
+			"../public/mathlib/compressed_vector.h",
+			"../public/mathlib/expressioncalculator.h",
+			"../public/mathlib/halton.h",
+			"../public/mathlib/IceKey.H",
+			"../public/mathlib/lightdesc.h",
+			"../public/mathlib/math_pfns.h",
+			"../public/mathlib/mathlib.h",
+			"../public/mathlib/noise.h",
+			"../public/mathlib/polyhedron.h",
+			"../public/mathlib/quantize.h",
+			"../public/mathlib/simdvectormatrix.h",
+			"../public/mathlib/spherical_geometry.h",
+			"../public/mathlib/ssemath.h",
+			"../public/mathlib/ssequaternion.h",
+			"../public/mathlib/vector.h",
+			"../public/mathlib/vector2d.h",
+			"../public/mathlib/vector4d.h",
+			"../public/mathlib/vmatrix.h",
+			"../public/mathlib/vplane.h",
+			"../public/mathlib/simplex.h",
+			"../public/mathlib/eigen.h",
+			"../public/mathlib/box_buoyancy.h",
+			"../public/mathlib/cholesky.h",
+			"../public/mathlib/planefit.h",
+			"../public/mathlib/intvector3d.h",
+			"../public/mathlib/polygon.h",
+			"../public/mathlib/quadric.h",
+			"../public/mathlib/volumeculler.h",
+			"../public/mathlib/transform.h",
+			"../public/mathlib/sphere.h",
+			"../public/mathlib/capsule.h"
 		})
-		vpaths({["Source files/*"] = "*.cpp"})
+		vpaths({
+			["Source files/*"] = "*.cpp",
+			["Header files/*"] = {"*.h", "../public/mathlib/*.h"}
+		})
 
-		filter("system:windows or linux")
-			files("3dnow.cpp")
-
-		filter("system:windows")
-			disablewarnings("4324")
-			defines("WIN32")
-			libdirs("../lib/public")
-
-			filter({"system:windows", "configurations:Debug"})
-				linkoptions("/NODEFAULTLIB:\"libcmt\"")
+		IncludeSDKCommonInternal()
 
 		filter("system:linux")
-			disablewarnings({
-				"unused-local-typedefs",
-				"unused-parameter",
-				"strict-aliasing",
-				"unknown-pragmas",
-				"undef",
-				"ignored-attributes",
-				"invalid-offsetof"
-			})
-			defines({"COMPILER_GCC", "POSIX", "_POSIX", "LINUX", "_LINUX", "GNUC", "NO_MALLOC_OVERRIDE"})
-			libdirs("../lib/public/linux32")
-
-		filter("system:macosx")
-			disablewarnings({
-				"unused-local-typedef",
-				"unused-parameter",
-				"unused-private-field",
-				"overloaded-virtual",
-				"unknown-pragmas",
-				"unused-variable",
-				"unknown-warning-option",
-				"undef",
-				"invalid-offsetof"
-			})
-			defines({"COMPILER_GCC", "POSIX", "_POSIX", "OSX", "GNUC", "NO_MALLOC_OVERRIDE"})
-			libdirs("../lib/public/osx32")
+			disablewarnings("ignored-attributes")

@@ -21,6 +21,12 @@
 #include "tier1/checksum_md5.h"
 #include "tier1/refcount.h"
 
+#include "GarrysMod/Addon.h"
+#include "GarrysMod/GameDepot.h"
+#include "GarrysMod/Gamemode.h"
+#include "GarrysMod/Language.h"
+#include "GarrysMod/LegacyAddons.h"
+
 #ifdef _WIN32
 #pragma once
 #endif
@@ -36,26 +42,6 @@ class IThreadPool;
 class CMemoryFileBacking;
 class IGet;
 class CLanguage;
-
-namespace Addon
-{
-	class FileSystem;
-}
-
-namespace Gamemode
-{
-	class System;
-}
-
-namespace GameDepot
-{
-	class System;
-}
-
-namespace LegacyAddons
-{
-	class System;
-}
 
 typedef void * FileHandle_t;
 typedef void * FileCacheHandle_t;

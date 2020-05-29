@@ -7,7 +7,6 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		sysincludedirs(".")
 		files({
 			"7zAlloc.c",
 			"7zArcIn.c",
@@ -51,7 +50,7 @@ group("SourceSDK")
 		})
 		vpaths({
 			["Header files/*"] = "*.h",
-			["Source files/*"] = "*.c"
+			["Source files/*"] = "*.c",
 		})
 
 		filter("system:windows")

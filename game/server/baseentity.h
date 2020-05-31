@@ -592,8 +592,10 @@ public:
 
 	bool		NameMatches( const char *pszNameOrWildcard );
 	bool		ClassMatches( const char *pszClassOrWildcard );
+#ifndef NO_STRING_T
 	bool		NameMatches( string_t nameStr );
 	bool		ClassMatches( string_t nameStr );
+#endif
 
 private:
 	bool		NameMatchesComplex( const char *pszNameOrWildcard );
@@ -1997,12 +1999,14 @@ inline bool CBaseEntity::NameMatches( const char *pszNameOrWildcard )
 	return NameMatchesComplex( pszNameOrWildcard );
 }
 
+#ifndef NO_STRING_T
 inline bool CBaseEntity::NameMatches( string_t nameStr )
 {
 	if ( IDENT_STRINGS(m_iName, nameStr) )
 		return true;
 	return NameMatchesComplex( STRING(nameStr) );
 }
+#endif
 
 inline bool CBaseEntity::ClassMatches( const char *pszClassOrWildcard )
 {
@@ -2016,13 +2020,14 @@ inline const char* CBaseEntity::GetClassname()
 	return STRING(m_iClassname);
 }
 
-
+#ifndef NO_STRING_T
 inline bool CBaseEntity::ClassMatches( string_t nameStr )
 {
 	if ( IDENT_STRINGS(m_iClassname, nameStr ) )
 		return true;
 	return ClassMatchesComplex( STRING(nameStr) );
 }
+#endif
 
 inline int CBaseEntity::GetSpawnFlags( void ) const
 { 

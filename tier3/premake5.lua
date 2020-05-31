@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKTier3()
-	IncludePackage("sdktier3")
+	IncludePackage("sourcesdk_tier3")
 
 	filter({})
 

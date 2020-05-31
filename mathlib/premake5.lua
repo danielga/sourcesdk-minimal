@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKMathlib()
-	local refcount = IncludePackage("sdkmathlib")
+	local refcount = IncludePackage("sourcesdk_mathlib")
 
 	local _project = project()
 

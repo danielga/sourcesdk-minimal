@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKTier0()
-	IncludePackage("sdktier0")
+	IncludePackage("sourcesdk_tier0")
 
 	local _project = project()
 

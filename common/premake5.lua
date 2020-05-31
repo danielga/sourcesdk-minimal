@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKCommon()
-	IncludePackage("sdkcommon")
+	IncludePackage("sourcesdk_common")
 
 	local _project = project()
 

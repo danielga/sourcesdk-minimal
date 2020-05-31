@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKLZMA()
-	local refcount = IncludePackage("sdklzma")
+	local refcount = IncludePackage("sourcesdk_lzma")
 
 	local _project = project()
 

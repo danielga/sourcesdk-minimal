@@ -1,4 +1,4 @@
-group("garrysmod_common")
+group("SourceSDK")
 	project("LZMA")
 		kind("StaticLib")
 		warnings("Default")

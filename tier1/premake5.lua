@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKTier1()
-	local refcount = IncludePackage("sdktier1")
+	local refcount = IncludePackage("sourcesdk_tier1")
 
 	local _project = project()
 

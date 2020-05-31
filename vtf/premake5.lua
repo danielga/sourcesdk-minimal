@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKVTF()
-	local refcount = IncludePackage("sdkvtf")
+	local refcount = IncludePackage("sourcesdk_vtf")
 
 	local _project = project()
 

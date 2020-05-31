@@ -1,4 +1,4 @@
-group("garrysmod_common")
+group("SourceSDK")
 	project("mathlib")
 		kind("StaticLib")
 		warnings("Default")

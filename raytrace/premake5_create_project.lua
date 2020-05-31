@@ -1,4 +1,4 @@
-group("garrysmod_common")
+group("SourceSDK")
 	project("raytrace")
 		kind("StaticLib")
 		warnings("Default")

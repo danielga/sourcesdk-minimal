@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKRaytrace()
-	local refcount = IncludePackage("sdkraytrace")
+	local refcount = IncludePackage("sourcesdk_raytrace")
 
 	local _project = project()
 

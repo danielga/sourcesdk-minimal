@@ -1,7 +1,7 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKBitmap()
-	local refcount = IncludePackage("sdkbitmap")
+	local refcount = IncludePackage("sourcesdk_bitmap")
 
 	local _project = project()
 

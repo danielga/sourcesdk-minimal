@@ -72,10 +72,10 @@ void SetBitBufErrorHandler( BitBufErrorHandler fn );
 // Helpers.
 //-----------------------------------------------------------------------------
 
-inline int BitByte( int bits )
+inline constexpr int BitByte( int bits )
 {
 	// return PAD_NUMBER( bits, 8 ) >> 3;
-	return (bits + 7) >> 3;
+	return (int)(((long long)bits + 7) >> 3);
 }
 
 //-----------------------------------------------------------------------------

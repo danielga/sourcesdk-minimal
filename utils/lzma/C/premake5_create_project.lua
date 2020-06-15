@@ -30,9 +30,7 @@ group("SourceSDK")
 			"Delta.c",
 			"DllSecur.c",
 			"LzFind.c",
-			"LzFindMt.c",
 			"Lzma2Dec.c",
-			"Lzma2DecMt.c",
 			"Lzma2Enc.c",
 			"Lzma86Dec.c",
 			"Lzma86Enc.c",
@@ -57,4 +55,4 @@ group("SourceSDK")
 		})
 
 		filter("system:windows")
-			files({"MtCoder.c", "MtDec.c", "Threads.c"})
+			files({"LzFindMt.c", "Lzma2DecMt.c", "MtCoder.c", "MtDec.c", "Threads.c"})

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: A dictionary mapping from symbol to structure 
 //
@@ -31,6 +31,8 @@ enum EDictCompareType
 //-----------------------------------------------------------------------------
 // A dictionary mapping from symbol to structure
 //-----------------------------------------------------------------------------
+
+// This is a useful macro to iterate from start to end in order in a map
 #define FOR_EACH_DICT( dictName, iteratorName ) \
 	for( int iteratorName=dictName.First(); iteratorName != dictName.InvalidIndex(); iteratorName = dictName.Next( iteratorName ) )
 
@@ -45,6 +47,9 @@ template <class T, class I = int >
 class CUtlDict
 {
 public:
+	typedef const char* KeyType_t;
+	typedef T ElemType_t;
+
 	// constructor, destructor
 	// Left at growSize = 0, the memory will first allocate 1 element and double in size
 	// at each increment.
@@ -60,7 +65,7 @@ public:
 	const T&   operator[]( I i ) const;
 
 	// gets element names
-	char	   *GetElementName( I i );
+	//char	   *GetElementName( I i );
 	char const *GetElementName( I i ) const;
 
 	void		SetElementName( I i, char const *pName );
@@ -158,11 +163,11 @@ inline const T& CUtlDict<T, I>::Element( I i ) const
 //-----------------------------------------------------------------------------
 // gets element names
 //-----------------------------------------------------------------------------
-template <class T, class I>
+/*template <class T, class I>
 inline char *CUtlDict<T, I>::GetElementName( I i )
 {
-	return (char *)m_Elements.Key( i );
-}
+	return const_cast< char* >( m_Elements.Key( i ) );
+}*/
 
 template <class T, class I>
 inline char const *CUtlDict<T, I>::GetElementName( I i ) const
@@ -189,7 +194,7 @@ inline void CUtlDict<T, I>::SetElementName( I i, char const *pName )
 	// TODO:  This makes a copy of the old element
 	// TODO:  This relies on the rb tree putting the most recently
 	//  removed element at the head of the insert list
-	free( (void *)m_Elements.Key( i ) );
+	free( const_cast< char* >( m_Elements.Key( i ) ) );
 	m_Elements.Reinsert( strdup( pName ), i );
 }
 
@@ -237,7 +242,7 @@ inline I CUtlDict<T, I>::InvalidIndex()
 template <class T, class I>
 void CUtlDict<T, I>::RemoveAt(I elem) 
 {
-	free( (void *)m_Elements.Key( elem ) );
+	free( const_cast< char* >( m_Elements.Key( elem ) ) );
 	m_Elements.RemoveAt(elem);
 }
 
@@ -264,7 +269,8 @@ void CUtlDict<T, I>::RemoveAll()
 	typename DictElementMap_t::IndexType_t index = m_Elements.FirstInorder();
 	while ( index != m_Elements.InvalidIndex() )
 	{
-		free( (void *)m_Elements.Key( index ) );
+		const char* p = m_Elements.Key( index );
+		free( const_cast< char* >( p ) );
 		index = m_Elements.NextInorder( index );
 	}
 
@@ -285,7 +291,8 @@ void CUtlDict<T, I>::PurgeAndDeleteElements()
 	I index = m_Elements.FirstInorder();
 	while ( index != m_Elements.InvalidIndex() )
 	{
-		free( (void *)m_Elements.Key( index ) );
+		const char* p = m_Elements.Key( index );
+		free( const_cast< char* >( p ) );
 		delete m_Elements[index];
 		index = m_Elements.NextInorder( index );
 	}

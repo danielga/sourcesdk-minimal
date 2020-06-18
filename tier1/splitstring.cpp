@@ -7,6 +7,11 @@
 #include "strtools.h"
 #include "utlvector.h"
 
+CSplitString::CSplitString()
+{
+	m_szBuffer = nullptr;
+}
+
 CSplitString::CSplitString(const char *pString, const char **pSeparators, int nSeparators)
 {
 	Construct(pString, pSeparators, nSeparators);
@@ -21,6 +26,12 @@ CSplitString::~CSplitString()
 {
 	if(m_szBuffer)
 		delete [] m_szBuffer;
+}
+
+void CSplitString::Set(const char *pString, const char **pSeparators, int nSeparators)
+{
+	delete[] m_szBuffer;
+	Construct(pString, pSeparators, nSeparators);
 }
 
 void CSplitString::Construct( const char *pString, const char **pSeparators, int nSeparators )
@@ -52,13 +63,13 @@ void CSplitString::Construct( const char *pString, const char **pSeparators, int
 		if ( pFirstSeparator )
 		{
 			// Split on this separator and continue on.
-			int separatorLen = strlen( pSeparators[iFirstSeparator] );
+			size_t separatorLen = strlen( pSeparators[iFirstSeparator] );
 			if ( pFirstSeparator > pCurPos )
 			{
 				//////////////////////////////////////////////////////////////////////////
 				/// Cut the token out of the duplicate string
 				char *pTokenInDuplicate = m_szBuffer + (pCurPos - pString);
-				int nTokenLength = pFirstSeparator-pCurPos;
+				size_t nTokenLength = pFirstSeparator-pCurPos;
 				Assert(nTokenLength > 0 && !memcmp(pTokenInDuplicate,pCurPos,nTokenLength));
 				pTokenInDuplicate[nTokenLength] = '\0';
 
@@ -70,8 +81,7 @@ void CSplitString::Construct( const char *pString, const char **pSeparators, int
 		else
 		{
 			// Copy the rest of the string
-			int nTokenLength = strlen( pCurPos );
-			if ( nTokenLength )
+			if ( size_t nTokenLength = strlen( pCurPos ) )
 			{
 				//////////////////////////////////////////////////////////////////////////
 				// There's no need to cut this token, because there's no separator after it.

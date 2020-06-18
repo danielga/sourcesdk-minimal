@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright � 2005-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: A higher level link library for general use in the game and tools.
 //
@@ -12,28 +12,12 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "tier1/convar.h"
-
 
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
-class ICvar;
-class IProcessUtils;
-
-
-//-----------------------------------------------------------------------------
-// These tier1 libraries must be set by any users of this library.
-// They can be set by calling ConnectTier1Libraries.
-// It is hoped that setting this, and using this library will be the common mechanism for
-// allowing link libraries to access tier1 library interfaces
-//-----------------------------------------------------------------------------
-
-// These are marked DLL_EXPORT for Linux.
-DLL_EXPORT ICvar *cvar;
-extern ICvar *g_pCVar;
-extern IProcessUtils *g_pProcessUtils;
 
 
 //-----------------------------------------------------------------------------
@@ -53,28 +37,18 @@ class CTier1AppSystem : public CTier0AppSystem< IInterface >
 	typedef CTier0AppSystem< IInterface > BaseClass;
 
 public:
-	CTier1AppSystem( bool bIsPrimaryAppSystem = true ) : BaseClass(	bIsPrimaryAppSystem )
-	{
-	}
-
 	virtual bool Connect( CreateInterfaceFn factory ) 
 	{
 		if ( !BaseClass::Connect( factory ) )
 			return false;
 
-		if ( BaseClass::IsPrimaryAppSystem() )
-		{
-			ConnectTier1Libraries( &factory, 1 );
-		}
+		ConnectTier1Libraries( &factory, 1 );
 		return true;
 	}
 
 	virtual void Disconnect() 
 	{
-		if ( BaseClass::IsPrimaryAppSystem() )
-		{
-			DisconnectTier1Libraries();
-		}
+		DisconnectTier1Libraries();
 		BaseClass::Disconnect();
 	}
 
@@ -84,7 +58,7 @@ public:
 		if ( nRetVal != INIT_OK )
 			return nRetVal;
 
-		if ( g_pCVar && BaseClass::IsPrimaryAppSystem() )
+		if ( g_pCVar )
 		{
 			ConVar_Register( ConVarFlag );
 		}
@@ -93,11 +67,16 @@ public:
 
 	virtual void Shutdown()
 	{
-		if ( g_pCVar && BaseClass::IsPrimaryAppSystem() )
+		if ( g_pCVar )
 		{
 			ConVar_Unregister( );
 		}
 		BaseClass::Shutdown( );
+	}
+
+	virtual AppSystemTier_t GetTier()
+	{
+		return APP_SYSTEM_TIER1;
 	}
 };
 

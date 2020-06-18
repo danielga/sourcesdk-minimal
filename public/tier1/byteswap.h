@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve LLC, All rights reserved. ============
 //
 // Purpose: Low level byte swapping routines.
 //
@@ -10,7 +10,8 @@
 #pragma once
 #endif
 
-#include "datamap.h"	// Needed for typedescription_t.  Note datamap.h is tier1 as well.
+#include "tier0/dbg.h"
+#include "datamap.h"	// needed for typedescription_t.  note datamap.h is tier1 as well.
 
 class CByteswap
 {
@@ -127,7 +128,7 @@ public:
 		if( output == nativeConstant )
 			return 0;
 
-		assert( 0 );		// if we get here, input is neither a swapped nor unswapped version of nativeConstant.
+		Assert( 0 );		// if we get here, input is neither a swapped nor unswapped version of nativeConstant.
 		return -1;
 	}
 
@@ -140,8 +141,8 @@ public:
 	//-----------------------------------------------------------------------------
 	template<typename T> inline void SwapBuffer( T* outputBuffer, T* inputBuffer = NULL, int count = 1 )
 	{
-		assert( count >= 0 );
-		assert( outputBuffer );
+		Assert( count >= 0 );
+		Assert( outputBuffer );
 
 		// Fail gracefully in release:
 		if( count <=0 || !outputBuffer )
@@ -169,8 +170,8 @@ public:
 	//-----------------------------------------------------------------------------
 	template<typename T> inline void SwapBufferToTargetEndian( T* outputBuffer, T* inputBuffer = NULL, int count = 1 )
 	{
-		assert( count >= 0 );
-		assert( outputBuffer );
+		Assert( count >= 0 );
+		Assert( outputBuffer );
 
 		// Fail gracefully in release:
 		if( count <=0 || !outputBuffer )
@@ -190,7 +191,8 @@ public:
 				return;
 		
 			// Otherwise copy the inputBuffer to the outputBuffer:
-			memcpy( outputBuffer, inputBuffer, count * sizeof( T ) );
+			if ( outputBuffer != inputBuffer )
+				memcpy( outputBuffer, inputBuffer, count * sizeof( T ) );
 			return;
 
 		}
@@ -217,8 +219,8 @@ private:
 		{
 		case 8:
 			{
-			__storewordbytereverse( *word, 0, &temp );
-			__storewordbytereverse( *(word+1), 4, &temp );
+			__storewordbytereverse( *(word+1), 0, &temp );
+			__storewordbytereverse( *(word+0), 4, &temp );
 			}
 			break;
 
@@ -230,17 +232,34 @@ private:
 			__storeshortbytereverse( *input, 0, &temp );
 			break;
 
+		case 1:
+			Q_memcpy( &temp, input, 1 );
+			break;
+
 		default:
 			Assert( "Invalid size in CByteswap::LowLevelByteSwap" && 0 );
 		}
 #else
-		for( int i = 0; i < sizeof(T); i++ )
+		for( unsigned int i = 0; i < sizeof(T); i++ )
 		{
 			((unsigned char* )&temp)[i] = ((unsigned char*)input)[sizeof(T)-(i+1)]; 
 		}
 #endif
 		Q_memcpy( output, &temp, sizeof(T) );
 	}
+
+#if defined( _X360 )
+	// specialized for void * to get 360 XDK compile working despite changelist 281331
+	//-----------------------------------------------------------------------------
+	// The lowest level byte swapping workhorse of doom.  output always contains the 
+	// swapped version of input.  ( Doesn't compare machine to target endianness )
+	//-----------------------------------------------------------------------------
+	template<> static void LowLevelByteSwap( void **output, void **input )
+	{
+		AssertMsgOnce( sizeof(void *) == sizeof(unsigned int) , "void *'s on this platform are not four bytes!" );	
+		__storewordbytereverse( *reinterpret_cast<unsigned int *>(input), 0, output );
+	}
+#endif
 
 	unsigned int m_bSwapBytes : 1;
 	unsigned int m_bBigEndian : 1;

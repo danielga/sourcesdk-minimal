@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: 
 //
@@ -28,11 +28,11 @@ class CUtlStreamBuffer : public CUtlBuffer
 public:
 	// See CUtlBuffer::BufferFlags_t for flags
 	CUtlStreamBuffer( );
-	CUtlStreamBuffer( const char *pFileName, const char *pPath, int nFlags = 0, bool bDelayOpen = false );
+	CUtlStreamBuffer( const char *pFileName, const char *pPath, int nFlags = 0, bool bDelayOpen = false, int nOpenFileFlags = 0 );
 	~CUtlStreamBuffer();
 
 	// Open the file. normally done in constructor
-	void Open( const char *pFileName, const char *pPath, int nFlags );
+	void Open( const char *pFileName, const char *pPath, int nFlags, int nOpenFileFlags = 0 );
 
 	// close the file. normally done in destructor
 	void Close();
@@ -40,12 +40,14 @@ public:
 	// Is the file open?
 	bool IsOpen() const;
 
+	// try flushing the file
+	bool TryFlushToFile( int nFlushToFileBytes );
+
 private:
 	// error flags
 	enum
 	{
 		FILE_OPEN_ERROR = MAX_ERROR_FLAG << 1,
-		FILE_WRITE_ERROR = MAX_ERROR_FLAG << 2,
 	};
 
 	// Overflow functions
@@ -58,12 +60,14 @@ private:
 	// Reads bytes from the file; fixes up maxput if necessary and null terminates
 	int ReadBytesFromFile( int nBytesToRead, int nReadOffset );
 
-	FileHandle_t OpenFile( const char *pFileName, const char *pPath );
+	FileHandle_t OpenFile( const char *pFileName, const char *pPath, int nOpenFileFlags );
 
 	FileHandle_t m_hFileHandle;
 
-	char *m_pFileName;
-	char *m_pPath;
+	// cached for delayed open
+	char	*m_pFileName;
+	char	*m_pPath;
+	int		m_nOpenFileFlags;
 };
 
 

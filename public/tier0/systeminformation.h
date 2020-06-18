@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright c 1996-2007, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: 
 //
@@ -10,8 +10,10 @@
 #define SYSTEMINFORMATION_H
 
 #ifdef _WIN32
-	#pragma once
+#pragma once
 #endif
+
+#include "tier0/platform.h"
 
 #ifndef PLATFORM_INTERFACE
 	#define PLATFORM_INTERFACE
@@ -35,15 +37,15 @@ enum SYSTEM_CALL_RESULT_t
 //
 struct PAGED_POOL_INFO_t
 {
-	unsigned long numPagesUsed;		// Number of Paged Pool pages used
-	unsigned long numPagesFree;		// Number of Paged Pool pages free
+	uint32 numPagesUsed;		// Number of Paged Pool pages used
+	uint32 numPagesFree;		// Number of Paged Pool pages free
 };
 
 //
 //	Plat_GetMemPageSize
 //		Returns the size of a memory page in kilobytes.
 //
-PLATFORM_INTERFACE unsigned long Plat_GetMemPageSize();
+PLATFORM_INTERFACE uint32 Plat_GetMemPageSize();
 
 //
 //	Plat_GetPagedPoolInfo

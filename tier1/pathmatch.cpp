@@ -316,7 +316,6 @@ inline __attribute__ ((always_inline)) static int utf8casecmp_loop(const uint32_
 	}
 }
 
-#ifdef UTF8_PATHMATCH
 static int utf8casecmp(const char *str1, const char *str2)
 {
 	uint32_t *folded1 = fold_utf8(str1);
@@ -326,7 +325,6 @@ static int utf8casecmp(const char *str1, const char *str2)
 	delete[] folded2;
 	return retval;
 }
-#endif
 
 // Simple object to help make sure a DIR* from opendir
 // gets closed when it goes out of scope.
@@ -491,14 +489,6 @@ static const int k_cMaxCacheLifetimeSeconds = 2;
 
 PathMod_t pathmatch( const char *pszIn, char **ppszOut, bool bAllowBasenameMismatch, char *pszOutBuf, size_t OutBufLen )
 {
-	// Path matching can be very expensive, and the cost is unpredictable because it
-	// depends on how many files are in directories on a user's machine. Therefore
-	// it should be disabled whenever possible, and only enabled in environments (such
-	// as running with loose files such as out of Perforce) where it is needed.
-	static const char *s_pszPathMatchEnabled = getenv("ENABLE_PATHMATCH");
-	if ( !s_pszPathMatchEnabled )
-		return kPathUnchanged;
-
 	static const char *s_pszDbgPathMatch = getenv("DBG_PATHMATCH");
 
 	s_bShowDiag = ( s_pszDbgPathMatch != NULL );

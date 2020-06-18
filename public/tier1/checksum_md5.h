@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Generic MD5 hashing algo
 //
@@ -13,7 +13,6 @@
 
 // 16 bytes == 128 bit digest
 #define MD5_DIGEST_LENGTH 16  
-#define MD5_BIT_LENGTH ( MD5_DIGEST_LENGTH * sizeof(unsigned char) )
 struct MD5Value_t
 {
 	unsigned char bits[MD5_DIGEST_LENGTH];
@@ -25,6 +24,7 @@ struct MD5Value_t
 	bool operator!=( const MD5Value_t &src ) const;
 
 };
+
 
 // MD5 Hash
 typedef struct

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -25,6 +25,8 @@ public:
 
 	// Check whether a particular parameter exists
 	virtual	const char	*CheckParm( const char *psz, const char **ppszValue = 0 ) const = 0;
+	// A bool return of whether param exists, useful for just checking if param that is just a flag is set
+	virtual bool		HasParm( const char *psz ) const = 0;
 	virtual void		RemoveParm( const char *parm ) = 0;
 	virtual void		AppendParm( const char *pszParm, const char *pszValues ) = 0;
 
@@ -41,7 +43,7 @@ public:
 	// copies the string passwed
 	virtual void SetParm( int nIndex, char const *pNewParm ) =0;
 
-	virtual const char *ParmValueByIndex( int nIndex, const char *pDefaultVal = 0 ) const = 0;
+	virtual const char **GetParms() const = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -49,11 +51,19 @@ public:
 // NOTE: The #define trickery here is necessary for backwards compat:
 // this interface used to lie in the vstdlib library.
 //-----------------------------------------------------------------------------
-PLATFORM_INTERFACE ICommandLine *CommandLine_Tier0();
+PLATFORM_INTERFACE ICommandLine *CommandLine();
 
-#if !defined( VSTDLIB_BACKWARD_COMPAT )
-#define CommandLine CommandLine_Tier0
+
+//-----------------------------------------------------------------------------
+// Process related functions
+//-----------------------------------------------------------------------------
+PLATFORM_INTERFACE const tchar *Plat_GetCommandLine();
+#ifndef _WIN32
+// helper function for OS's that don't have a ::GetCommandLine() call
+PLATFORM_INTERFACE void Plat_SetCommandLine( const char *cmdLine );
 #endif
+PLATFORM_INTERFACE const char *Plat_GetCommandLineA();
+
 
 #endif // TIER0_ICOMMANDLINE_H
 

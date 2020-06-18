@@ -71,6 +71,8 @@ public:
 	CCallStackStorage( const CCallStackStorage &copyFrom )
 	{
 		iValidEntries = copyFrom.iValidEntries;
+		// warning C6204: Possible buffer overrun in call to 'memcpy': use of unchecked parameter 'src'
+		ANALYZE_SUPPRESS( 6204 )
 		memcpy( pStack, copyFrom.pStack, sizeof( void * ) * copyFrom.iValidEntries );
 	}
 

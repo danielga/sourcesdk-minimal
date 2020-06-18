@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: setjmp/longjmp based cooperative multitasking system
 //
@@ -20,7 +20,11 @@
 //-----------------------------------------------------------------------------
 
 // coroutine callback
+#ifdef POSIX
+typedef void (*CoroutineFunc_t )(void *);
+#else
 typedef void (__cdecl *CoroutineFunc_t )(void *);
+#endif
 
 // handle to a coroutine
 typedef int32 HCoroutine;

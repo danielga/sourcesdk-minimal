@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 2005, Valve Inc., All rights reserved. ==========
 //
 // Purpose: Implementation of SHA-1
 //
@@ -28,6 +28,8 @@
 		34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
+#include "tier0/platform.h"
+
 #if !defined(_MINIMUM_BUILD_)
 #include <stdio.h>  // Needed for file access
 #if defined( _PS3 )
@@ -43,15 +45,15 @@
 
 typedef union
 {
-	unsigned char c[64];
-	unsigned long l[16];
+	uint8 c[64];
+	uint32 l[16];
 } SHA1_WORKSPACE_BLOCK;
 
 // SHA1 hash
 const unsigned int k_cubHash = 20;
 const unsigned int k_cchHash = 41; // k_cubHash * 2, plus 1 for terminator
 #pragma pack( push, 1 )
-typedef	unsigned char SHADigest_t[ k_cubHash ];
+typedef	uint8 SHADigest_t[ k_cubHash ];
 #pragma pack( pop )
 
 #if !defined(_MINIMUM_BUILD_)
@@ -77,32 +79,32 @@ public:
 	~Minimum_CSHA1() ;	// no virtual destructor's in the minimal builds !
 #endif	
 
-	unsigned long m_state[5];
-	unsigned long m_count[2];
-	unsigned char m_buffer[64];
-	unsigned char m_digest[k_cubHash];
+	unsigned int m_state[5];
+	unsigned int m_count[2];
+	uint8 m_buffer[64];
+	uint8 m_digest[k_cubHash];
 
 	void Reset();
 
 	// Update the hash value
-	void Update(unsigned char *data, unsigned int len);
+	void Update( const void *data, unsigned int len );
 #if !defined(_MINIMUM_BUILD_) 
-	bool HashFile(char *szFileName);
+	bool HashFile( const char *szFileName );
 #endif
 
 	// Finalize hash and report
 	void Final();
 #if !defined(_MINIMUM_BUILD_) 
-	void ReportHash(char *szReport, unsigned char uReportType = REPORT_HEX);
+	void ReportHash(char *szReport, uint8 uReportType = REPORT_HEX);
 #endif
-	void GetHash(unsigned char *uDest);
+	void GetHash(uint8 *uDest);
 
 private:
 	// Private SHA-1 transformation
-	void Transform(unsigned long state[5], unsigned char buffer[64]);
+	void Transform(unsigned int state[5], const uint8 buffer[64]);
 
 	// Member variables
-	unsigned char m_workspace[64];
+	uint8 m_workspace[64];
 	SHA1_WORKSPACE_BLOCK *m_block; // SHA1 pointer to the byte array above
 };
 

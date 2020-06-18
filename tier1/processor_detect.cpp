@@ -6,11 +6,25 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#if defined( _X360 ) || defined( WIN64 )
+#if defined( POSIX )
+#else // POSIX
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
+#if defined( _X360 )
 
 bool CheckMMXTechnology(void) { return false; }
 bool CheckSSETechnology(void) { return false; }
 bool CheckSSE2Technology(void) { return false; }
+bool Check3DNowTechnology(void) { return false; }
+
+#elif defined( _M_X64 )
+
+bool CheckMMXTechnology(void) { return true; }
+bool CheckSSETechnology(void) { return true; }
+bool CheckSSE2Technology(void) { return true; }
 bool Check3DNowTechnology(void) { return false; }
 
 #elif defined( _WIN32 ) && !defined( _X360 )
@@ -272,3 +286,5 @@ bool Check3DNowTechnology(void)
 #pragma optimize( "", on )
 
 #endif // _WIN32
+
+#endif // POSIX

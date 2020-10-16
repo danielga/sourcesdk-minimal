@@ -242,7 +242,7 @@ MY_CPU_LE_UNALIGN means that CPU is LITTLE ENDIAN and CPU supports unaligned mem
   #define MY__has_builtin(x) 0
 #endif
 
-#if defined(MY_CPU_LE_UNALIGN) && /* defined(_WIN64) && */ (_MSC_VER >= 1300)
+#if defined(MY_CPU_LE_UNALIGN) && /* defined(_WIN64) && */ (defined(_MSC_VER) && _MSC_VER >= 1300)
 
 /* Note: we use bswap instruction, that is unsupported in 386 cpu */
 

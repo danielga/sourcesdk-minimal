@@ -6,7 +6,7 @@
 #include "CpuArch.h"
 
 #ifdef MY_CPU_X86_OR_AMD64
-#if (_MSC_VER > 1500) || (_MSC_FULL_VER >= 150030729)
+#if (defined(_MSC_VER) && _MSC_VER > 1500) || (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 150030729)
 #define USE_INTEL_AES
 #endif
 #endif

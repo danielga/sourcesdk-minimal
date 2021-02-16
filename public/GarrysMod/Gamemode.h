@@ -2,6 +2,7 @@
 
 #include <string>
 #include <list>
+#include <cstdint>
 
 namespace IGamemodeSystem
 {
@@ -14,7 +15,7 @@ struct Information
 	std::string name;
 	std::string maps;
 	std::string basename;
-	std::string workshopid;
+	uint64_t workshopid;
 };
 
 }

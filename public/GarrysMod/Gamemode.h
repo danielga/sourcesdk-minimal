@@ -15,6 +15,7 @@ struct Information
 	std::string name;
 	std::string maps;
 	std::string basename;
+	std::string category;
 	uint64_t workshopid;
 };
 

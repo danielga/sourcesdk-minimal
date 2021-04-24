@@ -1,29 +1,25 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 3DNow Math primitives.
 //
 //=====================================================================================//
 
 #include <math.h>
-#include <float.h>	// Needed for FLT_EPSILON
+#include <float.h>	// needed for flt_epsilon
 #include "basetypes.h"
-#include <memory.h>
+//#include <memory.h>
 #include "tier0/dbg.h"
 #include "mathlib/mathlib.h"
-#include "mathlib/amd3dx.h"
+//#include "mathlib/amd3dx.h"
 #include "mathlib/vector.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if !defined(COMPILER_MSVC64) && !defined(LINUX)
-// Implement for 64-bit Windows if needed.
-// Clang hits "fatal error: error in backend:" and other errors when trying
-// to compile the inline assembly below. 3DNow support is highly unlikely to
-// be useful/used, so it's not worth spending time on fixing.
-
+#ifdef COMPILER_MSVC
 #pragma warning(disable:4244)   // "conversion from 'const int' to 'float', possible loss of data"
 #pragma warning(disable:4730)	// "mixing _m64 and floating point expressions may result in incorrect code"
+#endif
 
 //-----------------------------------------------------------------------------
 // 3D Now Implementations of optimized routines:
@@ -43,16 +39,9 @@ float _3DNow_Sqrt(float x)
 		movd		root, mm0
 		femms
 	}
-#elif LINUX
+#elif POSIX
  	__asm __volatile__( "femms" );
- 	__asm __volatile__
-	(
-		"pfrsqrt    %y0, %y1 \n\t"
-		"punpckldq   %y1, %y1 \n\t"
-		"pfmul      %y1, %y0 \n\t"
-		: "=y" (root), "=y" (x)
- 		:"0" (x)
- 	);
+ 	__asm __volatile__ ( "pfrsqrt    %y0, %y1 \n\t" "punpckldq   %y1, %y1 \n\t" "pfmul      %y1, %y0 \n\t" : "=y" (root), "=y" (x) :"0" (x));
  	__asm __volatile__( "femms" );
 #else
 #error
@@ -102,7 +91,7 @@ float FASTCALL _3DNow_VectorNormalize (Vector& vec)
 			movd		radius, mm1
 			femms
 		}
-#elif LINUX	
+#elif POSIX	
 		long long a,c;
     		int b,d;
     		memcpy(&a,&vec[0],sizeof(a));
@@ -111,20 +100,7 @@ float FASTCALL _3DNow_VectorNormalize (Vector& vec)
     		memcpy(&d,&vec[2],sizeof(d));
 
       		__asm __volatile__( "femms" );
-        	__asm __volatile__
-        	(
-        		"pfmul           %y3, %y3\n\t"
-        		"pfmul           %y0, %y0 \n\t"
-        		"pfacc           %y3, %y3 \n\t"
-        		"pfadd           %y3, %y0 \n\t"
-        		"pfrsqrt         %y0, %y3 \n\t"
-        		"punpckldq       %y0, %y0 \n\t"
-        		"pfmul           %y3, %y0 \n\t"
-        		"pfmul           %y3, %y2 \n\t"
-        		"pfmul           %y3, %y1 \n\t"
-        		: "=y" (radius), "=y" (c), "=y" (d)
-        		: "y" (a), "0" (b), "1" (c), "2" (d)
-        	);
+        	__asm __volatile__ ( "pfmul           %y3, %y3\n\t" "pfmul           %y0, %y0 \n\t" "pfacc           %y3, %y3 \n\t" "pfadd           %y3, %y0 \n\t" "pfrsqrt         %y0, %y3 \n\t" "punpckldq       %y0, %y0 \n\t" "pfmul           %y3, %y0 \n\t" "pfmul           %y3, %y2 \n\t" "pfmul           %y3, %y1 \n\t" : "=y" (radius), "=y" (c), "=y" (d) : "y" (a), "0" (b), "1" (c), "2" (d));
       		memcpy(&vec[0],&c,sizeof(c));
       		memcpy(&vec[2],&d,sizeof(d));		
         	__asm __volatile__( "femms" );
@@ -166,7 +142,7 @@ float _3DNow_InvRSquared(const float* v)
 		movd		[r2], mm0
 		femms
 	}
-#elif LINUX
+#elif POSIX
 		long long a,c;
     		int b;
     		memcpy(&a,&v[0],sizeof(a));
@@ -174,18 +150,7 @@ float _3DNow_InvRSquared(const float* v)
     		memcpy(&c,&v[0],sizeof(c));
 
       		__asm __volatile__( "femms" );
-        	__asm __volatile__
-        	(
-			"PFMUL          %y2, %y2 \n\t"
-                        "PFMUL          %y3, %y3 \n\t"
-                        "PFACC          %y2, %y2 \n\t"
-                        "PFADD          %y2, %y3 \n\t"
-                        "PFMAX          %y3, %y4 \n\t"
-                        "PFRCP          %y3, %y2 \n\t"
-                        "movq           %y2, %y0 \n\t"
-        		: "=y" (r2)
-        		: "0" (r2), "y" (a), "y" (b), "y" (c)
-        	);
+        	__asm __volatile__ ( "PFMUL          %y2, %y2 \n\t" "PFMUL          %y3, %y3 \n\t" "PFACC          %y2, %y2 \n\t" "PFADD          %y2, %y3 \n\t" "PFMAX          %y3, %y4 \n\t" "PFRCP          %y3, %y2 \n\t" "movq           %y2, %y0 \n\t" : "=y" (r2) : "0" (r2), "y" (a), "y" (b), "y" (c));
         	__asm __volatile__( "femms" );
 #else
 #error
@@ -193,5 +158,3 @@ float _3DNow_InvRSquared(const float* v)
 
 	return r2;
 }
-
-#endif // COMPILER_MSVC64 

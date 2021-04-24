@@ -1,4 +1,3 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
 // $Id$
 
 // halton.h - classes, etc for generating numbers using the Halton pseudo-random sequence.  See

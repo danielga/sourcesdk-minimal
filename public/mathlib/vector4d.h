@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -14,15 +14,15 @@
 #endif
 
 #include <math.h>
-#include <stdlib.h>		// For rand(). We really need a library!
 #include <float.h>
-#if !defined( _X360 )
-#include <xmmintrin.h>	// For SSE
+#if !defined( PLATFORM_PPC ) && !defined( _PS3 )
+#include <xmmintrin.h>	// for sse
 #endif
-#include "basetypes.h"	// For vec_t, put this somewhere else?
+#include "tier0/basetypes.h"	// For vec_t, put this somewhere else?
 #include "tier0/dbg.h"
 #include "mathlib/math_pfns.h"
-
+#include "mathlib/vector.h"
+#include "vstdlib/random.h"
 // forward declarations
 class Vector;
 class Vector2D;
@@ -38,12 +38,13 @@ public:
 	vec_t x, y, z, w;
 
 	// Construction/destruction
-	Vector4D(void);
+	Vector4D();
 	Vector4D(vec_t X, vec_t Y, vec_t Z, vec_t W);
-	Vector4D(const float *pFloat);
+	explicit Vector4D(const float *pFloat);
 
 	// Initialization
 	void Init(vec_t ix=0.0f, vec_t iy=0.0f, vec_t iz=0.0f, vec_t iw=0.0f);
+	void Init( const Vector& src, vec_t iw=0.0f );
 
 	// Got any nasty NAN's?
 	bool IsValid() const;
@@ -78,6 +79,13 @@ public:
 	Vector4D&	operator/=(const Vector4D &v);		
 	Vector4D&	operator/=(float s);					
 
+	Vector4D	operator-( void ) const;
+	Vector4D	operator*( float fl ) const;
+	Vector4D	operator/( float fl ) const;
+	Vector4D	operator*( const Vector4D& v ) const;
+	Vector4D	operator+( const Vector4D& v ) const;
+	Vector4D	operator-( const Vector4D& v ) const;
+
 	// negate the Vector4D components
 	void	Negate(); 
 
@@ -91,9 +99,9 @@ public:
 	bool IsZero( float tolerance = 0.01f ) const
 	{
 		return (x > -tolerance && x < tolerance &&
-				y > -tolerance && y < tolerance &&
-				z > -tolerance && z < tolerance &&
-				w > -tolerance && w < tolerance);
+			y > -tolerance && y < tolerance &&
+			z > -tolerance && z < tolerance &&
+			w > -tolerance && w < tolerance);
 	}
 
 	// Get the distance from this Vector4D to the other one.
@@ -201,7 +209,7 @@ void Vector4DLerp(Vector4D const& src1, Vector4D const& src2, vec_t t, Vector4D&
 // constructors
 //-----------------------------------------------------------------------------
 
-inline Vector4D::Vector4D(void)									
+inline Vector4D::Vector4D()									
 { 
 #ifdef _DEBUG
 	// Initialize to NAN to catch errors
@@ -236,20 +244,27 @@ inline Vector4D::Vector4D(const Vector4D &vOther)
 //-----------------------------------------------------------------------------
 // initialization
 //-----------------------------------------------------------------------------
-
 inline void Vector4D::Init( vec_t ix, vec_t iy, vec_t iz, vec_t iw )
 { 
 	x = ix; y = iy; z = iz;	w = iw;
 	Assert( IsValid() );
 }
 
+inline void Vector4D::Init( const Vector& src, vec_t iw )
+{
+	x = src.x; y = src.y; z = src.z; w = iw;
+	Assert( IsValid() );
+}
+
+#if !defined(__SPU__)
 inline void Vector4D::Random( vec_t minVal, vec_t maxVal )
 {
-	x = minVal + ((vec_t)rand() / VALVE_RAND_MAX) * (maxVal - minVal);
-	y = minVal + ((vec_t)rand() / VALVE_RAND_MAX) * (maxVal - minVal);
-	z = minVal + ((vec_t)rand() / VALVE_RAND_MAX) * (maxVal - minVal);
-	w = minVal + ((vec_t)rand() / VALVE_RAND_MAX) * (maxVal - minVal);
+	x = RandomFloat( minVal , maxVal );
+	y = RandomFloat( minVal , maxVal );
+	z = RandomFloat( minVal , maxVal );
+	w = RandomFloat( minVal , maxVal );
 }
+#endif
 
 inline void Vector4DClear( Vector4D& a )
 {
@@ -409,6 +424,52 @@ inline Vector4D& Vector4D::operator*=(Vector4D const& v)
 	w *= v.w;
 	Assert( IsValid() );
 	return *this;
+}
+
+inline Vector4D Vector4D::operator-(void) const
+{ 
+	return Vector4D(-x,-y,-z,-w);				
+}
+
+inline Vector4D Vector4D::operator+(const Vector4D& v) const	
+{ 
+	Vector4D res;
+	Vector4DAdd( *this, v, res );
+	return res;	
+}
+
+inline Vector4D Vector4D::operator-(const Vector4D& v) const	
+{ 
+	Vector4D res;
+	Vector4DSubtract( *this, v, res );
+	return res;	
+}
+
+
+inline Vector4D Vector4D::operator*(float fl) const	
+{ 
+	Vector4D res;
+	Vector4DMultiply( *this, fl, res );
+	return res;	
+}
+
+inline Vector4D Vector4D::operator*(const Vector4D& v) const	
+{ 
+	Vector4D res;
+	Vector4DMultiply( *this, v, res );
+	return res;	
+}
+
+inline Vector4D Vector4D::operator/(float fl) const	
+{ 
+	Vector4D res;
+	Vector4DDivide( *this, fl, res );
+	return res;	
+}
+
+inline Vector4D operator*( float fl, const Vector4D& v )	
+{ 
+	return v * fl; 
 }
 
 inline Vector4D& Vector4D::operator/=(float fl)	
@@ -614,8 +675,10 @@ inline void Vector4DAligned::Set( vec_t X, vec_t Y, vec_t Z, vec_t W )
 
 inline void Vector4DAligned::InitZero( void )
 { 
-#if !defined( _X360 )
+#if !defined( PLATFORM_PPC )
 	this->AsM128() = _mm_set1_ps( 0.0f );
+#elif defined(_PS3)
+	this->AsM128() =VMX_ZERO;
 #else
 	this->AsM128() = __vspltisw( 0 );
 #endif
@@ -625,11 +688,13 @@ inline void Vector4DAligned::InitZero( void )
 inline void Vector4DMultiplyAligned( Vector4DAligned const& a, Vector4DAligned const& b, Vector4DAligned& c )
 {
 	Assert( a.IsValid() && b.IsValid() );
-#if !defined( _X360 )
+#if !defined( PLATFORM_PPC )
 	c.x = a.x * b.x;
 	c.y = a.y * b.y;
 	c.z = a.z * b.z;
 	c.w = a.w * b.w;
+#elif defined(_PS3)
+	c.AsM128() = __vec_mul( a.AsM128(), b.AsM128());
 #else
 	c.AsM128() = __vmulfp( a.AsM128(), b.AsM128() );
 #endif
@@ -639,7 +704,7 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
 
-#if !defined( _X360 )
+#if !defined( PLATFORM_PPC )
 	vOutA.x += vInA.x * w;
 	vOutA.y += vInA.y * w;
 	vOutA.z += vInA.z * w;
@@ -649,11 +714,21 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 	vOutB.y += vInB.y * w;
 	vOutB.z += vInB.z * w;
 	vOutB.w += vInB.w * w;
-#else
-    __vector4 temp;
+#elif defined(_PS3)
+#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ == 1 ) && ( __GNUC_PATCHLEVEL__ == 1 )
+	// GCC 4.1.1
+	__m128 temp=vec_splats(w);
+#else //__GNUC__ == 4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 1
+	__m128 temp=__m128(w);
+#endif //__GNUC__ == 4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 1
 
-    temp = __lvlx( &w, 0 );
-    temp = __vspltw( temp, 0 );
+	vOutA.AsM128() = vec_madd( vInA.AsM128(), temp, vOutA.AsM128() );
+	vOutB.AsM128() = vec_madd( vInB.AsM128(), temp, vOutB.AsM128() );
+#else
+	__vector4 temp;
+
+	temp = __lvlx( &w, 0 );
+	temp = __vspltw( temp, 0 );
 
 	vOutA.AsM128() = __vmaddfp( vInA.AsM128(), temp, vOutA.AsM128() );
 	vOutB.AsM128() = __vmaddfp( vInB.AsM128(), temp, vOutB.AsM128() );
@@ -664,18 +739,28 @@ inline void Vector4DWeightMADSSE( vec_t w, Vector4DAligned const& vInA, Vector4D
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
 
-#if !defined( _X360 )
+#if !defined( PLATFORM_PPC )
 	// Replicate scalar float out to 4 components
-    __m128 packed = _mm_set1_ps( w );
+	__m128 packed = _mm_set1_ps( w );
 
 	// 4D SSE Vector MAD
 	vOutA.AsM128() = _mm_add_ps( vOutA.AsM128(), _mm_mul_ps( vInA.AsM128(), packed ) );
 	vOutB.AsM128() = _mm_add_ps( vOutB.AsM128(), _mm_mul_ps( vInB.AsM128(), packed ) );
-#else
-    __vector4 temp;
+#elif defined(_PS3)
+#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ == 1 ) && ( __GNUC_PATCHLEVEL__ == 1 )
+	// GCC 4.1.1
+	__m128 temp=vec_splats(w);
+#else //__GNUC__ == 4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 1
+	__m128 temp=__m128(w);
+#endif //__GNUC__ == 4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 1
 
-    temp = __lvlx( &w, 0 );
-    temp = __vspltw( temp, 0 );
+	vOutA.AsM128() = vec_madd( vInA.AsM128(), temp, vOutA.AsM128() );
+	vOutB.AsM128() = vec_madd( vInB.AsM128(), temp, vOutB.AsM128() );
+#else
+	__vector4 temp;
+
+	temp = __lvlx( &w, 0 );
+	temp = __vspltw( temp, 0 );
 
 	vOutA.AsM128() = __vmaddfp( vInA.AsM128(), temp, vOutA.AsM128() );
 	vOutB.AsM128() = __vmaddfp( vInB.AsM128(), temp, vOutB.AsM128() );

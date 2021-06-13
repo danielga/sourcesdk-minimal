@@ -11,6 +11,7 @@
 #endif
 
 #include <string.h>
+#include <stdint.h>
 
 //----------------------------------------
 // SteamNetworkingSockets library config
@@ -46,9 +47,16 @@ struct SteamRelayNetworkStatus_t;
 typedef uint32 HSteamNetConnection;
 const HSteamNetConnection k_HSteamNetConnection_Invalid = 0;
 
-/// Handle used to identify a "listen socket".
+/// Handle used to identify a "listen socket".  Unlike traditional
+/// Berkeley sockets, a listen socket and a connection are two
+/// different abstractions.
 typedef uint32 HSteamListenSocket;
 const HSteamListenSocket k_HSteamListenSocket_Invalid = 0;
+
+/// Handle used to identify a poll group, used to query many
+/// connections at once efficiently.
+typedef uint32 HSteamNetPollGroup;
+const HSteamNetPollGroup k_HSteamNetPollGroup_Invalid = 0;
 
 /// Max length of diagnostic error message
 const int k_cchMaxSteamNetworkingErrMsg = 1024;
@@ -65,7 +73,7 @@ typedef uint32 SteamNetworkingPOPID;
 /// microseconds.  This is guaranteed to increase over time during the lifetime
 /// of a process, but not globally across runs.  You don't need to worry about
 /// the value wrapping around.  Note that the underlying clock might not actually have
-/// microsecond *resolution*.
+/// microsecond resolution.
 typedef int64 SteamNetworkingMicroseconds;
 
 /// Describe the status of a particular network resource
@@ -181,6 +189,7 @@ struct SteamNetworkingIPAddr
 	union
 	{
 		uint8 m_ipv6[ 16 ];
+		#ifndef API_GEN // API generator doesn't understand this.  The bindings will just use the accessors
 		struct // IPv4 "mapped address" (rfc4038 section 4.2)
 		{
 			uint64 m_8zeros;
@@ -188,6 +197,7 @@ struct SteamNetworkingIPAddr
 			uint16 m_ffff;
 			uint8 m_ip[ 4 ]; // NOTE: As bytes, i.e. network byte order
 		} m_ipv4;
+		#endif
 	};
 	uint16 m_port; // Host byte order
 
@@ -195,7 +205,11 @@ struct SteamNetworkingIPAddr
 	bool operator==(const SteamNetworkingIPAddr &x ) const;
 };
 
-/// An abstract way to represent the identity of a network host
+/// An abstract way to represent the identity of a network host.  All identities can
+/// be represented as simple string.  Furthermore, this string representation is actually
+/// used on the wire in several places, even though it is less efficient, in order to
+/// facilitate forward compatibility.  (Old client code can handle an identity type that
+/// it doesn't understand.)
 struct SteamNetworkingIdentity
 {
 	/// Type of identity.
@@ -236,7 +250,11 @@ struct SteamNetworkingIdentity
 	/// k_cchMaxString bytes big to avoid truncation.
 	void ToString( char *buf, size_t cbBuf ) const;
 
-	/// Parse back a string that was generated using ToString
+	/// Parse back a string that was generated using ToString.  If we don't understand the
+	/// string, but it looks "reasonable" (it matches the pattern type:<type-data> and doesn't
+	/// have any funcky characters, etc), then we will return true, and the type is set to
+	/// k_ESteamNetworkingIdentityType_UnknownType.  false will only be returned if the string
+	/// looks invalid.
 	bool ParseString( const char *pszStr );
 
 	// Max sizes
@@ -624,7 +642,7 @@ struct SteamNetworkingQuickConnectionStatus
 	/// but has now been scheduled for re-transmission.  Thus, it's possible to
 	/// observe m_cbPendingReliable increasing between two checks, even if no
 	/// calls were made to send reliable data between the checks.  Data that is
-	/// awaiting the nagle delay will appear in these numbers.
+	/// awaiting the Nagle delay will appear in these numbers.
 	int m_cbPendingUnreliable;
 	int m_cbPendingReliable;
 
@@ -672,7 +690,7 @@ struct SteamNetworkingQuickConnectionStatus
 /// and our peer might, too.
 const int k_cbMaxSteamNetworkingSocketsMessageSizeSend = 512 * 1024;
 
-/// A message that has been received
+/// A message that has been received.
 struct SteamNetworkingMessage_t
 {
 
@@ -680,15 +698,20 @@ struct SteamNetworkingMessage_t
 	void *m_pData;
 
 	/// Size of the payload.
-	uint32 m_cbSize;
+	int m_cbSize;
 
-	/// The connection this came from.  (Not used when using the ISteamMessages interface)
+	/// For messages received on connections: what connection did this come from?
+	/// For outgoing messages: what connection to send it to?
+	/// Not used when using the ISteamNetworkingMessages interface
 	HSteamNetConnection m_conn;
 
-	/// Who sent this to us?
-	SteamNetworkingIdentity m_sender;
+	/// For inbound messages: Who sent this to us?
+	/// For outbound messages on connections: not used.
+	/// For outbound messages on the ad-hoc ISteamNetworkingMessages interface: who should we send this to?
+	SteamNetworkingIdentity m_identityPeer;
 
-	/// The user data associated with the connection.
+	/// For messages received on connections, this is the user data
+	/// associated with the connection.
 	///
 	/// This is *usually* the same as calling GetConnection() and then
 	/// fetching the user data associated with that connection, but for
@@ -701,12 +724,16 @@ struct SteamNetworkingMessage_t
 	/// - This is an inline call, so it's *much* faster.
 	/// - You might have closed the connection, so fetching the user data
 	///   would not be possible.
+	///
+	/// Not used when sending messages, 
 	int64 m_nConnUserData;
 
-	/// Local timestamps when it was received
+	/// Local timestamp when the message was received
+	/// Not used for outbound messages.
 	SteamNetworkingMicroseconds m_usecTimeReceived;
 
-	/// Message number assigned by the sender
+	/// Message number assigned by the sender.
+	/// This is not used for outbound messages
 	int64 m_nMessageNumber;
 
 	/// Function used to free up m_pData.  This mechanism exists so that
@@ -717,33 +744,48 @@ struct SteamNetworkingMessage_t
 	/// free( pMsg->m_pData );
 	void (*m_pfnFreeData)( SteamNetworkingMessage_t *pMsg );
 
-	/// Function to used to decrement reference count and, if it's zero, release
-	/// the message.  You should not normally need to access this directly.
-	/// (Use Release(), and don't set this.)
+	/// Function to used to decrement the internal reference count and, if
+	/// it's zero, release the message.  You should not set this function pointer,
+	/// or need to access this directly!  Use the Release() function instead!
 	void (*m_pfnRelease)( SteamNetworkingMessage_t *pMsg );
 
-	/// The channel number the message was received on.
-	/// (Not used for messages received on "connections")
+	/// When using ISteamNetworkingMessages, the channel number the message was received on
+	/// (Not used for messages sent or received on "connections")
 	int m_nChannel;
 
-	/// Pad to multiple of 8 bytes
-	int m___nPadDummy;
+	/// Bitmask of k_nSteamNetworkingSend_xxx flags.
+	/// For received messages, only the k_nSteamNetworkingSend_Reliable bit is valid.
+	/// For outbound messages, all bits are relevant
+	int m_nFlags;
 
-	#ifdef __cplusplus
+	/// Arbitrary user data that you can use when sending messages using
+	/// ISteamNetworkingUtils::AllocateMessage and ISteamNetworkingSockets::SendMessage.
+	/// (The callback you set in m_pfnFreeData might use this field.)
+	///
+	/// Not used for received messages.
+	int64 m_nUserData;
 
-		/// You MUST call this when you're done with the object,
-		/// to free up memory, etc.
-		inline void Release();
+	/// You MUST call this when you're done with the object,
+	/// to free up memory, etc.
+	inline void Release();
 
-		// For code compatibility, some accessors
-		inline uint32 GetSize() const { return m_cbSize; }
-		inline const void *GetData() const { return m_pData; }
-		inline int GetChannel() const { return m_nChannel; }
-		inline HSteamNetConnection GetConnection() const { return m_conn; }
-		inline int64 GetConnectionUserData() const { return m_nConnUserData; }
-		inline SteamNetworkingMicroseconds GetTimeReceived() const { return m_usecTimeReceived; }
-		inline int64 GetMessageNumber() const { return m_nMessageNumber; }
-	#endif
+	// For code compatibility, some accessors
+#ifndef API_GEN
+	inline uint32 GetSize() const { return m_cbSize; }
+	inline const void *GetData() const { return m_pData; }
+	inline int GetChannel() const { return m_nChannel; }
+	inline HSteamNetConnection GetConnection() const { return m_conn; }
+	inline int64 GetConnectionUserData() const { return m_nConnUserData; }
+	inline SteamNetworkingMicroseconds GetTimeReceived() const { return m_usecTimeReceived; }
+	inline int64 GetMessageNumber() const { return m_nMessageNumber; }
+#endif
+protected:
+	// Declare destructor protected.  You should never need to declare a message
+	// object on the stack or create one yourself.
+	// - You will receive a pointer to a message object when you receive messages (e.g. ISteamNetworkingSockets::ReceiveMessagesOnConnection)
+	// - You can allocate a message object for efficient sending using ISteamNetworkingUtils::AllocateMessage
+	// - Call Release() to free the object
+	inline ~SteamNetworkingMessage_t() {}
 };
 
 //
@@ -802,7 +844,7 @@ const int k_nSteamNetworkingSend_NoDelay = 4;
 // - there is a sufficiently large number of messages queued up already such that the current message
 //   will not be placed on the wire in the next ~200ms or so.
 //
-// if a message is dropped for these reasons, k_EResultIgnored will be returned.
+// If a message is dropped for these reasons, k_EResultIgnored will be returned.
 const int k_nSteamNetworkingSend_UnreliableNoDelay = k_nSteamNetworkingSend_Unreliable|k_nSteamNetworkingSend_NoDelay|k_nSteamNetworkingSend_NoNagle;
 
 // Reliable message send. Can send up to k_cbMaxSteamNetworkingSocketsMessageSizeSend bytes in a single message. 
@@ -820,6 +862,21 @@ const int k_nSteamNetworkingSend_Reliable = 8;
 //
 // Migration note: This is equivalent to k_EP2PSendReliable
 const int k_nSteamNetworkingSend_ReliableNoNagle = k_nSteamNetworkingSend_Reliable|k_nSteamNetworkingSend_NoNagle;
+
+// By default, message sending is queued, and the work of encryption and talking to
+// the operating system sockets, etc is done on a service thread.  This is usually a
+// a performance win when messages are sent from the "main thread".  However, if this
+// flag is set, and data is ready to be sent immediately (either from this message
+// or earlier queued data), then that work will be done in the current thread, before
+// the current call returns.  If data is not ready to be sent (due to rate limiting
+// or Nagle), then this flag has no effect.
+//
+// This is an advanced flag used to control performance at a very low level.  For
+// most applications running on modern hardware with more than one CPU core, doing
+// the work of sending on a service thread will yield the best performance.  Only
+// use this flag if you have a really good reason and understand what you are doing.
+// Otherwise you will probably just make performance worse.
+const int k_nSteamNetworkingSend_UseCurrentThread = 16;
 
 //
 // Ping location / measurement
@@ -960,6 +1017,9 @@ enum ESteamNetworkingConfigValue
 	/// we don't know our identity or can't get a cert.  On the server, it means that
 	/// we won't automatically reject a connection due to a failure to authenticate.
 	/// (You can examine the incoming connection and decide whether to accept it.)
+	///
+	/// This is a dev configuration value, and you should not let users modify it in
+	/// production.
 	k_ESteamNetworkingConfig_IP_AllowWithoutAuth = 23,
 
 	/// [connection int32] Do not send UDP packets with a payload of
@@ -970,6 +1030,30 @@ enum ESteamNetworkingConfigValue
 	/// [connection int32] (read only) Maximum message size you can send that
 	/// will not fragment, based on k_ESteamNetworkingConfig_MTU_PacketSize
 	k_ESteamNetworkingConfig_MTU_DataSize = 33,
+
+	/// [connection int32] Allow unencrypted (and unauthenticated) communication.
+	/// 0: Not allowed (the default)
+	/// 1: Allowed, but prefer encrypted
+	/// 2: Allowed, and preferred
+	/// 3: Required.  (Fail the connection if the peer requires encryption.)
+	///
+	/// This is a dev configuration value, since its purpose is to disable encryption.
+	/// You should not let users modify it in production.  (But note that it requires
+	/// the peer to also modify their value in order for encryption to be disabled.)
+	k_ESteamNetworkingConfig_Unencrypted = 34,
+
+	/// [global int32] 0 or 1.  Some variables are "dev" variables.  They are useful
+	/// for debugging, but should not be adjusted in production.  When this flag is false (the default),
+	/// such variables will not be enumerated by the ISteamnetworkingUtils::GetFirstConfigValue
+	/// ISteamNetworkingUtils::GetConfigValueInfo functions.  The idea here is that you
+	/// can use those functions to provide a generic mechanism to set any configuration
+	/// value from a console or configuration file, looking up the variable by name.  Depending
+	/// on your game, modifying other configuration values may also have negative effects, and
+	/// you may wish to further lock down which variables are allowed to be modified by the user.
+	/// (Maybe no variables!)  Or maybe you use a whitelist or blacklist approach.
+	///
+	/// (This flag is itself a dev variable.)
+	k_ESteamNetworkingConfig_EnumerateDevVars = 35,
 
 	//
 	// Settings for SDR relayed connections
@@ -1013,6 +1097,13 @@ enum ESteamNetworkingConfigValue
 	/// this set (maybe just one).  Comma-separated list.
 	k_ESteamNetworkingConfig_SDRClient_ForceProxyAddr = 31,
 
+	/// [global string] For debugging.  Force ping times to clusters to be the specified
+	/// values.  A comma separated list of <cluster>=<ms> values.  E.g. "sto=32,iad=100"
+	///
+	/// This is a dev configuration value, you probably should not let users modify it
+	/// in production.
+	k_ESteamNetworkingConfig_SDRClient_FakeClusterPing = 36,
+
 	//
 	// Log levels for debuging information.  A higher priority
 	// (lower numeric value) will cause more stuff to be printed.  
@@ -1025,6 +1116,36 @@ enum ESteamNetworkingConfigValue
 	k_ESteamNetworkingConfig_LogLevel_SDRRelayPings = 18, // [global int32] Ping relays
 
 	k_ESteamNetworkingConfigValue__Force32Bit = 0x7fffffff
+};
+
+/// In a few places we need to set configuration options on listen sockets and connections, and
+/// have them take effect *before* the listen socket or connection really starts doing anything.
+/// Creating the object and then setting the options "immediately" after creation doesn't work
+/// completely, because network packets could be received between the time the object is created and
+/// when the options are applied.  To set options at creation time in a reliable way, they must be
+/// passed to the creation function.  This structure is used to pass those options.
+///
+/// For the meaning of these fields, see ISteamNetworkingUtils::SetConfigValue.  Basically
+/// when the object is created, we just iterate over the list of options and call
+/// ISteamNetworkingUtils::SetConfigValueStruct, where the scope arguments are supplied by the
+/// object being created.
+struct SteamNetworkingConfigValue_t
+{
+	/// Which option is being set
+	ESteamNetworkingConfigValue m_eValue;
+
+	/// Which field below did you fill in?
+	ESteamNetworkingConfigDataType m_eDataType;
+
+	/// Option value
+	union
+	{
+		int32_t m_int32;
+		int64_t m_int64;
+		float m_float;
+		const char *m_string; // Points to your '\0'-terminated buffer
+		void *m_functionPtr;
+	} m_val;
 };
 
 /// Return value of ISteamNetworkintgUtils::GetConfigValue
@@ -1110,6 +1231,7 @@ const SteamNetworkingPOPID k_SteamDatagramPOPID_dev = ( (uint32)'d' << 16U ) | (
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Internal stuff
+#ifndef API_GEN
 
 // For code compatibility
 typedef SteamNetworkingMessage_t ISteamNetworkingMessage;
@@ -1155,5 +1277,7 @@ inline bool SteamNetworkingIPAddr::ParseString( const char *pszStr ) { return St
 inline void SteamNetworkingIdentity::ToString( char *buf, size_t cbBuf ) const { SteamAPI_SteamNetworkingIdentity_ToString( *this, buf, cbBuf ); }
 inline bool SteamNetworkingIdentity::ParseString( const char *pszStr ) { return SteamAPI_SteamNetworkingIdentity_ParseString( this, sizeof(*this), pszStr ); }
 #endif
+
+#endif // #ifndef API_GEN
 
 #endif // #ifndef STEAMNETWORKINGTYPES

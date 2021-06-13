@@ -65,9 +65,10 @@ enum ERemoteStoragePlatform
 	k_ERemoteStoragePlatformOSX			= (1 << 1),
 	k_ERemoteStoragePlatformPS3			= (1 << 2),
 	k_ERemoteStoragePlatformLinux		= (1 << 3),
-	k_ERemoteStoragePlatformReserved2	= (1 << 4),
+	k_ERemoteStoragePlatformSwitch		= (1 << 4),
 	k_ERemoteStoragePlatformAndroid		= (1 << 5),
 	k_ERemoteStoragePlatformIOS			= (1 << 6),
+	// NB we get one more before we need to widen some things
 
 	k_ERemoteStoragePlatformAll = 0xffffffff
 };
@@ -77,6 +78,7 @@ enum ERemoteStoragePublishedFileVisibility
 	k_ERemoteStoragePublishedFileVisibilityPublic = 0,
 	k_ERemoteStoragePublishedFileVisibilityFriendsOnly = 1,
 	k_ERemoteStoragePublishedFileVisibilityPrivate = 2,
+	k_ERemoteStoragePublishedFileVisibilityUnlisted = 3,
 };
 
 
@@ -239,7 +241,7 @@ class ISteamRemoteStorage
 		// The following functions are only necessary on the Playstation 3. On PC & Mac, the Steam client will handle these operations for you
 		// On Playstation 3, the game controls which files are stored in the cloud, via FilePersist, FileFetch, and FileForget.
 			
-#if defined(_PS3) || defined(_SERVER)
+#if defined(_SERVER)
 		// Connect to Steam and get a list of files in the Cloud - results in a RemoteStorageAppSyncStatusCheck_t callback
 		virtual void GetFileListFromServer() = 0;
 		// Indicate this file should be downloaded in the next sync

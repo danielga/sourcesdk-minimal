@@ -12,8 +12,6 @@
 
 #include "steam_api_common.h"
 
-#define MASTERSERVERUPDATERPORT_USEGAMESOCKETSHARE	((uint16)-1)
-
 //-----------------------------------------------------------------------------
 // Purpose: Functions for authenticating users via Steam to play on a game server
 //-----------------------------------------------------------------------------
@@ -27,7 +25,7 @@ public:
 //
 
 	/// This is called by SteamGameServer_Init, and you will usually not need to call it directly
-	virtual bool InitGameServer( uint32 unIP, uint16 usGamePort, uint16 usQueryPort, uint32 unFlags, AppId_t nGameAppId, const char *pchVersionString ) = 0;
+	STEAM_PRIVATE_API( virtual bool InitGameServer( uint32 unIP, uint16 usGamePort, uint16 usQueryPort, uint32 unFlags, AppId_t nGameAppId, const char *pchVersionString ) = 0; )
 
 	/// Game product identifier.  This is currently used by the master server for version checking purposes.
 	/// It's a required field, but will eventually will go away, and the AppID will be used for this purpose.
@@ -199,7 +197,7 @@ public:
 	// Returns the public IP of the server according to Steam, useful when the server is 
 	// behind NAT and you want to advertise its IP in a lobby for other clients to directly
 	// connect to
-	virtual uint32 GetPublicIP() = 0;
+	virtual SteamIPAddress_t GetPublicIP() = 0;
 
 // These are in GameSocketShare mode, where instead of ISteamGameServer creating its own
 // socket to talk to the master server on, it lets the game use its socket to forward messages
@@ -250,24 +248,11 @@ public:
 
 };
 
-#define STEAMGAMESERVER_INTERFACE_VERSION "SteamGameServer012"
+#define STEAMGAMESERVER_INTERFACE_VERSION "SteamGameServer013"
 
 // Global accessor
 inline ISteamGameServer *SteamGameServer();
 STEAM_DEFINE_GAMESERVER_INTERFACE_ACCESSOR( ISteamGameServer *, SteamGameServer, STEAMGAMESERVER_INTERFACE_VERSION );
-
-// game server flags
-const uint32 k_unServerFlagNone			= 0x00;
-const uint32 k_unServerFlagActive		= 0x01;		// server has users playing
-const uint32 k_unServerFlagSecure		= 0x02;		// server wants to be secure
-const uint32 k_unServerFlagDedicated	= 0x04;		// server is dedicated
-const uint32 k_unServerFlagLinux		= 0x08;		// linux build
-const uint32 k_unServerFlagPassworded	= 0x10;		// password protected
-const uint32 k_unServerFlagPrivate		= 0x20;		// server shouldn't list on master server and
-													// won't enforce authentication of users that connect to the server.
-													// Useful when you run a server where the clients may not
-													// be connected to the internet but you want them to play (i.e LANs)
-
 
 // callbacks
 #if defined( VALVE_CALLBACK_PACK_SMALL )

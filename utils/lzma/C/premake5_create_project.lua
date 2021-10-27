@@ -1,6 +1,8 @@
 group("SourceSDK")
 	project("LZMA")
+		language("C")
 		kind("StaticLib")
+		strictaliasing("Off")
 		warnings("Default")
 		defines("_7ZIP_ST")
 		location("../../../projects/" .. os.target() .. "/" .. _ACTION)

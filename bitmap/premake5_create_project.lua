@@ -43,13 +43,11 @@ group("SourceSDK")
 				"unused-parameter",
 				"strict-aliasing",
 				"unknown-pragmas",
-				"undef"
+				"undef",
+				"invalid-offsetof"
 			})
 			defines({"COMPILER_GCC", "POSIX", "_POSIX", "LINUX", "_LINUX", "GNUC", "NO_MALLOC_OVERRIDE"})
 			libdirs("../lib/public/linux32")
-
-			filter({"system:linux", "files:**.cpp or **.cxx"})
-				disablewarnings("invalid-offsetof")
 
 		filter("system:macosx")
 			disablewarnings({
@@ -60,10 +58,8 @@ group("SourceSDK")
 				"unknown-pragmas",
 				"unused-variable",
 				"unknown-warning-option",
-				"undef"
+				"undef",
+				"invalid-offsetof"
 			})
 			defines({"COMPILER_GCC", "POSIX", "_POSIX", "OSX", "GNUC", "NO_MALLOC_OVERRIDE"})
 			libdirs("../lib/public/osx32")
-
-			filter({"system:macosx", "files:**.cpp or **.cxx"})
-				disablewarnings("invalid-offsetof")

@@ -49,16 +49,11 @@ group("SourceSDK")
 			"utlbinaryblock.cpp",
 			"snappy.cpp",
 			"snappy-sinksource.cpp",
-			"snappy-stubs-internal.cpp",
-			"../utils/lzma/C/LzmaDec.c"
+			"snappy-stubs-internal.cpp"
 		})
-		vpaths({["Source files/*"] = {
-			"*.cpp",
-			"../utils/lzma/C/*.c"
-		}})
+		vpaths({["Source files/*"] = "*.cpp"})
 
-		filter("files:**.c")
-			language("C")
+		IncludeSDKLZMA()
 
 		filter("system:windows")
 			disablewarnings("4324")
@@ -76,7 +71,8 @@ group("SourceSDK")
 				"strict-aliasing",
 				"unknown-pragmas",
 				"undef",
-				"unused-result"
+				"unused-result",
+				"invalid-offsetof"
 			})
 			defines({"_DLL_EXT=.so", "COMPILER_GCC", "POSIX", "_POSIX", "LINUX", "_LINUX", "GNUC", "NO_MALLOC_OVERRIDE"})
 			files({
@@ -118,9 +114,6 @@ group("SourceSDK")
 				"-Xlinker --wrap=realpath"
 			})
 
-			filter({"system:linux", "files:**.cpp or **.cxx"})
-				disablewarnings("invalid-offsetof")
-
 		filter("system:macosx")
 			disablewarnings({
 				"unused-local-typedef",
@@ -130,11 +123,9 @@ group("SourceSDK")
 				"unknown-pragmas",
 				"unused-variable",
 				"unknown-warning-option",
-				"undef"
+				"undef",
+				"invalid-offsetof"
 			})
 			defines({"_DLL_EXT=.dylib", "COMPILER_GCC", "POSIX", "_POSIX", "OSX", "GNUC", "NO_MALLOC_OVERRIDE"})
 			files("processor_detect_linux.cpp")
 			libdirs("../lib/public/osx32")
-
-			filter({"system:macosx", "files:**.cpp or **.cxx"})
-				disablewarnings("invalid-offsetof")

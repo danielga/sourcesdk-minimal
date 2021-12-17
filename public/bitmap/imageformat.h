@@ -538,6 +538,9 @@ namespace ImageLoader
 
 	void NormalizeNormalMapRGBA8888( unsigned char *src, int numTexels );
 
+	bool ConvertRGBToDXT5YCoCg( const unsigned char *src, ImageFormat srcImageFormat, unsigned char *dst, int width, int height );
+	bool ConvertRGBAToDXT5YCoCg( const unsigned char *src, ImageFormat srcImageFormat, unsigned char *dst, int width, int height );
+
 	//-----------------------------------------------------------------------------
 	// Gamma correction
 	//-----------------------------------------------------------------------------
@@ -610,7 +613,7 @@ namespace ImageLoader
 		{
 			// !!BUG!! hardcoded 4x4 block size, dxt1, dxt5
 			int nNumBytesPerBlock = 8;
-			if ( fmt == IMAGE_FORMAT_DXT5 )
+			if ( (fmt == IMAGE_FORMAT_DXT5) || (fmt == IMAGE_FORMAT_DXT3) )
 			{
 				nNumBytesPerBlock = 16;
 			}
@@ -670,7 +673,7 @@ namespace ImageLoader
 
 	inline bool IsRuntimeCompressed( ImageFormat fmt )
 	{
-		return ( fmt == IMAGE_FORMAT_DXT1_RUNTIME ) || ( fmt == IMAGE_FORMAT_DXT5_RUNTIME );
+		return ( fmt == IMAGE_FORMAT_DXT1_RUNTIME ) || ( fmt == IMAGE_FORMAT_DXT5_RUNTIME ) || (fmt == IMAGE_FORMAT_DXT3_RUNTIME);
 	}
 
 } // end namespace ImageLoader

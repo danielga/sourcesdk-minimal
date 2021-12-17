@@ -11,27 +11,27 @@
 // Material editor
 //=============================================================================
 
-#ifndef VGUIMATSYSAPP_H
-#define VGUIMATSYSAPP_H
+#ifndef VGUIMATERIALSYSTEM2APP_H
+#define VGUIMATERIALSYSTEM2APP_H
 
 #ifdef _WIN32
 #pragma once
 #endif
 
 
-#include "appframework/matsysapp.h"
+#include "appframework/materialsystem2app.h"
 
 FORWARD_DECLARE_HANDLE( InputContextHandle_t );
 
 //-----------------------------------------------------------------------------
 // The application object
 //-----------------------------------------------------------------------------
-class CVguiMatSysApp : public CMatSysApp
+class CVGuiMaterialSystem2App : public CMaterialSystem2App
 {
-	typedef CMatSysApp BaseClass;
+	typedef CMaterialSystem2App BaseClass;
 
 public:
-	CVguiMatSysApp();
+	CVGuiMaterialSystem2App();
 
 	// Methods of IApplication
 	virtual bool Create();
@@ -48,4 +48,4 @@ private:
 };
 
 
-#endif // VGUIMATSYSAPP_H
+#endif // VGUIMATERIALSYSTEM2APP_H

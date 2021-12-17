@@ -8,44 +8,61 @@
 // $Header: $
 // $NoKeywords: $
 //
-// Material editor
+// Used for material system apps
 //=============================================================================
 
-#ifndef VGUIMATSYSAPP_H
-#define VGUIMATSYSAPP_H
+#ifndef MATSYSAPP_H
+#define MATSYSAPP_H
 
 #ifdef _WIN32
 #pragma once
 #endif
 
 
-#include "appframework/matsysapp.h"
+#include "appframework/tier2app.h"
 
-FORWARD_DECLARE_HANDLE( InputContextHandle_t );
 
 //-----------------------------------------------------------------------------
 // The application object
 //-----------------------------------------------------------------------------
-class CVguiMatSysApp : public CMatSysApp
+class CMatSysApp : public CTier2SteamApp
 {
-	typedef CMatSysApp BaseClass;
+	typedef CTier2SteamApp BaseClass;
 
 public:
-	CVguiMatSysApp();
+	CMatSysApp();
 
 	// Methods of IApplication
 	virtual bool Create();
 	virtual bool PreInit();
-	virtual bool PostInit();
-	virtual void PreShutdown();
 	virtual void PostShutdown();
 	virtual void Destroy();
 
-	InputContextHandle_t GetAppInputContext();
+	// Returns the window handle (HWND in Win32)
+	void* GetAppWindow();
+
+	// Gets the window size
+	int GetWindowWidth() const;
+	int GetWindowHeight() const;
+
+protected:
+	void AppPumpMessages();
+
+	// Sets the video mode
+	bool SetVideoMode( );
+
+	// Sets up the game path
+	bool SetupSearchPaths( const char *pStartingDir, bool bOnlyUseStartingDir, bool bIsTool );
 
 private:
-	InputContextHandle_t m_hAppInputContext;
+	// Returns the app name
+	virtual const char *GetAppName() = 0;
+	virtual bool AppUsesReadPixels() { return false; }
+
+	void *m_HWnd;
+	int m_nWidth;
+	int m_nHeight;
 };
 
 
-#endif // VGUIMATSYSAPP_H
+#endif // MATSYSAPP_H

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -49,6 +49,15 @@ public:
 	virtual void InternalKeyTyped(wchar_t unichar) = 0;
 	virtual bool InternalKeyCodeReleased(KeyCode code) = 0;
 
+    //=============================================================================
+    // HPE_BEGIN
+    // [dwenger] Handle gamepad joystick movement.
+    //=============================================================================
+    virtual bool InternalJoystickMoved(int axis, int value) = 0;
+    //=============================================================================
+    // HPE_END
+    //=============================================================================
+
 	// Creates/ destroys "input" contexts, which contains information
 	// about which controls have mouse + key focus, for example.
 	virtual HInputContext CreateInputContext() = 0;
@@ -68,10 +77,27 @@ public:
 	// Cursor position; this is the current position read from the input queue.
 	// We need to set it because client code may read this during Mouse Pressed
 	// events, etc.
-	virtual void UpdateCursorPosInternal( int x, int y ) = 0;
+    virtual void UpdateCursorPosInternal( int x, int y ) = 0;
+
+    //=============================================================================
+    // HPE_BEGIN
+    // [dwenger] Handle gamepad joystick movement.
+    //=============================================================================
+     virtual void UpdateJoystickXPosInternal( int pos ) = 0;
+     virtual void UpdateJoystickYPosInternal( int pos ) = 0;
+ 
+     virtual int GetJoystickXPos( ) = 0;
+     virtual int GetJoystickYPos( ) = 0;
+    //=============================================================================
+    // HPE_END
+    //=============================================================================
 
 	// Called to handle explicit calls to CursorSetPos after input processing is complete
 	virtual void HandleExplicitSetCursor( ) = 0;
+
+	// Resets a particular input context, use DEFAULT_INPUT_CONTEXT
+	// to get the one normally used by VGUI
+	virtual void ResetInputContext( HInputContext context ) = 0;
 
 	// Updates the internal key/mouse state associated with the current input context without sending messages
 	virtual void SetKeyCodeState( KeyCode code, bool bPressed ) = 0;

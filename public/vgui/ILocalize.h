@@ -1,24 +1,32 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#ifndef ILOCALIZE_H
-#define ILOCALIZE_H
+#ifndef VGUI_ILOCALIZE_H
+#define VGUI_ILOCALIZE_H
 
 #ifdef _WIN32
 #pragma once
 #endif
 
-#include "tier1/ilocalize.h"
+#include "localize/ilocalize.h"
 
+// Everything moved to localize lib; this is here for backward compat.
 namespace vgui
 {
-	class ILocalize : public ::ILocalize { };		// backwards compatability with vgui::ILocalize declarations
-}
+// direct references to localized strings
+typedef uint32 StringIndex_t;
+const uint32 INVALID_STRING_INDEX = (uint32) -1;
 
-#define VGUI_LOCALIZE_INTERFACE_VERSION "VGUI_Localize005"
+abstract_class ILocalize : public ::ILocalize
+{
+public:
+	virtual const char *FindAsUTF8( const char *tokenName ) = 0;
+};
 
-#endif // ILOCALIZE_H
+}; // namespace vgui
+
+#endif // VGUI_ILOCALIZE_H

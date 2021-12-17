@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ====
 //
 //=============================================================================
 
@@ -10,7 +10,7 @@
 
 
 #include <utlvector.h>
-#include "fgdlib/EntityDefs.h"
+#include "entitydefs.h"
 
 
 enum InputOutputType_t
@@ -24,6 +24,7 @@ enum InputOutputType_t
 	iotVector,
 	iotEHandle,
 	iotColor,
+	iotScript,
 };
 
 
@@ -43,7 +44,7 @@ class CClassInputOutputBase
 		const char *GetTypeText(void);
 		inline const char *GetDescription(void);
 
-		inline void SetName(const char *szName) { V_strcpy_safe(m_szName, szName); }
+		inline void SetName(const char *szName) { strcpy(m_szName, szName); }
 		inline void SetType(InputOutputType_t eType) { m_eType = eType; }
 		InputOutputType_t SetType(const char *szType);
 		inline void SetDescription(char *pszDescription) { m_pszDescription = pszDescription; }

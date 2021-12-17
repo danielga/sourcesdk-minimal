@@ -147,8 +147,8 @@ public:
 	// holds a cache of these by id.  So you can get by id to search for the previously created set
 	// UNDONE: Sets are currently limited to 32 elements.  More elements will return NULL in create.
 	// NOTE: id is not allowed to be zero.
-	virtual IPhysicsCollisionSet		*FindOrCreateCollisionSet( unsigned int id, int maxElementCount ) = 0;
-	virtual IPhysicsCollisionSet		*FindCollisionSet( unsigned int id ) = 0;
+	virtual IPhysicsCollisionSet		*FindOrCreateCollisionSet( uintptr_t id, int maxElementCount ) = 0;
+	virtual IPhysicsCollisionSet		*FindCollisionSet( uintptr_t id ) = 0;
 	virtual void						DestroyAllCollisionSets() = 0;
 };
 
@@ -900,12 +900,17 @@ struct surfaceaudioparams_t
 	float			hardThreshold;	// surface hardness > this causes "hard" impacts, < this causes "soft" impacts
 	float			hardVelocityThreshold;	// collision velocity > this causes "hard" impacts, < this causes "soft" impacts
 									// NOTE: Hard impacts must meet both hardnessFactor AND velocity thresholds
+	float    highPitchOcclusion;    //a value betweeen 0 and 100 where 0 is not occluded at all and 100 is silent (except for any additional reflected sound)
+	float    midPitchOcclusion;
+	float    lowPitchOcclusion;
 };
 
 struct surfacesoundnames_t
 {
-	unsigned short	stepleft;
-	unsigned short	stepright;
+	unsigned short	walkStepLeft;
+	unsigned short	walkStepRight;
+	unsigned short	runStepLeft;
+	unsigned short	runStepRight;
 
 	unsigned short	impactSoft;
 	unsigned short	impactHard;
@@ -944,6 +949,8 @@ struct surfacegameprops_t
 	float			maxSpeedFactor;			// Modulates player max speed when walking on this surface
 	float			jumpFactor;				// Indicates how much higher the player should jump when on the surface
 // Game-specific data
+	float			penetrationModifier;
+	float			damageModifier;
 	unsigned short	material;
 	// Indicates whether or not the player is on a ladder.
 	unsigned char	climbable;

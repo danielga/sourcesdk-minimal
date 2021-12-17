@@ -109,8 +109,14 @@ enum ImageFormat
 	IMAGE_FORMAT_DXT1_RUNTIME,
 	IMAGE_FORMAT_DXT5_RUNTIME,
 
+	// Extras for panorama dds loading. Adding to end so that existing format values are not disturbed ( possibly used in vtf, custom material files etc..
+	IMAGE_FORMAT_DXT3_RUNTIME,
+
+
 	// special depth format
 	IMAGE_FORMAT_INTZ,
+
+
 
 	NUM_IMAGE_FORMATS
 };

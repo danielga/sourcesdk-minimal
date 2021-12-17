@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//======== (C) Copyright 1999, 2000 Valve, L.L.C. All rights reserved. ========
 //
 // The copyright to the contents herein is the property of Valve, L.L.C.
 // The contents may be used and/or copied only with the written permission of
@@ -23,6 +23,7 @@
 #include "tier1/interface.h"
 #include "tier1/utlvector.h"
 #include "tier1/utldict.h"
+#include "tier1/UtlStringMap.h"
 #include "iappsystem.h"
 
 //-----------------------------------------------------------------------------
@@ -61,8 +62,16 @@ public:
 	// Return false if there's any problems and the app will abort
 	virtual bool PreInit() = 0;
 
+	// Allow the application to do some work after AppSystems are initialized but 
+	// before main is run
+	// Return false if there's any problems and the app will abort
+	virtual bool PostInit() = 0;
+
 	// Main loop implemented by the application
 	virtual int Main( ) = 0;
+
+	// Allow the application to do some work after all AppSystems are shut down
+	virtual void PreShutdown() = 0;
 
 	// Allow the application to do some work after all AppSystems are shut down
 	virtual void PostShutdown() = 0;
@@ -70,16 +79,6 @@ public:
 	// Call an installed application destroy function, occurring after all modules
 	// are unloaded
 	virtual void Destroy() = 0;
-};
-
-
-//-----------------------------------------------------------------------------
-// Specifies a module + interface name for initialization
-//-----------------------------------------------------------------------------
-struct AppSystemInfo_t
-{
-	const char *m_pModuleName;
-	const char *m_pInterfaceName;
 };
 
 
@@ -94,14 +93,19 @@ public:
 	enum AppSystemGroupStage_t
 	{
 		CREATION = 0,
+		DEPENDENCIES,
 		CONNECTION,
 		PREINITIALIZATION,
 		INITIALIZATION,
+		POSTINITIALIZATION,
+		RUNNING,
+		PRESHUTDOWN,
 		SHUTDOWN,
 		POSTSHUTDOWN,
 		DISCONNECTION,
 		DESTRUCTION,
 
+		APPSYSTEM_GROUP_STAGE_COUNT,
 		NONE,	// This means no error
 	};
 
@@ -120,8 +124,14 @@ public:
 	virtual int Startup();
 	virtual void Shutdown();
 
+	// Default implementations...
+	virtual bool PostInit() { return true; }
+	virtual void PreShutdown() { }
+
 	// Returns the stage at which the app system group ran into an error
-	AppSystemGroupStage_t GetErrorStage() const;
+	AppSystemGroupStage_t GetCurrentStage() const;
+	
+	int ReloadModule( const char * pDLLName );
 
 protected:
 	// These methods are meant to be called by derived classes of CAppSystemGroup
@@ -129,6 +139,7 @@ protected:
 	// Methods to load + unload DLLs
 	AppModule_t LoadModule( const char *pDLLName );
 	AppModule_t LoadModule( CreateInterfaceFn factory );
+	void UnloadModule( const char *pDLLName );
 
 	// Method to add various global singleton systems 
 	IAppSystem *AddSystem( AppModule_t module, const char *pInterfaceName );
@@ -138,18 +149,43 @@ protected:
 	// Make sure the last AppSystemInfo has a NULL module name
 	bool AddSystems( AppSystemInfo_t *pSystems );
 
+	// Adds a factory to the system so other stuff can query it. Triggers a connect systems
+	void AddNonAppSystemFactory( CreateInterfaceFn fn );
+
+	// Removes a factory, triggers a disconnect call if it succeeds
+	void RemoveNonAppSystemFactory( CreateInterfaceFn fn );
+
+	// Causes the systems to reconnect to an interface
+	void ReconnectSystems( const char *pInterfaceName );
+
 	// Method to look up a particular named system...
 	void *FindSystem( const char *pInterfaceName );
+
+	// Creates the app window (windowed app only)
+	virtual void *CreateAppWindow( void *hInstance, const char *pTitle, bool bWindowed, int w, int h, bool bResizing );
+	void SetAppWindowTitle( void* hWnd, const char *pTitle );
 
 	// Gets at a class factory for the topmost appsystem group in an appsystem stack
 	static CreateInterfaceFn GetFactory();
 
 private:
+	struct Module_t
+	{
+		CSysModule *m_pModule;
+		CreateInterfaceFn m_Factory;
+		char *m_pModuleName;
+	};
+
+	typedef CUtlStringMap< CUtlSymbolTable > LibraryDependencies_t;
+
 	int OnStartup();
 	void OnShutdown();
 
 	void UnloadAllModules( );
 	void RemoveAllSystems();
+
+	// Method to load all dependent systems
+	bool LoadDependentSystems();
 
 	// Method to connect/disconnect all systems
 	bool ConnectSystems( );
@@ -165,21 +201,21 @@ private:
 	// Loads a module the standard way
 	virtual CSysModule *LoadModuleDLL( const char *pDLLName );
 
-	void	ReportStartupFailure( int nErrorStage, int nSysIndex );
+	void	ComputeDependencies( LibraryDependencies_t &depend );
+	void	SortDependentLibraries( LibraryDependencies_t &depend );
+	const char *FindSystemName( int nIndex );
+	static bool	SortLessFunc( const int &left, const int &right );
 
-	struct Module_t
-	{
-		CSysModule *m_pModule;
-		CreateInterfaceFn m_Factory;
-		char *m_pModuleName;
-	};
+	void	ReportStartupFailure( int nErrorStage, int nSysIndex );
 
 	CUtlVector<Module_t> m_Modules;
 	CUtlVector<IAppSystem*> m_Systems;
+	CUtlVector<CreateInterfaceFn> m_NonAppSystemFactories;
 	CUtlDict<int, unsigned short> m_SystemDict;
 	CAppSystemGroup *m_pParentAppSystem;
-	AppSystemGroupStage_t m_nErrorStage;
+	AppSystemGroupStage_t m_nCurrentStage;
 
+	static LibraryDependencies_t *sm_pSortDependencies;
 	friend void *AppSystemCreateInterfaceFn(const char *pName, int *pReturnCode);
 	friend class CSteamAppSystemGroup;
 };
@@ -220,6 +256,8 @@ class CDefaultAppSystemGroup : public CBaseClass
 public:
 	virtual bool Create( ) { return true; }
 	virtual bool PreInit() { return true; }
+	virtual bool PostInit() { return true; }
+	virtual void PreShutdown() { }
 	virtual void PostShutdown() {}
 	virtual void Destroy() {}
 };

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Defines the interface to a game class as defined by the game data
 //			file (FGD). Each class is type of entity that can be placed in
@@ -17,10 +17,10 @@
 #pragma once
 #endif
 
-#include "HelperInfo.h"
-#include "TokenReader.h"
-#include "GDVar.h"
-#include "InputOutput.h"
+#include "helperinfo.h"
+#include "tier2/tokenreader.h"
+#include "gdvar.h"
+#include "inputoutput.h"
 #include "mathlib/vector.h"
 
 class CHelperInfo;

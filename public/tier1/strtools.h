@@ -346,7 +346,7 @@ inline bool V_isspace(int c)
 }
 
 // These #define are technically illega and they cause build errors on clang with C++11 enabled
-#if !__clang__
+#if !__clang__ && !MSVC
 	#undef isdigit // In case this is implemented as a macro
 	#define isdigit use_V_isdigit_instead_of_isdigit
 	#undef isalpha

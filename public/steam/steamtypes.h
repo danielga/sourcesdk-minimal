@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2008, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2008, Valve LLC, All rights reserved. ============
 //
 // Purpose:
 //
@@ -28,9 +28,9 @@ typedef unsigned char uint8;
 #define X64BITS
 #endif
 
-// Make sure VALVE_BIG_ENDIAN gets set on PS3, may already be set previously in Valve internal code.
-#if !defined(VALVE_BIG_ENDIAN) && defined(_PS3)
-#define VALVE_BIG_ENDIAN
+// Make sure PLAT_BIG_ENDIAN gets set on PS3, may already be set previously in Valve internal code.
+#if !defined(PLAT_BIG_ENDIAN) && defined(_PS3)
+#define PLAT_BIG_ENDIAN
 #endif
 
 typedef unsigned char uint8;

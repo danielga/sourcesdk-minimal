@@ -122,7 +122,7 @@ union TSLIST_HEAD_ALIGN TSLHead_t
 		//          because Sequence can be pretty much random. We could operate on both of them separately,
 		//          but it could perhaps (?) lead to problems with store forwarding. I don't know 'cause I didn't 
 		//          performance-test or design original code, I'm just making it work on PowerPC.
-#ifdef VALVE_BIG_ENDIAN
+#ifdef PLAT_BIG_ENDIAN
 		int16	Sequence;
 		int16   Depth;
 #else

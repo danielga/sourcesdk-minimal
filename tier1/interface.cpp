@@ -399,7 +399,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName )
 	// If using the Steam filesystem, either the DLL must be a minimum footprint
 	// file in the depot (MFP) or a filesystem GetLocalCopy() call must be made
 	// prior to the call to this routine.
-	HMODULE hDLL = NULL;
+	HMODULE hDLL = 0;
 
 	char alteredFilename[ MAX_PATH ];
 	if ( IsPS3() )

@@ -299,7 +299,7 @@ bool CMemoryStack::CommitTo( byte *pNextAlloc ) RESTRICT
 {
 	if ( m_bPhysical )
 	{
-		return NULL;
+		return false;
 	}
 
 #ifdef MEMSTACK_VIRTUAL_MEMORY_AVAILABLE

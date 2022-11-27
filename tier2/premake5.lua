@@ -5,7 +5,7 @@ function IncludeSDKTier2()
 
 	filter({})
 
-	sysincludedirs(current_dir .. "/../public/tier2")
+	externalincludedirs(current_dir .. "/../public/tier2")
 
 	filter("system:windows")
 		links("tier2")

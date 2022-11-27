@@ -7,7 +7,7 @@ group("SourceSDK")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
 		defines({"RAD_TELEMETRY_DISABLED", "TIER1_STATIC_LIB"})
-		sysincludedirs({
+		externalincludedirs({
 			"../public",
 			"../public/tier0",
 			"../public/tier1"

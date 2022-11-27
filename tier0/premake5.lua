@@ -5,7 +5,7 @@ function IncludeSDKTier0()
 
 	local _project = project()
 
-	sysincludedirs(current_dir .. "/../public/tier0")
+	externalincludedirs(current_dir .. "/../public/tier0")
 
 	filter("system:windows or macosx")
 		links("tier0")

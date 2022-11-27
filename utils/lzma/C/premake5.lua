@@ -5,7 +5,7 @@ function IncludeSDKLZMA()
 
 	local _project = project()
 
-	sysincludedirs(current_dir)
+	externalincludedirs(current_dir)
 	links("LZMA")
 
 	if refcount == 1 then

@@ -8,7 +8,7 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		sysincludedirs(".")
+		externalincludedirs(".")
 		files({
 			"7zAlloc.c",
 			"7zArcIn.c",

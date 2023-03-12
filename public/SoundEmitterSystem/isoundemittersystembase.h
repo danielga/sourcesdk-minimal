@@ -9,6 +9,7 @@
 #define ISOUNDEMITTERSYSTEMBASE_H
 #ifdef _WIN32
 #pragma once
+#pragma warning(disable: 4244)
 #endif
 
 #include "tier1/utldict.h"
@@ -268,5 +269,7 @@ public:
 	// Called by either client or server to force ModShutdown and ModInit
 	virtual void			Flush() = 0;
 };
+
+#pragma warning(default: 4244)
 
 #endif // ISOUNDEMITTERSYSTEMBASE_H

@@ -5,6 +5,7 @@
 //===========================================================================//
 #ifndef SSEMATH_H
 #define SSEMATH_H
+#pragma warning(disable: 4244)
 
 #if defined( _X360 )
 #include <xboxmath.h>
@@ -3095,4 +3096,5 @@ FORCEINLINE int BoxOnPlaneSideSIMD( const fltx4& emins, const fltx4& emaxs, cons
 	return sides[0];
 }
 
+#pragma warning(default: 4244)
 #endif // _ssemath_h

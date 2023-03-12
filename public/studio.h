@@ -11,6 +11,7 @@
 
 #ifdef _WIN32
 #pragma once
+#pragma warning(disable: 4244)
 #endif
 
 #include "basetypes.h"
@@ -3226,5 +3227,7 @@ inline int Studio_LoadVertexes( const vertexFileHeader_t *pTempVvdHdr, vertexFil
 
 	return target;
 }
+
+#pragma warning(default: 4244)
 
 #endif // STUDIO_H

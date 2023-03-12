@@ -273,6 +273,12 @@
 	#define PLATFORM_WINDOWS	1
     #define PLATFORM_OPENGL 0
 
+	#if defined( DX_TO_GL_ABSTRACTION )
+	#define IsPlatformOpenGL() true
+	#else
+	#define IsPlatformOpenGL() false
+	#endif
+
 	#ifndef _X360
 		#define IsPlatformX360() 0
 		#define IsPlatformWindowsPC() 1

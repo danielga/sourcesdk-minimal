@@ -7,7 +7,7 @@ function IncludeSDKTier2()
 	print("WARNING: Project '" .. _project.name .. "' included Source SDK 'tier2' library, which is currently not available in x86-64.")
 
 	filter("architecture:x86")
-		sysincludedirs(current_dir .. "/../public/tier2")
+		externalincludedirs(current_dir .. "/../public/tier2")
 
 		filter({"architecture:x86", "system:windows"})
 			links("tier2")

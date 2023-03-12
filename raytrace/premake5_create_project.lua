@@ -6,7 +6,7 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		sysincludedirs({"../utils/common", "../public", "../public/tier0", "../public/tier1"})
+		externalincludedirs({"../utils/common", "../public", "../public/tier0", "../public/tier1"})
 		files({"raytrace.cpp", "trace2.cpp","trace3.cpp"})
 		vpaths({["Source files/*"] = "*.cpp"})
 

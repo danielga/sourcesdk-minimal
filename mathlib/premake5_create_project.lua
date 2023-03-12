@@ -7,7 +7,7 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		sysincludedirs({"../public", "../public/mathlib", "../public/tier0"})
+		externalincludedirs({"../public", "../public/mathlib", "../public/tier0"})
 		files({
 			"expressioncalculator.cpp",
 			"color_conversion.cpp",

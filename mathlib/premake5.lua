@@ -5,7 +5,7 @@ function IncludeSDKMathlib()
 
 	local _project = project()
 
-	sysincludedirs(current_dir .. "/../public/mathlib")
+	externalincludedirs(current_dir .. "/../public/mathlib")
 	links("mathlib")
 
 	if refcount == 1 then

@@ -399,7 +399,23 @@ CSysModule *Sys_LoadModule( const char *pModuleName )
 	// If using the Steam filesystem, either the DLL must be a minimum footprint
 	// file in the depot (MFP) or a filesystem GetLocalCopy() call must be made
 	// prior to the call to this routine.
-	HMODULE hDLL = NULL;
+	HMODULE hDLL = 0;
+
+	char alteredFilename[ MAX_PATH ];
+	if ( IsPS3() )
+	{
+		// PS3's load module *must* be fed extensions. If the extension is missing, add it. 
+		if (!( strstr(pModuleName, ".sprx") || strstr(pModuleName, ".prx") ))
+		{
+			strncpy( alteredFilename, pModuleName, MAX_PATH );
+			strncat( alteredFilename, DLL_EXT_STRING, MAX_PATH );
+			pModuleName = alteredFilename;
+		}
+	}
+	else
+	{
+		(void)alteredFilename; // just to quash the warning
+	}
 
 	char alteredFilename[ MAX_PATH ];
 	if ( IsPS3() )

@@ -7,7 +7,7 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		sysincludedirs({"../utils/common", "../public", "../public/tier0", "../public/tier1"})
+		externalincludedirs({"../utils/common", "../public", "../public/tier0", "../public/tier1"})
 		files({"vtf.cpp", "convert_x360.cpp", "cvtf.h", "../public/vtf/vtf.h"})
 		vpaths({
 			["Source files/*"] = "*.cpp",

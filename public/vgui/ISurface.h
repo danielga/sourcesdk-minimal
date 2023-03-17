@@ -19,7 +19,7 @@
 
 #include "appframework/iappsystem.h"
 #include "mathlib/vector2d.h"  // must be before the namespace line
-#include "vgui/ischemesurface.h"
+//#include "vgui/ischemesurface.h"
 
 #include "IVguiMatInfo.h"
 
@@ -44,8 +44,10 @@ class IImage;
 class Image;
 class Point;
 
-
-typedef FontHandle_t HFont;
+class FontVertex_t;
+class FontCharRenderInfo;
+typedef void* FontHandle_t;
+typedef unsigned long HFont;
 typedef FontVertex_t Vertex_t;
 
 
@@ -55,6 +57,24 @@ struct IntRect
 	int y0;
 	int x1;
 	int y1;
+};
+
+enum FontDrawType_t
+{
+	// Use the "additive" value from the scheme file
+	FONT_DRAW_DEFAULT = 0,
+
+	// Overrides
+	FONT_DRAW_NONADDITIVE,
+	FONT_DRAW_ADDITIVE,
+
+	FONT_DRAW_TYPE_COUNT = 2,
+};
+
+enum FontFeatureType_t {
+	FONT_FEATURE_ANTIALIASED_FONTS = 1,
+	FONT_FEATURE_DROPSHADOW_FONTS = 2,
+	FONT_FEATURE_OUTLINE_FONTS = 6
 };
 
 struct DrawTexturedRectParms_t

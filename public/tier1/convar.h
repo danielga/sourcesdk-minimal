@@ -414,6 +414,8 @@ private:
 	
 	// Call this function when ConVar changes
 	FnChangeCallback_t			m_fnChangeCallback;
+
+	CUtlString m_unknown;
 };
 
 

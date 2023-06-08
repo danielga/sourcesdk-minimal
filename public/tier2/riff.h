@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,6 +15,7 @@
 #define RIFF_H
 #pragma once
 
+#include "filesystem.h"
 #include "commonmacros.h"
 
 
@@ -25,12 +26,12 @@
 class IFileReadBinary
 {
 public:
-	virtual int open( const char *pFileName ) = 0;
-	virtual int read( void *pOutput, int size, int file ) = 0;
-	virtual void close( int file ) = 0;
-	virtual void seek( int file, int pos ) = 0;
-	virtual unsigned int tell( int file ) = 0;
-	virtual unsigned int size( int file ) = 0;
+	virtual FileHandle_t open( const char *pFileName ) = 0;
+	virtual int read( void *pOutput, int size, FileHandle_t file ) = 0;
+	virtual void close( FileHandle_t file ) = 0;
+	virtual void seek( FileHandle_t file, int pos ) = 0;
+	virtual unsigned int tell( FileHandle_t file ) = 0;
+	virtual unsigned int size( FileHandle_t file ) = 0;
 };
 
 
@@ -45,6 +46,7 @@ public:
 
 	unsigned int RIFFName( void ) { return m_riffName; }
 	unsigned int RIFFSize( void ) { return m_riffSize; }
+	unsigned int GetFileSize() const { return m_nFileSize; }
 
 	int		ReadInt( void );
 	int		ReadData( void *pOutput, int dataSize );
@@ -56,9 +58,10 @@ private:
 	const InFileRIFF & operator=( const InFileRIFF & );
 
 	IFileReadBinary		&m_io;
-	int					m_file;
+	FileHandle_t		m_file;
 	unsigned int		m_riffName;
 	unsigned int		m_riffSize;
+	unsigned int		m_nFileSize;
 };
 
 
@@ -99,11 +102,11 @@ private:
 class IFileWriteBinary
 {
 public:
-	virtual int create( const char *pFileName ) = 0;
-	virtual int write( void *pData, int size, int file ) = 0;
-	virtual void close( int file ) = 0;
-	virtual void seek( int file, int pos ) = 0;
-	virtual unsigned int tell( int file ) = 0;
+	virtual FileHandle_t create( const char *pFileName ) = 0;
+	virtual int write( void *pData, int size, FileHandle_t file ) = 0;
+	virtual void close( FileHandle_t file ) = 0;
+	virtual void seek( FileHandle_t file, int pos ) = 0;
+	virtual unsigned int tell( FileHandle_t file ) = 0;
 };
 //-----------------------------------------------------------------------------
 // Purpose: Used to write a RIFF format file
@@ -126,7 +129,7 @@ private:
 	const OutFileRIFF & operator=( const OutFileRIFF & );
 
 	IFileWriteBinary	&m_io;
-	int					m_file;
+	FileHandle_t		m_file;
 	unsigned int		m_riffName;
 	unsigned int		m_riffSize;
 	unsigned int		m_nNamePos;
@@ -197,6 +200,13 @@ private:
 #define WAVE_FORMAT_XBOX_ADPCM	0x0069
 #ifndef WAVE_FORMAT_XMA
 #define WAVE_FORMAT_XMA			0x0165
+#endif
+#ifndef WAVE_FORMAT_MP3
+#define WAVE_FORMAT_MP3			0x0003
+#endif
+// Used when doing some tests
+#ifndef WAVE_FORMAT_TEMP
+#define WAVE_FORMAT_TEMP		0x0004
 #endif
 
 #endif // RIFF_H

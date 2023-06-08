@@ -1,12 +1,16 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
 //=============================================================================//
+
 #include <quantize.h>
-#include <minmax.h>
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 #define N_EXTRAVALUES 1
 #define N_DIMENSIONS (3+N_EXTRAVALUES)
@@ -14,10 +18,15 @@
 #define PIXEL(x,y,c) Image[4*((x)+((Width*(y))))+c]
 
 static uint8 Weights[]={5,7,4,8};
-static int ExtraValueXForms[3*N_EXTRAVALUES]={
+static int ExtraValueXForms[]={
 	76,151,28,
 };
 
+// 1 dot product with a constant value per EXTRAVALUES
+COMPILE_TIME_ASSERT( ARRAYSIZE( ExtraValueXForms ) == (3 * N_EXTRAVALUES) );
+
+// 1 weight per extra values + 1 weight for each of the 3 color channels
+COMPILE_TIME_ASSERT( ARRAYSIZE( Weights ) == N_DIMENSIONS );
   
 
 #define MAX_QUANTIZE_IMAGE_WIDTH 4096
@@ -32,21 +41,21 @@ void ColorQuantize(uint8 const *Image,
 {
 	int Error[MAX_QUANTIZE_IMAGE_WIDTH+1][3][2];
 	struct Sample *s=AllocSamples(Width*Height,N_DIMENSIONS);
-	int x,y,c;
-	for(y=0;y<Height;y++)
-		for(x=0;x<Width;x++)
+	//int x,y,c;
+	for(int y=0;y<Height;y++)
+		for(int x=0;x<Width;x++)
 		{
-			for(c=0;c<3;c++)
+			for(int c=0;c<3;c++)
 				NthSample(s,y*Width+x,N_DIMENSIONS)->Value[c]=PIXEL(x,y,c);
 			// now, let's generate extra values to quantize on
 			for(int i=0;i<N_EXTRAVALUES;i++)
 			{
 				int val1=0;
-				for(c=0;c<3;c++)
+				for(int c=0;c<3;c++)
 					val1+=PIXEL(x,y,c)*ExtraValueXForms[i*3+c];
 				val1>>=8;
-				NthSample(s,y*Width+x,N_DIMENSIONS)->Value[c]=(uint8)
-					(vmin(255,vmax(0,val1)));
+				NthSample(s,y*Width+x,N_DIMENSIONS)->Value[i+3]=(uint8)
+					(MIN(255,MAX(0,val1)));
 			}
 		}
 	struct QuantizedValue *q=Quantize(s,Width*Height,N_DIMENSIONS,
@@ -61,14 +70,14 @@ void ColorQuantize(uint8 const *Image,
 				out_palette[p*3+c]=v->Mean[c];
 	}
 	memset(Error,0,sizeof(Error));
-	for(y=0;y<Height;y++)
+	for(int y=0;y<Height;y++)
 	{
 		int ErrorUse=y & 1;
 		int ErrorUpdate=ErrorUse^1;
-		for(x=0;x<Width;x++)
+		for(int x=0;x<Width;x++)
 		{
 			uint8 samp[3];
-			for(c=0;c<3;c++)
+			for(int c=0;c<3;c++)
 			{
 				int tryc=PIXEL(x,y,c);
 				if (! (flags & QUANTFLAGS_NODITHER))
@@ -76,7 +85,7 @@ void ColorQuantize(uint8 const *Image,
 					tryc+=Error[x][c][ErrorUse];
 					Error[x][c][ErrorUse]=0;
 				}
-				samp[c]=(uint8) vmin(255,vmax(0,tryc));
+				samp[c]=(uint8) MIN(255,MAX(0,tryc));
 			}
 			struct QuantizedValue *f=FindMatch(samp,3,Weights,q);
 			out_pixels[Width*y+x]=(uint8) (f->value);

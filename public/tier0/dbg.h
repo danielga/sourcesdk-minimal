@@ -129,6 +129,8 @@ PLATFORM_INTERFACE void SetAssertDialogParent( struct SDL_Window *window );
 PLATFORM_INTERFACE struct SDL_Window * GetAssertDialogParent();
 #endif
 
+DBG_INTERFACE bool HushAsserts();
+
 /* Used to define macros, never use these directly. */
 
 #ifdef _PREFAST_

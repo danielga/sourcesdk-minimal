@@ -20,7 +20,7 @@
 
 // This can go away when everything is in bin.
 #if defined( CMDLIB_NODBGLIB )
-	void Error( PRINTF_FORMAT_STRING char const *pMsg, ... );
+	void Error( char const *pMsg, ... );
 #else
 	#include "tier0/dbg.h"
 #endif
@@ -34,7 +34,6 @@
 #include <stdarg.h>
 #include "filesystem.h"
 #include "filesystem_tools.h"
-#include "tier1/utlstring.h"
 
 
 // Tools should use this as the read path ID. It'll look into the paths specified by gameinfo.txt
@@ -42,7 +41,7 @@
 
 
 // Tools should use this to fprintf data to files.
-void CmdLib_FPrintf( FileHandle_t hFile, PRINTF_FORMAT_STRING const char *pFormat, ... );
+void CmdLib_FPrintf( FileHandle_t hFile, const char *pFormat, ... );
 char* CmdLib_FGets( char *pOut, int outSize, FileHandle_t hFile );
 
 
@@ -112,14 +111,11 @@ int 	ParseNum (char *str);
 #define CP_WARNING	stderr, 1, 1, 0, 1		
 #define CP_STARTUP	stdout, 0, 1, 1, 1		
 #define CP_NOTIFY	stdout, 1, 1, 1, 1
-void ColorPrintf( FILE *pFile, bool red, bool green, bool blue, bool intensity, PRINTF_FORMAT_STRING char const *pFormat, ... );
+void ColorPrintf( FILE *pFile, bool red, bool green, bool blue, bool intensity, char const *pFormat, ... );
 
 // Initialize spew output.
 void InstallSpewFunction();
 
-// This registers an extra callback for spew output.
-typedef void (*SpewHookFn)( const char * );
-void InstallExtraSpewHook( SpewHookFn pFn );
 
 // Install allocation hooks so we error out if an allocation can't happen.
 void InstallAllocationFunctions();
@@ -129,15 +125,31 @@ void InstallAllocationFunctions();
 typedef void (*CleanupFn)();
 void CmdLib_AtCleanup( CleanupFn pFn );	// register a callback when Cleanup() is called.
 void CmdLib_Cleanup();
-void CmdLib_Exit( int exitCode );	// Use this to cleanup and call exit().
 
 // entrypoint if chaining spew functions
-SpewRetval_t CmdLib_SpewOutputFunc( SpewType_t type, char const *pMsg );
 unsigned short SetConsoleTextColor( int red, int green, int blue, int intensity );
 void RestoreConsoleTextColor( unsigned short color );
 
-// Append all spew output to the specified file.
-void SetSpewFunctionLogFile( char const *pFilename );
+class CCmdLibStandardLoggingListener : public ILoggingListener
+{
+public:
+	virtual void Log( const LoggingContext_t *pContext, const tchar *pMessage );
+};
+
+class CCmdLibFileLoggingListener : public ILoggingListener
+{
+public:
+	CCmdLibFileLoggingListener();
+	virtual void Log( const LoggingContext_t *pContext, const tchar *pMessage );
+	void Open( char const *pFilename );
+	void Close();
+
+private:
+	FileHandle_t m_pLogFile;
+};
+
+extern CCmdLibStandardLoggingListener g_CmdLibOutputLoggingListener;
+extern CCmdLibFileLoggingListener g_CmdLibFileLoggingListener;
 
 char *COM_Parse (char *data);
 
@@ -154,16 +166,15 @@ extern	char			archivedir[1024];
 
 extern	qboolean verbose;
 
-void qprintf( PRINTF_FORMAT_STRING const char *format, ... );
+void qprintf( char *format, ... );
 
 void ExpandWildcards (int *argc, char ***argv);
 
 void CmdLib_AddBasePath( const char *pBasePath );
+void CmdLib_AddNewSearchPath( const char *pBasePath );
 bool CmdLib_HasBasePath( const char *pFileName, int &pathLength );
 int CmdLib_GetNumBasePaths( void );
 const char *CmdLib_GetBasePath( int i );
-// Like ExpandPath but expands the path for each base path like SafeOpenRead
-int CmdLib_ExpandWithBasePaths( CUtlVector< CUtlString > &expandedPathList, const char *pszPath );
 
 extern bool g_bStopOnExit;
 

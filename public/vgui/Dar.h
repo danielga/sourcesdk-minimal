@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Holds the enumerated list of default cursors
 //
@@ -14,7 +14,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <vgui/VGUI.h>
+#include <vgui/vgui.h>
 #include "tier1/utlvector.h"
 
 #include "tier0/memdbgon.h"
@@ -74,7 +74,7 @@ public:
 	}
 	bool HasElement(ELEMTYPE elem)
 	{
-		if ( this->FindElement(elem) != this->InvalidIndex() )
+		if ( FindElement(elem) != this->InvalidIndex() )
 		{
 			return true;
 		}
@@ -82,12 +82,12 @@ public:
 	}
 	int PutElement(ELEMTYPE elem)
 	{
-		int index = this->FindElement(elem);
+		int index = FindElement(elem);
 		if (index >= 0)
 		{
 			return index;
 		}
-		return this->AddElement(elem);
+		return AddElement(elem);
 	}
 	// insert element at index and move all the others down 1
 	void InsertElementAt(ELEMTYPE elem,int index)
@@ -123,7 +123,7 @@ public:
 
 	void CopyFrom(Dar<ELEMTYPE> &dar)
 	{
-		this->CopyArray( dar.Base(), dar.Count() );
+		CoypArray( dar.Base(), dar.Count() );
 	}
 };
 

@@ -9,6 +9,7 @@
 #define RECIPIENTFILTER_H
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
 #pragma warning(disable: 4244)
 #endif
 
@@ -239,5 +240,8 @@ public:
 	}
 };
 
-#pragma warning(default: 4244)
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #endif // RECIPIENTFILTER_H

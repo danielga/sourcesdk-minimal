@@ -12,6 +12,7 @@
 #define BASE_ANIMATING_OVERLAY_H
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
 #pragma warning(disable: 4244)
 #endif
 
@@ -230,5 +231,8 @@ inline void CAnimationLayer::NetworkStateChanged( void *pVar )
 		m_pOwnerEntity->NetworkStateChanged();
 }
 
-#pragma warning(default: 4244)
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #endif // BASE_ANIMATING_OVERLAY_H

@@ -12,7 +12,8 @@
 
 #if defined ( WIN32 )
     #pragma once
-    #pragma warning(disable: 4244)
+	#pragma warning(push)
+	#pragma warning(disable: 4244)
 #endif
 
 #include <math.h>  
@@ -546,5 +547,8 @@ class IVideoServices : public IAppSystem
 
 
 
-#pragma warning(default: 4244)
+#if defined ( WIN32 )
+	#pragma warning(pop)
+#endif
+
 #endif // IVIDEOSERVICES_H

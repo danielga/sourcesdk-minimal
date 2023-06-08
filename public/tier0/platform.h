@@ -9,7 +9,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#ifdef _WIN32
+#pragma warning(push)
 #pragma warning(disable: 26495)
+#endif
 
 #if defined(__x86_64__) || defined(_WIN64)
 #define PLATFORM_64BITS 1
@@ -1597,6 +1600,8 @@ extern "C" int V_tier0_stricmp(const char *s1, const char *s2 );
 #define strcmpi(s1,s2) V_tier0_stricmp( s1, s2 )
 #endif
 
-#pragma warning(default: 26495)
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif /* PLATFORM_H */

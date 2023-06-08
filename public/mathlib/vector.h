@@ -11,6 +11,7 @@
 
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
 #pragma warning(disable: 26495)
 #endif
 
@@ -2306,6 +2307,9 @@ inline bool Vector::IsLengthLessThan( float val ) const
 	return LengthSqr() < val*val;
 }
 
-#pragma warning(default: 26495)
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #endif
 

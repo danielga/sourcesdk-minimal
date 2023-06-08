@@ -10,6 +10,7 @@
 
 #if defined( _WIN32 )
 #pragma once
+#pragma warning(push)
 #pragma warning(disable: 4244)
 #endif
 
@@ -344,5 +345,8 @@ private:
 
 //-----------------------------------------------------------------------------
 
-#pragma warning(default: 4244)
+#if defined( _WIN32 )
+#pragma warning(pop)
+#endif
+
 #endif // SIMTIMER_H

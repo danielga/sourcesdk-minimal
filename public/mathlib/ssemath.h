@@ -6,6 +6,11 @@
 #ifndef SSEMATH_H
 #define SSEMATH_H
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#endif
+
 #if defined( _X360 )
 #include <xboxmath.h>
 #else
@@ -3094,5 +3099,9 @@ FORCEINLINE int BoxOnPlaneSideSIMD( const fltx4& emins, const fltx4& emaxs, cons
 	ConvertStoreAsIntsSIMD( &sides, result );
 	return sides[0];
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif // _ssemath_h

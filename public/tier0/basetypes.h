@@ -15,8 +15,9 @@
 
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 28252)
 #endif
-
 
 // This is a trick to get the DLL extension off the -D option on the command line.
 #define DLLExtTokenPaste(x) #x
@@ -394,5 +395,9 @@ protected:
 	inline Type  operator--( Type &a, int ) { Type t = a; --a; return t; }
 
 #include "tier0/valve_on.h"
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif // BASETYPES_H

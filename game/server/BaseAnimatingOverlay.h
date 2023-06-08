@@ -12,6 +12,8 @@
 #define BASE_ANIMATING_OVERLAY_H
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
 #endif
 
 class CBaseAnimatingOverlay;
@@ -228,5 +230,9 @@ inline void CAnimationLayer::NetworkStateChanged( void *pVar )
 	if ( m_pOwnerEntity )
 		m_pOwnerEntity->NetworkStateChanged();
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif // BASE_ANIMATING_OVERLAY_H

@@ -10,6 +10,8 @@
 
 #if defined( _WIN32 )
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
 #endif
 
 #define ST_EPS 0.001
@@ -342,5 +344,9 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+
+#if defined( _WIN32 )
+#pragma warning(pop)
+#endif
 
 #endif // SIMTIMER_H

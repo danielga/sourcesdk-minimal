@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright (c) 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: 
 //
@@ -28,14 +28,8 @@
 struct base_array_t
 {
 public:
-	static const bool IsUtlArray = true; // Used to match this at compiletime 		
+	enum { IsUtlArray = true }; // Used to match this at compiletime 		
 };
-
-#if defined( GNUC ) && defined( DEBUG )
-// gcc in debug doesn't optimize away the need for the storage of IsUtlArray so make one here
-//  as this is in a shared header use SELECTANY to make it throw away the dupe symbols
-const bool base_array_t::IsUtlArray SELECTANY;
-#endif
 
 //-----------------------------------------------------------------------------
 template< class T, size_t MAX_SIZE >
@@ -43,8 +37,6 @@ class CUtlArray : public base_array_t
 {
 public:
 	typedef T ElemType_t;
-	typedef T* iterator;
-	typedef const T* const_iterator;
 
 	CUtlArray();
 	CUtlArray( T* pMemory, size_t count );
@@ -60,13 +52,6 @@ public:
 	const T& Element( int i ) const;
 	T& Random();
 	const T& Random() const;
-
-	// STL compatible member functions. These allow easier use of std::sort
-	// and they are forward compatible with the C++ 11 range-based for loops.
-	iterator begin();
-	const_iterator begin() const;
-	iterator end();
-	const_iterator end() const;
 
 	T* Base();
 	const T* Base() const;
@@ -137,30 +122,6 @@ inline CUtlArray<T, MAX_SIZE>::CUtlArray( CUtlArray const& vec )
 	{
 		m_Memory[n] = vec.m_Memory[n];
 	}
-}
-
-template< typename T, size_t MAX_SIZE >
-typename CUtlArray<T, MAX_SIZE>::iterator CUtlArray<T, MAX_SIZE>::begin()
-{ 
-	return Base(); 
-}
-
-template< typename T, size_t MAX_SIZE >
-typename CUtlArray<T, MAX_SIZE>::const_iterator CUtlArray<T, MAX_SIZE>::begin() const
-{ 
-	return Base(); 
-}
-
-template< typename T, size_t MAX_SIZE >
-typename CUtlArray<T, MAX_SIZE>::iterator CUtlArray<T, MAX_SIZE>::end()
-{ 
-	return Base() + Count(); 
-}
-
-template< typename T, size_t MAX_SIZE >
-typename CUtlArray<T, MAX_SIZE>::const_iterator CUtlArray<T, MAX_SIZE>::end() const
-{ 
-	return Base() + Count(); 
 }
 
 template< typename T, size_t MAX_SIZE >

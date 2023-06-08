@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c), Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Contains a branch-neutral binary packer for KeyValues trees. 
 //
@@ -6,7 +6,7 @@
 //
 //=============================================================================//
 
-#include <KeyValues.h>
+#include <keyvalues.h>
 #include "kvpacker.h"
 
 #include "tier0/dbg.h"
@@ -145,7 +145,7 @@ bool KVPacker::WriteAsBinary( KeyValues *pNode, CUtlBuffer &buffer )
 			}
 		case KeyValues::TYPE_PTR:
 			{
-				buffer.PutUnsignedInt( (int)dat->GetPtr() );
+				buffer.PutPtr( dat->GetPtr() );
 				break;
 			}
 
@@ -181,7 +181,7 @@ bool KVPacker::ReadAsBinary( KeyValues *pNode, CUtlBuffer &buffer )
 		if ( ePackType == PACKTYPE_NULLMARKER )
 			break; // no more peers
 
-		buffer.GetString( token );
+		buffer.GetString( token, KEYVALUES_TOKEN_SIZE-1 );
 		token[KEYVALUES_TOKEN_SIZE-1] = 0;
 
 		dat->SetName( token );
@@ -198,7 +198,7 @@ bool KVPacker::ReadAsBinary( KeyValues *pNode, CUtlBuffer &buffer )
 			}
 		case PACKTYPE_STRING:
 			{
-				buffer.GetString( token );
+				buffer.GetString( token, KEYVALUES_TOKEN_SIZE-1 );
 				token[KEYVALUES_TOKEN_SIZE-1] = 0;
 				dat->SetStringValue( token );
 				break;
@@ -258,7 +258,7 @@ bool KVPacker::ReadAsBinary( KeyValues *pNode, CUtlBuffer &buffer )
 			}
 		case PACKTYPE_PTR:
 			{
-				dat->SetPtr( NULL, (void*)buffer.GetUnsignedInt() );
+				dat->SetPtr( NULL, buffer.GetPtr() );
 				break;
 			}
 

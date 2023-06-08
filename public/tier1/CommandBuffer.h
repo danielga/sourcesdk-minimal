@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2006, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,6 +15,8 @@
 #pragma once
 #endif
 
+#include "tier0/platform.h"
+
 #include "tier1/utllinkedlist.h"
 #include "tier1/convar.h"
 
@@ -28,12 +30,11 @@ class CUtlBuffer;
 //-----------------------------------------------------------------------------
 // Invalid command handle
 //-----------------------------------------------------------------------------
-typedef int CommandHandle_t;
+typedef intp CommandHandle_t;
 enum
 {
 	COMMAND_BUFFER_INVALID_COMMAND_HANDLE = 0
 };
-
 
 //-----------------------------------------------------------------------------
 // A command buffer class- a queue of argc/argv based commands associated
@@ -47,17 +48,11 @@ public:
 	~CCommandBuffer();
 
     // Inserts text into the command buffer
-	bool AddText( const char *pText, int nTickDelay = 0 );
+	bool AddText( const char *pText, cmd_source_t cmdSource = kCommandSrcUserInput, int nTickDelay = 0 );
 
 	// Used to iterate over all commands appropriate for the current time
 	void BeginProcessingCommands( int nDeltaTicks );
-	bool DequeueNextCommand( );
-	int DequeueNextCommand( const char **& ppArgv );
-	int ArgC() const;
-	const char **ArgV() const;
-	const char *ArgS() const;		// All args that occur after the 0th arg, in string form
-	const char *GetCommandString() const;	// The entire command in string form, including the 0th arg
-	const CCommand& GetCommand() const;
+	bool DequeueNextCommand( /*out*/ CCommand* pCommand );
 	void EndProcessingCommands();
 
 	// Are we in the middle of processing commands?
@@ -83,9 +78,6 @@ public:
 	void SetWaitEnabled( bool bEnable )		{ m_bWaitEnabled = bEnable; }
 	bool IsWaitEnabled( void )				{ return m_bWaitEnabled; }
 
-	int GetArgumentBufferSize() { return m_nArgSBufferSize; }
-	int GetMaxArgumentBufferSize() { return m_nMaxArgSBufferLength; }
-
 private:
 	enum
 	{
@@ -97,17 +89,18 @@ private:
 		int m_nTick;
 		int m_nFirstArgS;
 		int m_nBufferSize;
+		cmd_source_t m_source;
 	};
 
 	// Insert a command into the command queue at the appropriate time
-	void InsertCommandAtAppropriateTime( int hCommand );
+	void InsertCommandAtAppropriateTime( intp hCommand );
 						   
 	// Insert a command into the command queue
 	// Only happens if it's inserted while processing other commands
-	void InsertImmediateCommand( int hCommand );
+	void InsertImmediateCommand( intp hCommand );
 
 	// Insert a command into the command queue
-	bool InsertCommand( const char *pArgS, int nCommandSize, int nTick );
+	bool InsertCommand( const char *pArgS, int nCommandSize, int nTick, cmd_source_t cmdSource );
 
 	// Returns the length of the next command, as well as the offset to the next command
 	void GetNextCommandLength( const char *pText, int nMaxLen, int *pCommandLength, int *pNextCommandOffset );
@@ -125,43 +118,10 @@ private:
 	int		m_nCurrentTick;
 	int		m_nLastTickToProcess;
 	int		m_nWaitDelayTicks;
-	int		m_hNextCommand;
+	intp	m_hNextCommand;
 	int		m_nMaxArgSBufferLength;
 	bool	m_bIsProcessingCommands;
 	bool	m_bWaitEnabled;
-
-	// NOTE: This is here to avoid the pointers returned by DequeueNextCommand
-	// to become invalid by calling AddText. Is there a way we can avoid the memcpy?
-	CCommand m_CurrentCommand;
 };
-
-
-//-----------------------------------------------------------------------------
-// Returns the next command
-//-----------------------------------------------------------------------------
-inline int CCommandBuffer::ArgC() const
-{
-	return m_CurrentCommand.ArgC();
-}
-
-inline const char **CCommandBuffer::ArgV() const
-{
-	return m_CurrentCommand.ArgV();
-}
-
-inline const char *CCommandBuffer::ArgS() const
-{
-	return m_CurrentCommand.ArgS();
-}
-
-inline const char *CCommandBuffer::GetCommandString() const
-{
-	return m_CurrentCommand.GetCommandString();
-}
-
-inline const CCommand& CCommandBuffer::GetCommand() const
-{
-	return m_CurrentCommand;
-}
 
 #endif // COMMANDBUFFER_H

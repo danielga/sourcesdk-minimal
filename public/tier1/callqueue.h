@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========== Copyright © 2006, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -9,6 +9,7 @@
 
 #include "tier0/tslist.h"
 #include "functors.h"
+#include "vstdlib/jobthread.h"
 
 #if defined( _WIN32 )
 #pragma once
@@ -119,7 +120,7 @@ public:
 
 		m_queue.PushItem( NULL );
 
-		CFunctor *pFunctor;
+		CFunctor *pFunctor = NULL;
 
 		while ( m_queue.PopItem( &pFunctor ) && pFunctor != NULL )
 		{
@@ -133,6 +134,30 @@ public:
 			pFunctor->Release();
 		}
 
+	}
+
+	void ParallelCallQueued( IThreadPool *pPool = NULL )
+	{
+		if ( ! pPool ) 
+		{
+			pPool = g_pThreadPool;
+		}
+		int nNumThreads = 1;
+
+		if ( pPool )
+		{
+			nNumThreads = MIN( pPool->NumThreads(), MAX( 1, Count() ) );
+		}
+		
+		if ( nNumThreads < 2 )
+		{
+			CallQueued();
+		}
+		else
+		{
+			int *pDummy = NULL;
+			ParallelProcess( pPool, pDummy, nNumThreads, this, &CCallQueueT<>::ExecuteWrapper );
+		}
 	}
 
 	void QueueFunctor( CFunctor *pFunctor )
@@ -156,6 +181,11 @@ public:
 	FUNC_GENERATE_QUEUE_METHODS();
 
 private:
+	void ExecuteWrapper( int &nDummy )						// to match paralell process function template
+	{
+		CallQueued();
+	}
+
 	void QueueFunctorInternal( CFunctor *pFunctor )
 	{
 		if ( !m_bNoQueue )
@@ -191,7 +221,18 @@ class ICallQueue
 public:
 	void QueueFunctor( CFunctor *pFunctor )
 	{
-		QueueFunctorInternal( RetAddRef( pFunctor ) );
+		// [mhansen] If we grab an extra reference here then this functor never gets released.
+		// That usually isn't too bad because the memory the functor is allocated in is cleared and
+		// reused every frame.  But, if the functor contains a CUtlDataEnvelope with more than
+		// 4 bytes of data it allocates its own memory and, in that case, we need the destructor to
+		// be called to free it.  So, we don't want to grab the "extra" reference here.
+		// The net result should be that after this call the pFunctor has a ref count of 1 (which
+		// is held by the functor it gets nested in, which is stuck in the call queue) and after it
+		// is executed the owning functor is destructed which causes it to release the reference
+		// and this functor is then freed.  This happens in imatersysteminternal.h:112 where the
+		// destructor is called explictly for the owning functor: pFunctor->~CFunctor();
+		//QueueFunctorInternal( RetAddRef( pFunctor ) );
+		QueueFunctorInternal( pFunctor );
 	}
 
 	FUNC_GENERATE_QUEUE_METHODS();

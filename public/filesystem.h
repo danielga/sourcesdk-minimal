@@ -45,7 +45,7 @@ class CLanguage;
 
 typedef void * FileHandle_t;
 typedef void * FileCacheHandle_t;
-typedef int FileFindHandle_t;
+typedef intp FileFindHandle_t;
 typedef void (*FileSystemLoggingFunc_t)( const char *fileName, const char *accessType );
 typedef int WaitForResourcesHandle_t;
 

@@ -21,6 +21,7 @@
 #include "appframework/iappsystem.h"
 #include "datacache/imdlcache.h"
 #include "studio.h"
+#include "fasttimer.h"
 
 
 //-----------------------------------------------------------------------------

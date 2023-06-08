@@ -65,7 +65,9 @@ public:
 	int		FindLessOrEqual( const TKey& search ) const;
 	template< typename TKey >
 	int		FindLess( const TKey& search ) const;
-	
+	template <typename K>
+	int     FindAs( const K& key ) const;
+
 	/// Removes a particular element
 	void	Remove( const T& search );
 	void	Remove( int i );
@@ -97,9 +99,9 @@ protected:
 	int AddToTail();
 	int InsertBefore( int elem );
 	int InsertAfter( int elem );
-	int	InsertBefore( int elem, const T& src );
 	int AddToHead( const T& src );
 	int AddToTail( const T& src );
+	int InsertBefore( int elem, const T& src );
 	int AddMultipleToHead( int num );
 	int AddMultipleToTail( int num, const T *pToCopy=NULL );	   
 	int InsertMultipleBefore( int elem, int num, const T *pToCopy=NULL );
@@ -207,16 +209,14 @@ int CUtlSortVector<T, LessFunc, BaseVector>::InsertIfNotFound( const T& src )
 		return pos;
 
 	++pos;
-	this->GrowVector();
-	this->ShiftElementsRight(pos);
-	CopyConstruct<T>( &this->Element(pos), src );
+	BaseVector::InsertBefore( pos, src );
 	return pos;
 }
 
 template <class T, class LessFunc, class BaseVector> 
 int CUtlSortVector<T, LessFunc, BaseVector>::InsertAfter( int nIndex, const T &src )
 {
-	int nInsertedIndex = this->BaseClass::InsertAfter( nIndex, src );
+	int nInsertedIndex = BaseClass::InsertAfter( nIndex, src );
 
 #ifdef DEBUG
 	LessFunc less;
@@ -244,7 +244,7 @@ void CUtlSortVector<T, LessFunc, BaseVector>::QuickSort( LessFunc& less, int nLo
 		ctx.m_pLessContext = m_pLessContext;
 		ctx.m_pLessFunc = &less;
 
-		qsort_s( this->Base(), this->Count(), sizeof(T), (QSortCompareFunc_t)&CUtlSortVector<T, LessFunc>::CompareHelper, &ctx );
+		qsort_s( Base(), Count(), sizeof(T), (QSortCompareFunc_t)&CUtlSortVector<T, LessFunc>::CompareHelper, &ctx );
 	}
 #else
 	typedef int (__cdecl *QSortCompareFunc_t)( const void *, const void *);
@@ -303,11 +303,12 @@ int CUtlSortVector<T, LessFunc, BaseVector>::Find( const TKey& src ) const
 }
 
 
+
 //-----------------------------------------------------------------------------
 // finds a particular element using a linear search. Useful when used
 // in between calls to InsertNoSort and RedoSort
 //-----------------------------------------------------------------------------
-template< class T, class LessFunc, class BaseVector > 
+template< class T, class LessFunc, class BaseVector >
 template < typename TKey >
 int CUtlSortVector<T, LessFunc, BaseVector>::FindUnsorted( const TKey &src ) const
 {
@@ -315,15 +316,47 @@ int CUtlSortVector<T, LessFunc, BaseVector>::FindUnsorted( const TKey &src ) con
 	int nCount = this->Count();
 	for ( int i = 0; i < nCount; ++i )
 	{
-		if ( less.Less( this->Element(i), src, m_pLessContext ) )
+		if ( less.Less( this->Element( i ), src, m_pLessContext ) )
 			continue;
-		if ( less.Less( src, this->Element(i), m_pLessContext ) )
+		if ( less.Less( src, this->Element( i ), m_pLessContext ) )
 			continue;
 		return i;
 	}
 	return -1;
 }
 
+
+//-----------------------------------------------------------------------------
+// finds a particular element
+//-----------------------------------------------------------------------------
+template <class T, class LessFunc, class BaseVector>
+template <typename K>
+int CUtlSortVector<T, LessFunc, BaseVector>::FindAs( const K& key ) const
+{
+	AssertFatal( !m_bNeedsSort );
+
+	LessFunc less;
+
+	int start = 0, end = this->Count() - 1;
+	while (start <= end)
+	{
+		int mid = (start + end) >> 1;
+		int nResult = less.Compare( this->Element(mid), key, m_pLessContext );
+		if ( nResult < 0 )
+		{
+			start = mid + 1;
+		}
+		else if ( nResult > 0 )
+		{
+			end = mid - 1;
+		}
+		else
+		{
+			return mid;
+		}
+	}
+	return -1;
+}
 
 //-----------------------------------------------------------------------------
 // finds a particular element

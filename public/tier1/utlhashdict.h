@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========== Copyright © 2005, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -71,7 +71,7 @@ protected:
 		T value;
 	};
 
-	template <bool bCaseInsensitive>
+	template <bool bCaseIgnore>
 	class CCompare
 	{
 	public:
@@ -79,11 +79,11 @@ protected:
 
 		bool operator()( const Entry_t &entry1, const Entry_t &entry2 ) const
 		{
-			return !( ( bCaseInsensitive ) ? stricmp( entry1.pszSymbol, entry2.pszSymbol ) : strcmp( entry1.pszSymbol, entry2.pszSymbol ) );
+			return !( ( bCaseIgnore ) ? stricmp( entry1.pszSymbol, entry2.pszSymbol ) : strcmp( entry1.pszSymbol, entry2.pszSymbol ) );
 		}
 	};
 
-	template <bool bCaseInsensitive>
+	template <bool bCaseIgnore>
 	class CHash
 	{
 	public:
@@ -91,7 +91,7 @@ protected:
 
 		unsigned operator()( const Entry_t &entry ) const
 		{
-			return !( ( bCaseInsensitive ) ? HashStringCaseless( entry.pszSymbol ) : HashString( entry.pszSymbol ) );
+			return !( ( bCaseIgnore ) ? HashStringCaseless( entry.pszSymbol ) : HashString( entry.pszSymbol ) );
 		}
 	};
 
@@ -219,7 +219,7 @@ void CUtlHashDict<T, bCaseInsensitive, bDupeStrings>::RemoveAll()
 {
 	if ( bDupeStrings )
 	{
-		typename UtlHashHandle_t index = m_Elements.GetFirstHandle();
+		UtlHashHandle_t index = m_Elements.GetFirstHandle();
 		while ( index != m_Elements.InvalidHandle() )
 		{
 			free( (void *)m_Elements[index].pszSymbol );
@@ -236,7 +236,7 @@ void CUtlHashDict<T, bCaseInsensitive, bDupeStrings>::Purge()
 {
 	if ( bDupeStrings )
 	{
-		typename UtlHashHandle_t index = m_Elements.GetFirstHandle();
+		UtlHashHandle_t index = m_Elements.GetFirstHandle();
 		while ( index != m_Elements.InvalidHandle() )
 		{
 			free( (void *)m_Elements[index].pszSymbol );

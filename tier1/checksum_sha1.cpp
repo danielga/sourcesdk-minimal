@@ -91,12 +91,12 @@ void CSHA1::Reset()
 }
 
 #ifdef	_MINIMUM_BUILD_
-void Minimum_CSHA1::Transform(unsigned long state[5], unsigned char buffer[64])
+void Minimum_CSHA1::Transform(uint32 state[5], const uint8 buffer[64])
 #else
-void CSHA1::Transform(unsigned long state[5], unsigned char buffer[64])
+void CSHA1::Transform(uint32 state[5], const uint8 buffer[64])
 #endif
 {
-	unsigned long a = 0, b = 0, c = 0, d = 0, e = 0;
+	uint32 a = 0, b = 0, c = 0, d = 0, e = 0;
 
 	memcpy(m_block, buffer, 64);
 
@@ -142,12 +142,13 @@ void CSHA1::Transform(unsigned long state[5], unsigned char buffer[64])
 
 // Use this function to hash in binary data and strings
 #ifdef	_MINIMUM_BUILD_
-void Minimum_CSHA1::Update(unsigned char *data, unsigned int len)
+void Minimum_CSHA1::Update( const void *pvData, unsigned int len )
 #else
-void CSHA1::Update(unsigned char *data, unsigned int len)
+void CSHA1::Update( const void *pvData, unsigned int len)
 #endif
 {
-	unsigned long i = 0, j;
+	const uint8 *data = (const uint8 *)pvData;
+	uint32 i = 0, j;
 
 	j = (m_count[0] >> 3) & 63;
 
@@ -172,11 +173,11 @@ void CSHA1::Update(unsigned char *data, unsigned int len)
 
 #if !defined(_MINIMUM_BUILD_)
 // Hash in file contents
-bool CSHA1::HashFile(char *szFileName)
+bool CSHA1::HashFile(const char *szFileName)
 {
-	unsigned long ulFileSize = 0, ulRest = 0, ulBlocks = 0;
-	unsigned long i = 0;
-	unsigned char uData[MAX_FILE_READ_BUFFER];
+	uint32 ulFileSize = 0, ulRest = 0, ulBlocks = 0;
+	uint32 i = 0;
+	uint8 uData[MAX_FILE_READ_BUFFER];
 	FILE *fIn = NULL;
 
 	if(szFileName == NULL) return(false);
@@ -215,23 +216,23 @@ void Minimum_CSHA1::Final()
 void CSHA1::Final()
 #endif
 {
-	unsigned long i = 0;
-	unsigned char finalcount[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	uint32 i = 0;
+	uint8 finalcount[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	for (i = 0; i < 8; i++)
-		finalcount[i] = (unsigned char)((m_count[(i >= 4 ? 0 : 1)]
+		finalcount[i] = (uint8)((m_count[(i >= 4 ? 0 : 1)]
 			>> ((3 - (i & 3)) * 8) ) & 255); // Endian independent
 
-	Update((unsigned char *)"\200", 1);
+	Update((uint8 *)"\200", 1);
 
 	while ((m_count[0] & 504) != 448)
-		Update((unsigned char *)"\0", 1);
+		Update((uint8 *)"\0", 1);
 
 	Update(finalcount, 8); // Cause a SHA1Transform()
 
 	for (i = 0; i < k_cubHash; i++)
 	{
-		m_digest[i] = (unsigned char)((m_state[i >> 2] >> ((3 - (i & 3)) * 8) ) & 255);
+		m_digest[i] = (uint8)((m_state[i >> 2] >> ((3 - (i & 3)) * 8) ) & 255);
 	}
 
 	// Wipe variables for security reasons
@@ -246,9 +247,9 @@ void CSHA1::Final()
 
 #if !defined(_MINIMUM_BUILD_)
 // Get the final hash as a pre-formatted string
-void CSHA1::ReportHash(char *szReport, unsigned char uReportType)
+void CSHA1::ReportHash(char *szReport, uint8 uReportType)
 {
-	unsigned char i = 0;
+	uint8 i = 0;
 	char szTemp[12];
 
 	if(szReport == NULL) return;
@@ -281,9 +282,9 @@ void CSHA1::ReportHash(char *szReport, unsigned char uReportType)
 
 // Get the raw message digest
 #ifdef	_MINIMUM_BUILD_
-void Minimum_CSHA1::GetHash(unsigned char *uDest)
+void Minimum_CSHA1::GetHash(uint8 *uDest)
 #else
-void CSHA1::GetHash(unsigned char *uDest)
+void CSHA1::GetHash(uint8 *uDest)
 #endif
 {
 	memcpy(uDest, m_digest, k_cubHash);

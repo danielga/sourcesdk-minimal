@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 2005, Valve Inc., All rights reserved. ==========
 //
 // Purpose: Cryptographic hash agility helper definitions
 //
@@ -73,7 +73,7 @@ enum EPasswordHashAlg
 //
 // Hash sizes for the various available hash algorithms,
 // indexed by EPasswordHashAlg.
-const size_t k_HashLengths[] = {
+const uint k_HashLengths[] = {
 	sizeof(SHADigest_t),
 	sizeof(BigPasswordHash_t),
 	sizeof(PBKDF2Hash_t),
@@ -88,7 +88,7 @@ const size_t k_HashLengths[] = {
 // hash type and properly updated k_EHashMax, but you forgot to add the length
 // of the new hash type into k_HashLengths.  So do that.
 //
-C_ASSERT( ( ( sizeof(k_HashLengths) / sizeof(size_t) ) == k_EHashMax + 1 ) );
+C_ASSERT( ( ( sizeof(k_HashLengths) / sizeof(uint) ) == k_EHashMax + 1 ) );
 #endif
 
 #endif // PASSWORDHASH_H

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -50,7 +50,7 @@ public:
 
 	virtual ~CPolyhedron( void ) {};
 	virtual void Release( void ) = 0;
-	Vector Center( void );
+	Vector Center( void ) const;
 };
 
 class CPolyhedron_AllocByNew : public CPolyhedron

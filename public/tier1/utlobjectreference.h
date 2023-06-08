@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2006, Valve Corporation, All rights reserved. ======//
 //
 // $Revision: $
 // $NoKeywords: $
@@ -13,6 +13,7 @@
 
 #include "tier1/utlintrusivelist.h"
 #include "mathlib/mathlib.h"
+#include "tier1/utlvector.h"
 
 
 // Purpose: class for keeping track of all the references that exist to an object.  When the object
@@ -46,6 +47,16 @@ public:
 		AddRef( pObj );
 	}
 
+	FORCEINLINE CUtlReference( const CUtlReference<T>& other ) 
+	{
+		CUtlReference();
+
+		if ( other.IsValid() )
+		{
+			AddRef( (T*)( other.GetObject() ) );
+		}
+	}
+
 	FORCEINLINE ~CUtlReference(void)
 	{
 		KillRef();
@@ -65,6 +76,11 @@ public:
 		return m_pObject;
 	}
 
+	FORCEINLINE bool IsValid( void) const
+	{
+		return ( m_pObject != NULL );
+	}
+
 	FORCEINLINE operator T*()
 	{
 		return m_pObject;
@@ -74,6 +90,18 @@ public:
 	{
 		return m_pObject;
 	}
+
+
+	FORCEINLINE T * GetObject( void )
+	{
+		return m_pObject;
+	}
+
+	FORCEINLINE const T* GetObject( void ) const
+	{
+		return m_pObject;
+	}
+
 
 	FORCEINLINE T* operator->()
 	{ 
@@ -97,6 +125,16 @@ public:
 		return *this;
 	}
 
+
+	FORCEINLINE bool operator==( T const *pOther ) const
+	{
+		return ( pOther == m_pObject );
+	}	
+
+	FORCEINLINE bool operator==( T *pOther ) const
+	{
+		return ( pOther == m_pObject );
+	}	
 
 	FORCEINLINE bool operator==( const CUtlReference& o ) const
 	{
@@ -126,7 +164,6 @@ public:
 			m_pObject = NULL;
 		}
 	}
-
 };
 
 template<class T> class CUtlReferenceList : public CUtlIntrusiveDList< CUtlReference<T> >
@@ -156,6 +193,62 @@ public:
 		CUtlReferenceList< _className > m_References;		\
 		template<class T> friend class CUtlReference;
 
+
+template < class T >
+class CUtlReferenceVector : public CUtlBlockVector< CUtlReference< T > >
+{
+public:
+	void RemoveAll()
+	{
+		for ( int i = 0; i < this->Count(); i++ )
+		{
+			this->Element( i ).KillRef();
+		}
+
+		CUtlBlockVector< CUtlReference< T > >::RemoveAll(); 
+	}
+
+	void FastRemove( int elem )
+	{
+		Assert( this->IsValidIndex(elem) );
+
+		if ( this->m_Size > 0 )
+		{
+			if ( elem != this->m_Size -1 )
+			{
+				this->Element( elem ).Set( this->Element( this->m_Size - 1 ).GetObject() );
+			}
+			Destruct( &Element( this->m_Size - 1 ) );
+			--this->m_Size;
+		}
+	}
+
+	bool FindAndFastRemove( const CUtlReference< T >& src )
+	{
+		int elem = Find( src );
+		if ( elem != -1 )
+		{
+			FastRemove( elem );
+			return true;
+		}
+		return false;
+	}
+
+private:
+	//
+	// Disallow methods of CUtlBlockVector that can cause element addresses to change, thus
+	// breaking assumptions of CUtlReference
+	//
+	void Remove( int elem );		
+	bool FindAndRemove( const T& src );	
+	void RemoveMultiple( int elem, int num );	
+	void RemoveMultipleFromHead(int num); 
+	void RemoveMultipleFromTail(int num); 
+	void Swap( CUtlReferenceVector< T > &vec );
+	void Purge();
+	void PurgeAndDeleteElements();
+	void Compact();
+};
 
 #endif
 

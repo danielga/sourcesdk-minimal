@@ -52,6 +52,7 @@
 #pragma once
 #pragma warning(push)
 #pragma warning(disable:4251)
+#pragma warning(disable:4244)
 #endif
 
 #ifdef COMPILER_MSVC64

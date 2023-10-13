@@ -13,6 +13,8 @@
 
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
 #endif
 
 
@@ -1584,6 +1586,10 @@ public:
 
 
 WRAP_READ( CBitRead );
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif
 

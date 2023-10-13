@@ -14,6 +14,8 @@
 
 #if _WIN32
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
 #endif
 
 #include "tier0/dbg.h"
@@ -1168,6 +1170,10 @@ private:
 		FORCEINLINE_CVAR float GetFloat() { return cvvalue; } \
 		FORCEINLINE_CVAR bool GetBool() { return (cvvalue != 0); } \
 	} cvname
+#endif
+
+#if _WIN32
+#pragma warning(pop)
 #endif
 
 #endif // CONVAR_H

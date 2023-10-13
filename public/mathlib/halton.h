@@ -20,6 +20,11 @@
 #include <tier0/platform.h>
 #include <mathlib/vector.h>
 
+#ifdef COMPILER_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#endif
+
 class HaltonSequenceGenerator_t
 {
 	int seed;
@@ -65,6 +70,8 @@ public:
 };
 
 
-
+#ifdef COMPILER_MSVC
+#pragma warning(pop)
+#endif
 
 #endif // halton_h

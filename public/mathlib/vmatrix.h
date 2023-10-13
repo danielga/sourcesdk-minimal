@@ -28,6 +28,8 @@
 
 #ifdef _WIN32
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
 #endif
 
 #include <string.h>
@@ -1003,6 +1005,10 @@ inline void ExtractClipPlanesFromTransposedMatrix( const VMatrix &transposedView
 // This function always returns normalized planes.
 //-----------------------------------------------------------------------------
 void ExtractClipPlanesFromNonTransposedMatrix( const VMatrix &viewProjMatrix, VPlane *pPlanesOut, bool bD3DClippingRange = true );
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #endif
 

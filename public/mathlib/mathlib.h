@@ -33,6 +33,12 @@
 
 #endif
 
+#ifdef COMPILER_MSVC
+#pragma once
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#endif
+
 // plane_t structure
 // !!! if this is changed, it must be changed in asm code too !!!
 // FIXME: does the asm code even exist anymore?
@@ -3127,7 +3133,9 @@ inline float matrix3x4_t::GetSylvestersCriterion()const
 void PointsFromBox( const Vector &mins, const Vector &maxs, Vector *points );
 void BuildTransformedBox( Vector *v2, Vector const &bbmin, Vector const &bbmax, const matrix3x4_t& m );
 
-
+#ifdef COMPILER_MSVC
+#pragma warning(pop)
+#endif
 
 #endif	// MATH_BASE_H
 

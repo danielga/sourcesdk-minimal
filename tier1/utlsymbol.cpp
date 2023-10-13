@@ -190,7 +190,7 @@ bool CUtlSymbolTable::CLess::operator()( const CStringPoolIndex &i1, const CStri
 		if ( !str1 && str2 )
 			return 1;
 		if ( !str2 && str1 )
-			return -1;
+			return (bool)-1;
 		if ( !str1 && !str2 )
 			return 0;
 		

@@ -131,6 +131,7 @@ group("SourceSDK")
 		IncludeSDKLZMA()
 
 		filter("system:windows")
+			disablewarnings("4244")
 			defines("_CRT_SECURE_NO_WARNINGS")
 			files({"processor_detect.cpp", "../public/tier1/uniqueid.h"})
 

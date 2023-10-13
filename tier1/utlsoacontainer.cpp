@@ -972,7 +972,7 @@ void CSOAContainer::UpdateDistanceRow( int nSearchRadius, int nMinX, int nMaxX, 
 	int nStartZ = MAX( 0, nZ - nSearchRadius );
 	int nEndZ = MIN( NumSlices() - 1, nZ + nSearchRadius );
 
-	fltx4 fl4Thresh = ReplicateX4( THRESH );
+	fltx4 fl4Thresh = ReplicateX4( (float)THRESH );
 	for( int x = nMinX; x <= nMaxX; x++ )
 	{
 		float flReferenceValue = *( pDataIn++ );

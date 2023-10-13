@@ -12,6 +12,7 @@
 #pragma once
 #pragma warning(push)
 #pragma warning(disable: 28252)
+#pragma warning(disable: 4244)
 #endif
 
 // This is a trick to get the DLL extension off the -D option on the command line.

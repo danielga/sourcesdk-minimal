@@ -48,6 +48,7 @@
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4251)
+#pragma warning(disable:4244)
 #endif
 
 // enable this to get detailed nodes beneath budget

@@ -12,12 +12,12 @@
 class CHL2MP_Player;
 
 #include "basemultiplayerplayer.h"
-#include "hl2_playerlocaldata.h"
-#include "hl2_player.h"
+#include "hl2/hl2_playerlocaldata.h"
+#include "hl2/hl2_player.h"
 #include "simtimer.h"
 #include "soundenvelope.h"
-#include "hl2mp_player_shared.h"
-#include "hl2mp_gamerules.h"
+#include "hl2mp/hl2mp_player_shared.h"
+#include "hl2mp/hl2mp_gamerules.h"
 #include "utldict.h"
 
 //=============================================================================

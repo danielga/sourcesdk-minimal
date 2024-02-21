@@ -13,7 +13,7 @@
 
 #include "networkvar.h"
 
-#include "hl_movedata.h"
+#include "hl2/hl_movedata.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Player specific data for HL2 ( sent only to local player, too )

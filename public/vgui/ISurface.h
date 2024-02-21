@@ -251,6 +251,7 @@ public:
 	};
 
 	virtual bool SetFontGlyphSet(HFont font, const char *windowsFontName, int tall, int weight, int blur, int scanlines, int flags, int nRangeMin = 0, int nRangeMax = 0) = 0;
+	virtual bool SetFontGlyphSet_Extended(HFont font, const char *windowsFontName, int tall, int weight, int blur, int scanlines, int flags, bool unknown ) = 0;
 
 	// adds a custom font file (only supports true type font files (.ttf) for now)
 	virtual bool AddCustomFontFile(const char *fontName, const char *fontFileName) = 0;
@@ -383,7 +384,7 @@ public:
 
 	virtual const char *GetWebkitHTMLUserAgentString() = 0;
 
-	virtual void *Deprecated_AccessChromeHTMLController() = 0;
+	virtual void *AccessChromeHTMLController() = 0;
 
 	// the origin of the viewport on the framebuffer (Which might not be 0,0 for stereo)
 	virtual void SetFullscreenViewport( int x, int y, int w, int h ) = 0; // this uses NULL for the render target.
@@ -395,6 +396,10 @@ public:
 	virtual void SetSoftwareCursor( bool bUseSoftwareCursor ) = 0;
 	virtual void PaintSoftwareCursor() = 0;
 
+	virtual void GMOD_ClearFontCache() = 0;
+	virtual void GMOD_GetTextSize(HFont font, const wchar_t *text, int &wide, int &tall) = 0;
+	virtual Color GMOD_DrawGetColor() = 0;
+	virtual Color GMOD_DrawGetTextColor() = 0;
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// !! WARNING! YOU MUST NOT ADD YOUR NEW METHOD HERE OR YOU WILL BREAK MODS !!

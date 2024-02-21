@@ -20,7 +20,7 @@
 #include "gamevars_shared.h"
 
 #ifndef CLIENT_DLL
-#include "hl2mp_player.h"
+#include "hl2mp/hl2mp_player.h"
 #endif
 
 #define VEC_CROUCH_TRACE_MIN	HL2MPRules()->GetHL2MPViewVectors()->m_vCrouchTraceMin

@@ -1427,6 +1427,7 @@ public:
 	virtual void	VPhysicsShadowUpdate( IPhysicsObject *pPhysics ) {}
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 	virtual void	GMOD_VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
+	virtual matrix3x4_t GMOD_GetPhysBoneMatrix( int index );
 	virtual void	VPhysicsFriction( IPhysicsObject *pObject, float energy, int surfaceProps, int surfacePropsHit );
 	
 	// update the shadow so it will coincide with the current AI position at some time
@@ -1820,9 +1821,9 @@ public:
 	virtual bool IsVehicle() const;
 	virtual bool IsJeep() const;
 	virtual bool UsesLua();
+	virtual bool GMOD_ShouldPlayPhysicsSounds();
 	virtual int GetLuaEntityType();
 	virtual void PushEntity();
-	virtual void Push_This_Entity();
 	virtual void SetPhysObject( int, IPhysicsObject * );
 	virtual void SetEntity( const char *, CBaseEntity * );
 	virtual void DeleteOnRemove( CBaseEntity * );
@@ -1849,13 +1850,13 @@ public:
 	virtual void SetLuaTable( ILuaObject * );
 	virtual bool HasLuaTable();
 	virtual void ForcePhysicsDropObject();
+	virtual INextBot *GetNextBot();
+	virtual void SetPhysicsAttacker( CBasePlayer*, float );
 	virtual void StartDriving( CBasePlayer * );
 	virtual void FinishDriving( CBasePlayer * );
 	virtual bool GMOD_ShouldPreventTransmitToPlayer( CBasePlayer * );
 	virtual void GMOD_SetShouldPreventTransmitToPlayer( CBasePlayer *, bool );
-	virtual bool GMOD_ShouldPlayPhysicsSounds();
 	virtual void *Lua_GetLuaClass();
-	virtual INextBot *GetNextBot();
 };
 
 // Send tables exposed in this module.

@@ -420,6 +420,11 @@ public:
 	virtual void GMOD_DestroyDataTable( CGMODDataTable *dataTable ) = 0;
 	virtual const char *GMOD_GetServerAddress() const = 0;
 	virtual void *GMOD_LoadModel( const char *path ) = 0;
+	virtual float GetClientConVarFloat( int client, const char* cvar, float fallback ) = 0;
+	virtual CSteamID *GMOD_GetPlayerOwnerSteamID( const edict_t* pClient ) = 0;
+	virtual bool GMOD_GetPlayerIsSpeaking( const edict_t* pClient ) = 0;
+	virtual bool GMOD_ShouldUpdateVoiceMasks() = 0;
+	virtual bool NET_IsHostLocal( const char* unknwon ) = 0;
 
 	virtual void *GetReplay() const = 0;
 };
@@ -567,6 +572,8 @@ public:
 		const char *name,
 		char *rejectionMessage,
 		unsigned int rejectionMessageLen ) = 0;
+	virtual void GMOD_ClientSignOnStateChanged( int userID, int oldState, int newState ) = 0;
+	virtual void GMOD_OnAllSoundsStoppedSV() = 0;
 };
 
 typedef IServerGameDLL IServerGameDLL008;
@@ -674,6 +681,13 @@ public:
 
 	// Hook for player spawning
 	virtual void			ClientSpawned( edict_t *pPlayer ) = 0;
+
+	// Handles file requests and Lua errors from the client
+	virtual void 			GMOD_ReceiveClientMessage( int unknown, edict_t* pPlayer, bf_read* msg, int unknown2 ) = 0;
+
+	virtual void 			GMOD_ClientConnected( int userID ) = 0;
+
+	virtual void 			GMOD_SentClientStringTables( int userID ) = 0;
 };
 
 typedef IServerGameClients IServerGameClients003;

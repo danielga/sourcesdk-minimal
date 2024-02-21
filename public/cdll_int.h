@@ -563,6 +563,14 @@ public:
 	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) );
 	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable );
 	virtual void GMOD_LoadModel( const char *path );
+	virtual void GMOD_DecalRemoveEntity( int index );
+	virtual const char *GMOD_TranslateAlias( const char *cmd );
+	virtual void GMOD_R_StudioInitLightingCache();
+	virtual void PrecacheSentenceFile();
+	virtual float GetPlayerVoiceVolume( unsigned long long unknown );
+	virtual void SetPlayerVoiceVolume( unsigned long long unknown, float volume );
+	virtual bool NET_IsHostLocal();
+	virtual bool IsDedicatedServer();
 
 };
 

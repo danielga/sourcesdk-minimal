@@ -139,6 +139,8 @@ public:
 	virtual void AddDecal( ModelInstanceHandle_t handle, Ray_t const& ray, 
 		Vector const& decalUp, int decalIndex, int body, bool noPokeThru = false, int maxLODToDecal = ADDDECAL_TO_ALL_LODS ) = 0;
 
+	virtual void GMODAddDecal( ModelInstanceHandle_t handle, Vector const& pos, Vector const& decalUp, IMaterial* mat, int decalIndex, float unknown1, float unknown2 ) = 0;
+
 	// Removes all the decals on a model instance
 	virtual void RemoveAllDecals( ModelInstanceHandle_t handle ) = 0;
 

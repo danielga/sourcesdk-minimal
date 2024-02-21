@@ -183,6 +183,9 @@ public:
 	virtual const FlashlightState_t &GetFlashlightState( ShadowHandle_t handle ) = 0;
 
 	virtual void SetFlashlightRenderState( ShadowHandle_t handle ) = 0;
+
+	virtual void GMOD_StartFlashLight() = 0;
+	virtual void GMOD_SetNextFlashLight( ShadowHandle_t *handle ) = 0;
 };
 
 

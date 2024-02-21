@@ -226,11 +226,8 @@ enum CastVote
 //You might be wondering why these aren't multiple of 2. Well the reason is that if servers decide to have HLTV or Replay enabled we need the extra slot.
 //This is ok since MAX_PLAYERS is used for code specific things like arrays and loops, but it doesn't really means that this is the max number of players allowed
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
-#if defined( CSTRIKE_DLL )
-	#define MAX_PLAYERS				65  // Absolute max players supported
-#else
-	#define MAX_PLAYERS				33  // Absolute max players supported
-#endif
+//NOTE: GMOD doesn't have an extra slot for HLTV or Replay.
+#define MAX_PLAYERS					128
 
 #define MAX_PLACE_NAME_LENGTH		18
 

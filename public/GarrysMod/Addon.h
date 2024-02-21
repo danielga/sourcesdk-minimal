@@ -66,6 +66,7 @@ namespace Addon
 			virtual void ClearAllGMAs( ) = 0;
 			virtual void GetSteamUGCFile( uint64_t, bool ) = 0;
 			virtual void UnmountAddon( uint64_t ) = 0;
+			virtual void UnmountServerAddons( ) = 0;
 			virtual void MountFloatingAddons( ) = 0;
 			virtual void Shutdown( ) = 0;
 			virtual void AddFile( const SteamUGCDetails_t & ) = 0;

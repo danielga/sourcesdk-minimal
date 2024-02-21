@@ -57,6 +57,10 @@ public:
 
 	// Notify that the player is spawned
 	virtual void			ClientSpawned( edict_t *pPlayer ) OVERRIDE;
+
+	virtual void			GMOD_ReceiveClientMessage( int unknown, edict_t* pPlayer, bf_read* msg, int unknown2 ) OVERRIDE;
+	virtual void			GMOD_ClientConnected( int userID ) OVERRIDE;
+	virtual void 			GMOD_SentClientStringTables( int userID ) OVERRIDE;
 };
 
 
@@ -152,6 +156,10 @@ public:
 
 	// Called to see if the game server is okay with a manual changelevel or map command
 	virtual bool			IsManualMapChangeOkay( const char **pszReason ) OVERRIDE;
+
+	virtual bool 			GMOD_CheckPassword( long long, char const*, char const*, char const*, char const*, char *, uint ) OVERRIDE;
+	virtual void 			GMOD_ClientSignOnStateChanged( int userID, int oldState, int newState ) OVERRIDE;
+	virtual void 			GMOD_OnAllSoundsStoppedSV() OVERRIDE;
 
 private:
 

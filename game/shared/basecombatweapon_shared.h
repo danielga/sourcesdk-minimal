@@ -380,6 +380,8 @@ public:
 	virtual bool			UsesClipsForAmmo1( void ) const;
 	virtual bool			UsesClipsForAmmo2( void ) const;
 	bool					IsMeleeWeapon() const;
+	virtual char const 		*GetHoldType();
+	virtual char const 		*SetHoldType( char const* );
 
 	// derive this function if you mod uses encrypted weapon info files
 	virtual const unsigned char *GetEncryptionKey( void );
@@ -409,6 +411,7 @@ public:
 
 	virtual Activity		ActivityOverride( Activity baseAct, bool *pRequired );
 	virtual	acttable_t*		ActivityList( int &iActivityCount ) { return NULL; }
+	virtual int 			ActivityListCount( void );
 
 	virtual void			PoseParameterOverride( bool bReset );
 	virtual poseparamtable_t* PoseParamList( int &iPoseParamCount ) { return NULL; }
@@ -544,6 +547,20 @@ public:
 
 	virtual void			HideThink( void );
 	virtual bool			CanReload( void );
+
+	// Gmod functions
+	virtual float  			GetPlayerDamage( void );
+	virtual void 			EquipAmmo( CBaseEntity* );
+	virtual bool 			ShouldDropOnDie( void );
+	virtual bool 			ShouldDrawViewModel( void );
+	virtual float 			GetLastShootTime( void );
+	virtual void 			UpdateLastShootTime( float );
+	virtual float 			GetFOV( float );
+	virtual void 			ForcePlayerPickup( CBaseEntity* );
+	virtual void 			OnRangeAttack1( void );
+	virtual void 			GModNPCAttackHack( void );
+	virtual bool 			WasDropped( void );
+	virtual void 			MarkAsDropped( void );
 
 private:
 	typedef CHandle< CBaseCombatCharacter > CBaseCombatCharacterHandle;

@@ -49,7 +49,7 @@ public:
 	virtual bool CanHaveItem( CBasePlayer *pPlayer, CItem *pItem );
 	virtual int ItemShouldRespawn( CItem *pItem );
 	virtual void InitDefaultAIRelationships();
-	virtual const char*	AIClassText( int classType );
+	virtual const char* AIClassText( int classType );
 	virtual void CreateStandardEntities();
 	virtual bool ShouldBurningPropsEmitLight();
 	virtual void CleanUpMap();

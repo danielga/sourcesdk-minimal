@@ -21,18 +21,18 @@ public:
 	virtual void Finish() = 0;
 	virtual void Delete() = 0;
 	virtual void ManualFiling() = 0;
-}
+};
 
 abstract_class CVideoHolly : CVideoWriter
 {
 public:
-	virtual void AddAudio( void*, uint, uchar, uchar ) = 0;
+	virtual void AddAudio( void*, uint, unsigned char, unsigned char ) = 0;
 	virtual void StartMovie() = 0;
 	virtual void EncodeRGB( void*, float ) = 0;
 	virtual void EndMovie() = 0;
 	virtual void ManualFiling() = 0;
 	virtual const char* FileExtension() = 0;
-}
+};
 
 abstract_class IResources
 {
@@ -42,11 +42,11 @@ public:
 	virtual CVideoHolly* CreateMovie() = 0;
 	virtual IMaterial* FindMaterial( const char*, const char*, bool, bool, bool ) = 0;
 	virtual Color GetTextureColour( ITexture*, int, int ) = 0;
-	virtual void SavePNG( int, int, uchar*, const char*, int, int ) = 0;
-	virtual void SaveJPG( int, int, int, uchar*, const char*, int, int, CUtlBuffer* ) = 0;
+	virtual void SavePNG( int, int, unsigned char*, const char*, int, int ) = 0;
+	virtual void SaveJPG( int, int, int, unsigned char*, const char*, int, int, CUtlBuffer* ) = 0;
 	virtual bool ShouldRecordSound() = 0;
-	virtual void AudioSamples( void*, uint, uchar, uchar ) = 0;
-	virtual void SavePNGToBuffer( int, int, uchar*, Bootil::Buffer&, int, int ) = 0;
-	virtual void SaveJPGToBuffer( int, int, uchar*, Bootil::Buffer&, int, int, int ) = 0;
+	virtual void AudioSamples( void*, uint, unsigned char, unsigned char ) = 0;
+	virtual void SavePNGToBuffer( int, int, unsigned char*, Bootil::Buffer&, int, int ) = 0;
+	virtual void SaveJPGToBuffer( int, int, unsigned char*, Bootil::Buffer&, int, int, int ) = 0;
 	virtual void SetImage( ITexture*, const char* ) = 0;
 };

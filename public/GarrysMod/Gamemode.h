@@ -35,7 +35,7 @@ public:
 	virtual void FindByName( const std::string & ) = 0;
 	virtual void SetActive( const std::string & ) = 0;
 	virtual const std::list<IGamemodeSystem::Information> &GetList( ) const = 0;
-	virtual bool IsServerBlacklisted( char const*, char const*, char const*, char const*, char const* ) = 0;
+	virtual bool IsServerBlacklisted( char const* address, char const* hostname, char const* description, char const* gm, char const* map ) = 0;
 };
 
 }

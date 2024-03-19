@@ -601,6 +601,8 @@ public:
 	virtual bool			WasReloadedFromWhitelist() = 0;
 
 	virtual bool			IsPrecached() const = 0;
+
+	virtual bool			GMOD_Persist() const = 0;
 };
 
 

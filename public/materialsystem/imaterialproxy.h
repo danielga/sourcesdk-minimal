@@ -23,6 +23,7 @@ public:
 	virtual void OnBind( void * ) = 0;
 	virtual void Release() = 0;
 	virtual IMaterial *	GetMaterial() = 0;
+	virtual bool GMOD_CanBeQueued() = 0;
 
 protected:
 	// no one should call this directly

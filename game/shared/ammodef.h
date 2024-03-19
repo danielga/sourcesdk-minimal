@@ -76,6 +76,10 @@ public:
 	int					PlrDamage(int nAmmoIndex);
 	int					NPCDamage(int nAmmoIndex);
 	int					MaxCarry(int nAmmoIndex);
+	int					GMOD_MaxCarry(int nAmmoIndex);
+	void				GMOD_SetConVarPlrDamage(int nAmmoIndex, const char* plr_cvar);
+	void				GMOD_SetConVarNPCDamage(int nAmmoIndex, const char* npc_cvar);
+	void				GMOD_SetConVarMaxCarry(int nAmmoIndex, const char* carry_cvar);
 	int					DamageType(int nAmmoIndex);
 	int					TracerType(int nAmmoIndex);
 	float				DamageForce(int nAmmoIndex);

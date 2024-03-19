@@ -1725,7 +1725,6 @@ public:
 	virtual bool UsesLua();
 	virtual int GetLuaEntityType();
 	virtual void PushEntity();
-	virtual void Push_This_Entity();
 	virtual void SetEntity( const char *, C_BaseEntity * );
 	virtual int GetParentPhysicsNum();
 	virtual void SetParentPhysicsNum( int );

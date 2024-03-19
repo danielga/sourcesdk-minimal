@@ -384,6 +384,9 @@ private:
 									const char *pHelpString = 0, bool bMin = false, float fMin = 0.0,
 									bool bMax = false, float fMax = false, FnChangeCallback_t callback = 0 );
 
+	// Needed for Gmod, or else it causes a crash on level Shutdown.
+	virtual void				SetServerValue( const char* pName ) {};
+
 	// Used internally by OneTimeInit to initialize.
 	virtual void				Init();
 	int GetFlags() { return m_pParent->m_nFlags; }

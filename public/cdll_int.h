@@ -62,6 +62,7 @@ class IConVar;
 class IClientEntity;
 class CGMODVariant;
 class IGMODDataTable;
+class IGet;
 
 //-----------------------------------------------------------------------------
 // Purpose: This data structure is filled in by the engine when the client .dll requests information about
@@ -563,6 +564,14 @@ public:
 	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) );
 	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable );
 	virtual void GMOD_LoadModel( const char *path );
+	virtual void GMOD_DecalRemoveEntity( int index );
+	virtual const char *GMOD_TranslateAlias( const char *cmd );
+	virtual void GMOD_R_StudioInitLightingCache();
+	virtual void PrecacheSentenceFile();
+	virtual float GetPlayerVoiceVolume( unsigned long long unknown );
+	virtual void SetPlayerVoiceVolume( unsigned long long unknown, float volume );
+	virtual bool NET_IsHostLocal();
+	virtual bool IsDedicatedServer();
 
 };
 
@@ -596,7 +605,8 @@ public:
 	// Called once when the client DLL is loaded
 	virtual int				Init( CreateInterfaceFn appSystemFactory, 
 									CreateInterfaceFn physicsFactory,
-									CGlobalVarsBase *pGlobals ) = 0;
+									CGlobalVarsBase *pGlobals,
+									IGet *get ) = 0;
 
 	virtual void			PostInit() = 0;
 
@@ -797,7 +807,14 @@ public:
 	// Returns true if the disconnect command has been handled by the client
 	virtual bool DisconnectAttempt( void ) = 0;
 
-	virtual bool IsConnectedUserInfoChangeAllowed( IConVar *pCvar ) = 0;
+	virtual void GMOD_ReceiveServerMessage( bf_read*, int ) = 0;
+	virtual void GMOD_DoSnapshots() = 0;
+	virtual void GMOD_VoiceVolume( uint, float ) = 0;
+	virtual void GMOD_OnDrawSkybox() = 0;
+	virtual void IN_MouseWheelAnalog( int ) = 0;
+	virtual void GMOD_RequestLuaFiles() = 0;
+	virtual void GMOD_SignOnStateChanged( int, int, int ) = 0;
+	virtual void GMOD_OnAllSoundsStoppedCL() = 0;
 };
 
 #define CLIENT_DLL_INTERFACE_VERSION		"VClient017"

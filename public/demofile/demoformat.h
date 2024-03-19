@@ -14,7 +14,7 @@
 #include "utlvector.h"
 #include "tier0/platform.h"
 
-#define DEMO_HEADER_ID		"HL2DEMO"
+#define DEMO_HEADER_ID		"GMODEMO"
 #define DEMO_PROTOCOL		3
 
 #if !defined( MAX_OSPATH )

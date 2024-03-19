@@ -1540,6 +1540,9 @@ public:
 
 	virtual void ClearBuffersObeyStencilEx( bool bClearColor, bool bClearAlpha, bool bClearDepth ) = 0;
 
+	virtual void GMOD_ForceFilterMode(bool, int) = 0;
+	virtual void GMOD_FlushQueue() = 0;
+
 	// Create a texture from the specified src render target, then call pRecipient->OnAsyncCreateComplete from the main thread.
 	// The texture will be created using the destination format, and will optionally have mipmaps generated.
 	// In case of error, the provided callback function will be called with the error texture.

@@ -14,7 +14,7 @@
 
 
 #include "tier0/platform.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "vgui_controls/Frame.h"
 
 

@@ -23,7 +23,7 @@
 #include "mathlib/vector.h"
 #include "mathlib/vector4d.h"
 #include "mathlib/vmatrix.h"
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include "bitmap/imageformat.h"
 #include "texture_group_names.h"
 #include "vtf/vtf.h"

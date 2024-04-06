@@ -12,7 +12,7 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 
 class CAppSystemGroup;
 

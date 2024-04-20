@@ -24,6 +24,7 @@ struct model_t;
 struct cmodel_t;
 struct vcollide_t;
 class CGameTrace;
+class CBaseHandle;
 enum soundlevel_t;
 
 //-----------------------------------------------------------------------------

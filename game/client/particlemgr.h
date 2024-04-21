@@ -120,7 +120,6 @@ entities. Each one is useful under different conditions.
 #include "utllinkedlist.h"
 #include "utldict.h"
 #include <typeinfo>
-#endif
 #include "tier1/utlintrusivelist.h"
 #include "tier1/utlstring.h"
 

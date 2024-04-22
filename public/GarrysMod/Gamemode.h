@@ -9,7 +9,7 @@ namespace IGamemodeSystem
 
 struct Information
 {
-	bool placeholder1;
+	bool exists;
 	bool menusystem;
 	std::string title;
 	std::string name;

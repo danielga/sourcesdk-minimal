@@ -21,9 +21,9 @@ namespace IAddonSystem
 		uint64_t wsid;
 		uint64_t creator;
 		uint64_t hcontent_file;
-		uint64_t placeholder4;
+		uint64_t size;
 		uint64_t hcontent_preview;
-		uint32_t placeholder6;
+		uint32_t timeadded;
 	};
 
 	struct UGCInfo

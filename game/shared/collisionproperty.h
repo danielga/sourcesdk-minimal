@@ -15,6 +15,7 @@
 #include "engine/ICollideable.h"
 #include "mathlib/vector.h"
 #include "ispatialpartition.h"
+#include "predictable_entity.h"
 
 
 //-----------------------------------------------------------------------------

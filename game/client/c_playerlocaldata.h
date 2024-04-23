@@ -15,6 +15,8 @@
 #include "basetypes.h"
 #include "mathlib/vector.h"
 #include "playernet_vars.h"
+#include "predictable_entity.h"
+#include "interpolatedvar.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Player specific data ( sent only to local player, too )

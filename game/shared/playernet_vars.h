@@ -11,7 +11,10 @@
 #pragma once
 #endif
 
+#include "networkvar.h"
 #include "shared_classnames.h"
+#include "playernet_vars.h"
+#include "c_baseentity.h"
 
 #define NUM_AUDIO_LOCAL_SOUNDS	8
 

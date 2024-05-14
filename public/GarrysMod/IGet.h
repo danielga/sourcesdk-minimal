@@ -2,9 +2,13 @@
 
 #include "steam/isteamutils.h"
 
+namespace GarrysMod::Lua
+{
+	class ILuaShared;
+	class ILuaConVars;
+}
+
 class IFileSystem;
-class ILuaShared;
-class ILuaConVars;
 class IMenuSystem;
 class IResources;
 class IIntroScreen;
@@ -35,8 +39,8 @@ public:
 	virtual bool IsDedicatedServer() = 0;
 	virtual int GetClientCount() = 0;
 	virtual IFileSystem* FileSystem() = 0;
-	virtual ILuaShared* LuaShared() = 0;
-	virtual ILuaConVars* LuaConVars() = 0;
+	virtual GarrysMod::Lua::ILuaShared* LuaShared() = 0;
+	virtual GarrysMod::Lua::ILuaConVars* LuaConVars() = 0;
 	virtual IMenuSystem* MenuSystem() = 0;
 	virtual IResources* Resources() = 0;
 	virtual IIntroScreen* IntroScreen() = 0;

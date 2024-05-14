@@ -19,6 +19,7 @@
 #include "tier1/bitbuf.h"
 #include "inputsystem/ButtonCode.h"
 #include "modes.h"
+#include "GarrysMod/CGMODVariant.h"
 
 #if !defined( _X360 )
 #include "xbox/xboxstubs.h"
@@ -60,7 +61,6 @@ class CRenamedRecvTableInfo;
 class CMouthInfo;
 class IConVar;
 class IClientEntity;
-class CGMODVariant;
 class IGMODDataTable;
 class IGet;
 

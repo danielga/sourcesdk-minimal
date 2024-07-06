@@ -142,6 +142,8 @@
 #define VPROF_BUDGETGROUP_ATTRIBUTES				_T("Attributes")
 #define VPROF_BUDGETGROUP_FINDATTRIBUTE				_T("FindAttribute")
 #define VPROF_BUDGETGROUP_FINDATTRIBUTEUNSAFE		_T("FindAttributeUnsafe")
+#define VPROF_BUDGETGROUP_GLUA						_T("GLUA")
+#define VPROF_BUDGETGROUP_GMOD						_T("GMOD")
 	
 #ifdef _X360
 // update flags

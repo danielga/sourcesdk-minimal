@@ -612,14 +612,9 @@ public:
 	//extended clear buffers function with alpha independent from color
 	virtual void ClearBuffersObeyStencilEx( bool bClearColor, bool bClearAlpha, bool bClearDepth ) = 0;
 
-	// Allows copying a render target to another texture by specifying them both.
-	virtual void CopyRenderTargetToScratchTexture( ShaderAPITextureHandle_t srcRt, ShaderAPITextureHandle_t dstTex, Rect_t *pSrcRect = NULL, Rect_t *pDstRect = NULL ) = 0;
-
-	virtual void GMOD_ForceFilterMode( bool, int ) = 0;
-
-	// Allows locking and unlocking of very specific surface types.
-	virtual void LockRect( void** pOutBits, int* pOutPitch, ShaderAPITextureHandle_t texHandle, int mipmap, int x, int y, int w, int h, bool bWrite, bool bRead ) = 0;
-	virtual void UnlockRect( ShaderAPITextureHandle_t texHandle, int mipmap ) = 0;
+	virtual void GMOD_ForceFilterMode( bool forceFilter, int filterType ) = 0;
+	virtual void OverrideBlend( bool bOverrideEnable, bool bUseSeparateAlpha, int iSrcBlend, int iDestBlend, int iBlendFunc ) = 0;
+	virtual void OverrideBlendSeparateAlpha( bool bOverrideEnable, bool bUseSeparateAlpha, int iSrcBlend, int iDestBlend, int iBlendFunc ) = 0;
 };
 
 

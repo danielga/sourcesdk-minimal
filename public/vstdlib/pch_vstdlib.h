@@ -31,7 +31,7 @@
 #include "vstdlib/vstdlib.h"
 #include "tier1/strtools.h"
 #include "vstdlib/random.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "tier1/utlmemory.h"
 #include "tier1/utlrbtree.h"
 #include "tier1/utlvector.h"

@@ -13,7 +13,7 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
+#include "appframework/iappsystem.h"
 #include <tier1/keyvalues.h>
 
 // unicode character type

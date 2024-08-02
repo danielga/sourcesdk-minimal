@@ -1874,9 +1874,9 @@ public:
 	const char* m_SubMaterials[32];
 	int m_SubMaterialIndex[32]; // This is the index for the string in the networkstring stringtable -> util.NetworkIDToString(i) == m_SubMaterials[i]
 	void* offset3[9];
-	GarrysMod::Lua::ILuaInterface* m_GMOD_LuaInterface; // A pointer to g_Lua?
-	GarrysMod::Lua::IILuaObject* m_GMOD_LuaTable; // The Lua table
-	GarrysMod::Lua::IILuaObject* m_GMOD_LuaObject; // A reference to the lua object -> Player object, Entity object etc
+	ILuaInterface* m_GMOD_LuaInterface; // A pointer to g_Lua?
+	ILuaObject* m_GMOD_LuaTable; // The Lua table
+	ILuaObject* m_GMOD_LuaObject; // A reference to the lua object -> Player object, Entity object etc
 	bool m_GMOD_bool[32];
 	float m_GMOD_float[32];
 	int m_GMOD_int[32];

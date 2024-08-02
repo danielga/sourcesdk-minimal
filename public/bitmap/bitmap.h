@@ -15,7 +15,7 @@
 
 
 #include "bitmap/imageformat.h"
-#include "Color.h"
+#include "color.h"
 #include "dbg.h"
 
 class CUtlBuffer;

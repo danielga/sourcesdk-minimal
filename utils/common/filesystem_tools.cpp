@@ -17,7 +17,7 @@
 #include "tier1/strtools.h"
 #include "filesystem_tools.h"
 #include "tier0/icommandline.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "tier2/tier2.h"
 
 #ifdef MPI

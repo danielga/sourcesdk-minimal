@@ -15,12 +15,12 @@
 #define _wtoi64(arg) wcstoll(arg, NULL, 10)
 #endif
 
-#include <KeyValues.h>
+#include <keyvalues.h>
 #include "filesystem.h"
 #include <vstdlib/IKeyValuesSystem.h>
 #include "tier0/icommandline.h"
 
-#include <Color.h>
+#include <color.h>
 #include <stdlib.h>
 #include "tier0/dbg.h"
 #include "tier0/mem.h"

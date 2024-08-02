@@ -26,7 +26,7 @@
 #include "tier1/utlbuffer.h"
 #include "filesystem_init.h"
 #include "tier0/icommandline.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "appframework/IAppSystemGroup.h"
 #include "tier1/smartptr.h"
 #if defined( _X360 )

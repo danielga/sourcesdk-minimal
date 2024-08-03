@@ -1015,7 +1015,7 @@ CPolyhedron *ClipLinkedGeometry( GeneratePolyhedronFromPlanes_UnorderedPolygonLL
 
 			//Scan for onplane points connected to only other onplane/dead points, these points get downgraded to dead status.
 			{
-				GeneratePolyhedronFromPlanes_UnorderedPointLL *pActivePointWalk = pAllPoints;
+				pActivePointWalk = pAllPoints;
 				do
 				{
 					if( pActivePointWalk->pPoint->planarity == POINT_ONPLANE )

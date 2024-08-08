@@ -15,4 +15,5 @@ public:
 	virtual void* FindFileInDatatable( std::string const&, bool, bool ) = 0;
 	virtual bool IsSingleplayer() = 0;
 	virtual void UnknownMethod() = 0; // Name in Gmod: v000000000000000000000000000oo0000000000000000fff000000000000000000000000000000000o0o
+	virtual bool IsDirectory(const std::string&) = 0; // Semms serverside only.
 };

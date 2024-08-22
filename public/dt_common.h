@@ -124,6 +124,7 @@ typedef enum
 #ifdef SUPPORTS_INT64
 	DPT_Int64,
 #endif
+	DPT_GMODTable,
 
 	DPT_NUMSendPropTypes
 
@@ -179,6 +180,9 @@ public:
 							Q_snprintf( text, sizeof(text), "%I64d", m_Int64 );
 							break;
 #endif
+						case DPT_GMODTable :
+							Q_snprintf( text, sizeof(text), "GMODTable" ); 
+							break;
 						default :
 							Q_snprintf( text, sizeof(text), "DVariant type %i unknown", m_Type ); 
 							break;

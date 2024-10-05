@@ -422,6 +422,8 @@ private:
 	CThreadFastMutex	m_StudioHdrInitLock;
 	CThreadFastMutex	m_BoneSetupMutex;
 
+	float _offset6[39]; // Could be a part of CBaseAnimatingOverlay
+
 // FIXME: necessary so that cyclers can hack m_bSequenceFinished
 friend class CFlexCycler;
 friend class CCycler;

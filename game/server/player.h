@@ -735,8 +735,8 @@ public:
 	bool	IsPredictingWeapons( void ) const; 
 	int		CurrentCommandNumber() const;
 	const CUserCmd *GetCurrentUserCommand() const;
-	int		GetLockViewanglesTickNumber() const { return m_iLockViewanglesTickNumber; }
-	QAngle	GetLockViewanglesData() const { return m_qangLockViewangles; }
+	//int		GetLockViewanglesTickNumber() const { return m_iLockViewanglesTickNumber; }
+	//QAngle	GetLockViewanglesData() const { return m_qangLockViewangles; }
 
 	int		GetFOV( void );														// Get the current FOV value
 	int		GetDefaultFOV( void ) const;										// Default FOV if not specified otherwise
@@ -823,12 +823,12 @@ private:
 public:
 	
 	// How long since this player last interacted with something the game considers an objective/target/goal
-	float				GetTimeSinceLastObjective( void ) const { return ( m_flLastObjectiveTime == -1.f ) ? 999.f : gpGlobals->curtime - m_flLastObjectiveTime; }
-	void				SetLastObjectiveTime( float flTime ) { m_flLastObjectiveTime = flTime; }
+	//float				GetTimeSinceLastObjective( void ) const { return ( m_flLastObjectiveTime == -1.f ) ? 999.f : gpGlobals->curtime - m_flLastObjectiveTime; }
+	//void				SetLastObjectiveTime( float flTime ) { m_flLastObjectiveTime = flTime; }
 
 	// Used by gamemovement to check if the entity is stuck.
 	int m_StuckLast;
-	
+	void* _offsetply1[14];
 	// FIXME: Make these protected or private!
 
 	// This player's data that should only be replicated to 
@@ -838,15 +838,15 @@ public:
 #if defined USES_ECON_ITEMS
 	CNetworkVarEmbedded( CAttributeList,	m_AttributeList );
 #endif
-
+	
 	void InitFogController( void );
 	void InputSetFogController( inputdata_t &inputdata );
 
 	// Used by env_soundscape_triggerable to manage when the player is touching multiple
 	// soundscape triggers simultaneously.
 	// The one at the HEAD of the list is always the current soundscape for the player.
+	void* _offsetply2[8];
 	CUtlVector<EHANDLE> m_hTriggerSoundscapeList;
-
 	// Player data that's sometimes needed by the engine
 	CNetworkVarEmbedded( CPlayerState, pl );
 
@@ -864,7 +864,7 @@ public:
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_nNextThinkTick );
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_vecVelocity );
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_nWaterLevel );
-	
+
 	int						m_nButtons;
 	int						m_afButtonPressed;
 	int						m_afButtonReleased;
@@ -874,6 +874,7 @@ public:
 
 	CNetworkVar( bool, m_fOnTarget );		//Is the crosshair on a target?
 
+	char					_offsetply3[5];
 	char					m_szAnimExtension[32];
 
 	int						m_nUpdateRate;		// user snapshot rate cl_updaterate
@@ -900,7 +901,7 @@ public:
 private:
 
 	Activity				m_Activity;
-	float					m_flLastObjectiveTime;				// Last curtime player touched/killed something the gamemode considers an objective
+	//float					m_flLastObjectiveTime;				// Last curtime player touched/killed something the gamemode considers an objective
 
 protected:
 
@@ -1061,8 +1062,9 @@ protected:
 	// Last received usercmd (in case we drop a lot of packets )
 	CUserCmd				m_LastCmd;
 	CUserCmd				*m_pCurrentCommand;
-	int						m_iLockViewanglesTickNumber;
-	QAngle					m_qangLockViewangles;
+	char					_offsetply4[270]; // Is m_pCurrentCommand CUserCmd instead of a CUserCmd*?
+	//int						m_iLockViewanglesTickNumber;
+	//QAngle					m_qangLockViewangles;
 
 	float					m_flStepSoundTime;	// time to check for next footstep sound
 

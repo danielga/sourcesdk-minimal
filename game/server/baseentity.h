@@ -1866,9 +1866,10 @@ public:
 	virtual void *GMOD_GetBoneFollowerMgr();
 
 public:
-	char m_OverrideMaterial[255];
+	char m_strOverrideMaterial[255];
 	bool _offset1;
-	int _offset2[67];
+	char m_strRealClassName[256];
+	int _offset2[3];
 	float m_fCreationTime;
 	int m_iMapCreatedID;
 	const char* m_SubMaterials[32];
@@ -1886,6 +1887,7 @@ public:
 	char m_GMOD_String[4][512];
 	unsigned char _offset4;
 	int m_iCreationID;
+	int _offset5[26];
 };
 
 // Send tables exposed in this module.

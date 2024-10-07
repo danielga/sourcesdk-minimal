@@ -23,7 +23,7 @@
 #include "filesystem_helpers.h"
 #include "utllinkedlist.h"
 #include "tier0/icommandline.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "filesystem_tools.h"
 
 #if defined( MPI )

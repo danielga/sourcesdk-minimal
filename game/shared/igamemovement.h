@@ -122,7 +122,7 @@ public:
 	virtual Vector	GetPlayerMins( bool ducked ) const = 0;
 	virtual Vector	GetPlayerMaxs( bool ducked ) const = 0;
 	virtual Vector  GetPlayerViewOffset( bool ducked ) const = 0;
-
+	virtual void	_OffsetFunction() = 0; // It's some pure virtual function . . .
 };
 
 

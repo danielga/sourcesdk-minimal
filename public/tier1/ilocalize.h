@@ -13,8 +13,8 @@
 #pragma once
 #endif
 
-#include "appframework/IAppSystem.h"
-#include <tier1/KeyValues.h>
+#include "appframework/iappsystem.h"
+#include <tier1/keyvalues.h>
 
 // unicode character type
 // for more unicode manipulation functions #include <wchar.h>

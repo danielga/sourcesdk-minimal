@@ -26,7 +26,7 @@ group("SourceSDK")
 			"generichash.cpp",
 			"ilocalize.cpp",
 			"interface.cpp",
-			"KeyValues.cpp",
+			"keyvalues.cpp",
 			"kvpacker.cpp",
 			"lzmaDecoder.cpp",
 			"mempool.cpp",

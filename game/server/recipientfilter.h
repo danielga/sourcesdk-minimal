@@ -65,6 +65,10 @@ public:
 	void			AddPlayersFromBitMask( CBitVec< ABSOLUTE_PLAYER_LIMIT >& playerbits );
 	void			RemovePlayersFromBitMask( CBitVec< ABSOLUTE_PLAYER_LIMIT >& playerbits );
 
+public:
+	bool			GMOD_HasRecipient( int slot );
+	void			GMOD_RemoveRecipientsByPAS( const Vector& origin );
+
 private:
 
 	bool				m_bReliable;

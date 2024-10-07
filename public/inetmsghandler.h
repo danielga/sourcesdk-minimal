@@ -105,6 +105,7 @@ class CLC_FileCRCCheck;
 class CLC_FileMD5Check;
 class CLC_SaveReplay;
 class CLC_CmdKeyValues;
+class CLC_GMod_ClientToServer;
 
 class IClientMessageHandler : public INetMessageHandler
 {
@@ -123,6 +124,7 @@ public:
 	PROCESS_CLC_MESSAGE( SaveReplay ) = 0;
 #endif
 	PROCESS_CLC_MESSAGE( CmdKeyValues ) = 0;
+	PROCESS_CLC_MESSAGE( GMod_ClientToServer ) = 0;
 };
 
 class SVC_Print;

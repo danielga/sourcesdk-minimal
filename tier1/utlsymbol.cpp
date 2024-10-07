@@ -9,7 +9,7 @@
 #pragma warning (disable:4514)
 
 #include "utlsymbol.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "tier0/threadtools.h"
 #include "tier0/memdbgon.h"
 #include "stringpool.h"

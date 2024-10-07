@@ -14,7 +14,7 @@
 
 #include "datacache/imdlcache.h"
 #include "mathlib/vector.h"
-#include "Color.h"
+#include "color.h"
 #include "studio.h"
 
 

@@ -43,6 +43,7 @@ abstract_class ITraceFilter
 public:
 	virtual bool ShouldHitEntity( IHandleEntity *pEntity, int contentsMask ) = 0;
 	virtual TraceType_t	GetTraceType() const = 0;
+	virtual bool ShouldHitClientEntities() { return false; };
 };
 
 

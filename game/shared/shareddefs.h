@@ -115,14 +115,14 @@ public:
 #define MAX_WEAPON_SLOTS		6	// hud item selection slots
 #define MAX_WEAPON_POSITIONS	20	// max number of items within a slot
 #define MAX_ITEM_TYPES			6	// hud item selection slots
-#define MAX_WEAPONS				48	// Max number of weapons available
+#define MAX_WEAPONS				256	// Max number of weapons available
 
 #define MAX_ITEMS				5	// hard coded item types
 
 #define WEAPON_NOCLIP			-1	// clip sizes set to this tell the weapon it doesn't use a clip
 
-#define	MAX_AMMO_TYPES	32		// ???
-#define MAX_AMMO_SLOTS  32		// not really slots
+#define	MAX_AMMO_TYPES	256		// ???
+#define MAX_AMMO_SLOTS  256		// not really slots
 
 #define HUD_PRINTNOTIFY		1
 #define HUD_PRINTCONSOLE	2
@@ -280,7 +280,7 @@ enum CastVote
 
 // Humans only have left and right hands, though we might have aliens with more
 //  than two, sigh
-#define MAX_VIEWMODELS			2
+#define MAX_VIEWMODELS			3
 
 #define MAX_BEAM_ENTS			10
 

@@ -86,6 +86,7 @@ class CSkyCamera;
 class CEntityMapData;
 class INextBot;
 class IHasAttributes;
+class CBaseAnimatingOverlay;
 
 typedef CUtlVector< CBaseEntity* > EntityList_t;
 
@@ -876,6 +877,7 @@ public:
 
 	// Returns a CBaseAnimating if the entity is derived from CBaseAnimating.
 	virtual CBaseAnimating*	GetBaseAnimating() { return 0; }
+	virtual CBaseAnimatingOverlay* GetBaseAnimatingOverlay() { return 0; }
 
 	virtual IResponseSystem *GetResponseSystem();
 	virtual void	DispatchResponse( const char *conceptName );
@@ -985,7 +987,8 @@ public:
 	virtual CBaseEntity		*GetEnemy( void ) const { return NULL; }
 
 
-	void	ViewPunch( const QAngle &angleOffset );
+	virtual void	ViewPunch( const QAngle &angleOffset );
+
 	void	VelocityPunch( const Vector &vecForce );
 
 	CBaseEntity *GetNextTarget( void );

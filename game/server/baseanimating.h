@@ -332,6 +332,16 @@ public:
 
 	bool PrefetchSequence( int iSequence );
 
+public:
+	virtual void SetOverrideViewTarget(Vector& vec);
+
+	virtual int GetPhysBoneNumber(int bone);
+	virtual void SetBoneManipulator(CBaseEntity* pEnt);
+	virtual int GetBoneManipulator(bool bBool);
+	virtual void SetFlexManipulator(CBaseEntity* pEnt);
+	virtual int GetFlexManipulator(bool bBool);
+	virtual QAngle GetAnimStateRenderAngles();
+	virtual void SetAnimStateRenderAngles(QAngle& ang);
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();

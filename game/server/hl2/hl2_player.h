@@ -10,7 +10,7 @@
 #pragma once
 
 
-#include "player.h"
+#include "basemultiplayerplayer.h"
 #include "hl2_playerlocaldata.h"
 #include "simtimer.h"
 #include "soundenvelope.h"
@@ -75,10 +75,10 @@ public:
 //=============================================================================
 // >> HL2_PLAYER
 //=============================================================================
-class CHL2_Player : public CBasePlayer
+class CHL2_Player : public CBaseMultiplayerPlayer
 {
 public:
-	DECLARE_CLASS( CHL2_Player, CBasePlayer );
+	DECLARE_CLASS( CHL2_Player, CBaseMultiplayerPlayer);
 
 	CHL2_Player();
 	~CHL2_Player( void );
@@ -115,6 +115,14 @@ public:
 	virtual void		CommanderMode();
 
 	virtual bool		ClientCommand( const CCommand &args );
+
+	// Sprint Device
+	virtual void StartAutoSprint(void);
+	virtual void StartSprinting(void);
+	virtual void StopSprinting(void);
+	virtual void InitSprinting(void);
+	virtual bool CanSprint(void);
+	virtual void EnableSprint(bool bEnable);
 
 	// from cbasecombatcharacter
 	void				InitVCollision( const Vector &vecAbsOrigin, const Vector &vecAbsVelocity );
@@ -162,14 +170,7 @@ public:
 	// Locator
 	void UpdateLocatorPosition( const Vector &vecPosition );
 
-	// Sprint Device
-	void StartAutoSprint( void );
-	void StartSprinting( void );
-	void StopSprinting( void );
-	void InitSprinting( void );
-	bool IsSprinting( void ) { return m_fIsSprinting; }
-	bool CanSprint( void );
-	void EnableSprint( bool bEnable);
+	
 
 	bool CanZoom( CBaseEntity *pRequester );
 	void ToggleZoom(void);
@@ -260,7 +261,7 @@ public:
 	void  HandleAdmireGlovesAnimation( void );
 	void  StartAdmireGlovesAnimation( void );
 	
-	void  HandleSpeedChanges( void );
+	virtual void  HandleSpeedChanges( void );
 
 	void SetControlClass( Class_T controlClass ) { m_nControlClass = controlClass; }
 	

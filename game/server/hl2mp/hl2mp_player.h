@@ -88,7 +88,7 @@ public:
 
 	void CheatImpulseCommands( int iImpulse );
 	void CreateRagdollEntity( void );
-	void GiveAllItems( void );
+	virtual void GiveAllItems( void );
 	void GiveDefaultItems( void );
 
 	void NoteWeaponFired( void );
@@ -137,6 +137,9 @@ public:
 
 	virtual bool	CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
+public:
+	virtual bool InPlayerThink();
+	virtual void SetInPlayerThink(bool bBool);
 		
 private:
 

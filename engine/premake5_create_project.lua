@@ -28,6 +28,12 @@ group("SourceSDK")
 			filter({"system:windows", "configurations:Debug"})
 				linkoptions("/NODEFAULTLIB:\"libcmt\"")
 
+		filter({"architecture:x86_64", "system:linux"})
+			libdirs("../lib/public/linux64")
+
+		filter({"architecture:x86", "system:linux"})
+			libdirs("../lib/public/linux32")
+
 		filter("system:linux")
 			disablewarnings({
 				"unused-local-typedefs",
@@ -39,7 +45,6 @@ group("SourceSDK")
 				"invalid-offsetof"
 			})
 			defines({"_DLL_EXT=.so", "COMPILER_GCC", "POSIX", "_POSIX", "LINUX", "_LINUX", "GNUC", "NO_MALLOC_OVERRIDE"})
-			libdirs("../lib/public/linux32")
 			linkoptions({
 				"-Xlinker --wrap=fopen",
 				"-Xlinker --wrap=freopen",

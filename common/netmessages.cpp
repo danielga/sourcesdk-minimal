@@ -1105,7 +1105,7 @@ bool NET_SetConVar::WriteToBuffer( bf_write &buffer )
 {
 	buffer.WriteUBitLong( GetType(), NETMSG_TYPE_BITS );
 
-	intp numvars = m_ConVars.Count();
+	int numvars = m_ConVars.Count();
 	Assert( numvars <= UCHAR_MAX );
 
 	// Note how many we're sending
@@ -1430,7 +1430,7 @@ bool SVC_ClassInfo::WriteToBuffer( bf_write &buffer )
 		return !buffer.IsOverflowed();
 
 	int serverClassBits = Q_log2( numServerClasses ) + 1;
-	for ( intp i = 0; i < m_nNumServerClasses; i++ )
+	for ( int i = 0; i < m_nNumServerClasses; i++ )
 	{
 		class_t * serverclass = &m_Classes[i];
 
@@ -1459,7 +1459,7 @@ bool SVC_ClassInfo::ReadFromBuffer( bf_read &buffer )
 		return !buffer.IsOverflowed(); // stop here
 	}
 
-	for ( intp i=0; i < m_nNumServerClasses; i++ )
+	for ( int i=0; i < m_nNumServerClasses; i++ )
 	{
 		class_t serverclass;
 
@@ -1720,7 +1720,7 @@ bool SVC_Menu::ReadFromBuffer( bf_read &buffer )
 	m_Type = (DIALOG_TYPE)buffer.ReadShort();
 	m_iLength = buffer.ReadWord();
 
-	CUtlBuffer buf( (intp)0, m_iLength );
+	CUtlBuffer buf( 0, m_iLength );
 	buffer.ReadBytes( buf.Base(), m_iLength );
 	buf.SeekPut( CUtlBuffer::SEEK_HEAD, m_iLength );
 

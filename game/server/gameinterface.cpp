@@ -19,10 +19,12 @@
 
 void CServerGameTags::GetTaggedConVarList( KeyValues *pCvarTagList )
 {
+#if 0 // 64x likes to complain about this function missing if you include gameinterface.h
 	if ( pCvarTagList && g_pGameRules )
 	{
 		g_pGameRules->GetTaggedConVarList( pCvarTagList );
 	}
+#endif
 }
 
 static bf_write* g_pMsgBuffer = NULL;

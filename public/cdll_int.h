@@ -563,14 +563,14 @@ public:
 	virtual void GMOD_RawClientCmd_Unrestricted( const char *command );
 	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) );
 	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable );
-	virtual void GMOD_LoadModel( const char *path );
+	virtual MDLHandle_t GMOD_LoadModel( const char *path );
 	virtual void GMOD_DecalRemoveEntity( int index );
 	virtual const char *GMOD_TranslateAlias( const char *cmd );
 	virtual void GMOD_R_StudioInitLightingCache();
-	virtual void PrecacheSentenceFile();
+	virtual int PrecacheSentenceFile( const char* pFileName );
 	virtual float GetPlayerVoiceVolume( unsigned long long unknown );
 	virtual void SetPlayerVoiceVolume( unsigned long long unknown, float volume );
-	virtual bool NET_IsHostLocal();
+	virtual bool NET_IsHostLocal( const char* pHostName );
 	virtual bool IsDedicatedServer();
 
 };

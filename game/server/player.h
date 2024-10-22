@@ -233,7 +233,6 @@ private:
 	CBasePlayer *m_pParent; 
 };
 
-
 class CBasePlayer : public CBaseCombatCharacter
 {
 public:

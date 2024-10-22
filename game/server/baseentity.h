@@ -15,7 +15,6 @@
 
 #include "entitylist.h"
 #include "entityoutput.h"
-#include "networkvar.h"
 #include "collisionproperty.h"
 #include "ServerNetworkProperty.h"
 #include "shareddefs.h"

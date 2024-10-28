@@ -20,14 +20,14 @@ void LightDesc_t::RecalculateDerivedValues(void)
 	
 	if (m_Type==MATERIAL_LIGHT_SPOT)
 	{
-		m_ThetaDot=cos(m_Theta);
-		m_PhiDot=cos(m_Phi);
+		m_ThetaDot=(float)cos(m_Theta);
+		m_PhiDot=(float)cos(m_Phi);
 		float spread=m_ThetaDot-m_PhiDot;
 		if (spread>1.0e-10)
 		{
 			// note - this quantity is very sensitive to round off error. the sse
 			// reciprocal approximation won't cut it here.
-			OneOver_ThetaDot_Minus_PhiDot=1.0/spread;
+			OneOver_ThetaDot_Minus_PhiDot=1.0f/spread;
 		}
 		else
 		{
@@ -293,7 +293,7 @@ void LightDesc_t::SetupNewStyleAttenuation( float fFiftyPercentDistance,
 	{
 		// !!warning in lib code???!!!
 		Warning("light has _fifty_percent_distance of %f but no zero_percent_distance\n",d50);
-		d0=2.0*d50;
+		d0=2.0f*d50;
 	}
 	float a=0,b=1,c=0;
 	if (! SolveInverseQuadraticMonotonic(0,1.0,d50,2.0,d0,256.0,a,b,c))
@@ -301,7 +301,7 @@ void LightDesc_t::SetupNewStyleAttenuation( float fFiftyPercentDistance,
 		Warning("can't solve quadratic for light %f %f\n",d50,d0);
 	}
 	float v50=c+d50*(b+d50*a);
-	float scale=2.0/v50;
+	float scale=2.0f/v50;
 	a*=scale;
 	b*=scale;
 	c*=scale;

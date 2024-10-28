@@ -705,7 +705,7 @@ public:
 		m_Timer.End();
 		if ( Plat_FloatTime() - m_timeLast > 2.0 )
 		{
-			m_timeLast = Plat_FloatTime();
+			m_timeLast = (float)Plat_FloatTime();
 			if ( m_Timer.GetDuration().GetMillisecondsF() > m_spike )
 			{
 				g_VProfSignalSpike = true;

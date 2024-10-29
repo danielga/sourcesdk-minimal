@@ -5,6 +5,7 @@
 abstract_class IGarrysMod : public IGameEventListener2
 {
 public:
+	virtual void MenuThink() = 0;
 	virtual void MD5String( char* out, const char*, const char*, const char* ) = 0;
 	virtual void PlaySound( const char* sound ) = 0;
 	virtual const char* GetMapName() = 0;

@@ -423,10 +423,9 @@ public:
 	virtual float GetClientConVarFloat( int client, const char* cvar, float fallback ) = 0;
 	virtual CSteamID *GMOD_GetPlayerOwnerSteamID( const edict_t* pClient ) = 0;
 	virtual bool GMOD_GetPlayerIsSpeaking( const edict_t* pClient ) = 0;
+	virtual bool GMOD_GetPlayerIsBot( const edict_t* pClient ) = 0;
 	virtual bool GMOD_ShouldUpdateVoiceMasks() = 0;
 	virtual bool NET_IsHostLocal( const char* unknwon ) = 0;
-
-	virtual void *GetReplay() const = 0;
 };
 
 

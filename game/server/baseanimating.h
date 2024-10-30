@@ -425,6 +425,10 @@ protected:
 	CNetworkVar( float, m_flFadeScale );	// Scale applied to min / max
 
 public:
+	Vector m_OverrideViewTarget;
+	BYTE gap1494[132];
+	void* m_pBoneManiuplator;
+	void* m_pFlexManipulator;
 	COutputEvent m_OnIgnite;
 
 private:
@@ -432,7 +436,7 @@ private:
 	CThreadFastMutex	m_StudioHdrInitLock;
 	CThreadFastMutex	m_BoneSetupMutex;
 
-	float _offset6[39]; // Could be a part of CBaseAnimatingOverlay
+	BYTE _offset6[2]; // Could be a part of CBaseAnimatingOverlay
 
 // FIXME: necessary so that cyclers can hack m_bSequenceFinished
 friend class CFlexCycler;

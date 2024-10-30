@@ -1872,8 +1872,8 @@ public:
 	bool _offset1;
 	char m_strRealClassName[256];
 	int _offset2[3];
-	float m_fCreationTime;
-	int m_iMapCreatedID;
+	float m_CreationTime;
+	BYTE gap0548[4];
 	const char* m_SubMaterials[32];
 	int m_SubMaterialIndex[32]; // This is the index for the string in the networkstring stringtable -> util.NetworkIDToString(i) == m_SubMaterials[i]
 	void* offset3[9];
@@ -1887,9 +1887,12 @@ public:
 	QAngle m_GMOD_QAngle[32];
 	EHANDLE m_GMOD_EHANDLE[32];
 	char m_GMOD_String[4][512];
-	unsigned char _offset4;
+	void* m_GMOD_DataTable;
 	int m_iCreationID;
-	int _offset5[26];
+	int m_iMapCreatedID;
+	BYTE gap1328[32];
+	int m_iGModFlags;
+	BYTE gap134C[64];
 };
 
 // Send tables exposed in this module.

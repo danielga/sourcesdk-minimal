@@ -454,8 +454,8 @@ public:
 	void Start();
 	void Stop();
 
-	void SetTargetThreadId( unsigned id ) { m_TargetThreadId = id; }
-	unsigned GetTargetThreadId() { return m_TargetThreadId; }
+	void SetTargetThreadId( ThreadId_t id ) { m_TargetThreadId = id; }
+	ThreadId_t GetTargetThreadId() { return m_TargetThreadId; }
 	bool InTargetThread() { return ( m_TargetThreadId == ThreadGetCurrentId() ); }
 
 #ifdef _X360
@@ -676,7 +676,7 @@ protected:
 	bool					m_bTraceCompleteEvent;
 #endif
 
-	unsigned m_TargetThreadId;
+	ThreadId_t m_TargetThreadId;
 
 	StreamOut_t				m_pOutputStream;
 };

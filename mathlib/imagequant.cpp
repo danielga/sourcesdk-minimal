@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -66,7 +66,7 @@ void ColorQuantize(uint8 const *Image,
 	{
 		struct QuantizedValue *v=FindQNode(q,p);
 		if (v)
-			for(c=0;c<3;c++)
+			for(int c=0;c<3;c++)
 				out_palette[p*3+c]=v->Mean[c];
 	}
 	memset(Error,0,sizeof(Error));

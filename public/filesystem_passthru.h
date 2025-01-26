@@ -43,10 +43,10 @@ public:
 	virtual int				Write( void const* pInput, int size, FileHandle_t file )					{ return m_pBaseFileSystemPassThru->Write( pInput, size, file ); }
 	virtual FileHandle_t	Open( const char *pFileName, const char *pOptions, const char *pathID )		{ return m_pBaseFileSystemPassThru->Open( pFileName, pOptions, pathID ); }
 	virtual void			Close( FileHandle_t file )													{ m_pBaseFileSystemPassThru->Close( file ); }
-	virtual void			Seek( FileHandle_t file, int pos, FileSystemSeek_t seekType )				{ m_pBaseFileSystemPassThru->Seek( file, pos, seekType ); }
-	virtual unsigned int	Tell( FileHandle_t file )													{ return m_pBaseFileSystemPassThru->Tell( file ); }
-	virtual unsigned int	Size( FileHandle_t file )													{ return m_pBaseFileSystemPassThru->Size( file ); }
-	virtual unsigned int	Size( const char *pFileName, const char *pPathID )							{ return m_pBaseFileSystemPassThru->Size( pFileName, pPathID ); }
+	virtual void			Seek( FileHandle_t file, long long pos, FileSystemSeek_t seekType )			{ m_pBaseFileSystemPassThru->Seek( file, pos, seekType ); }
+	virtual unsigned long long	Tell( FileHandle_t file )												{ return m_pBaseFileSystemPassThru->Tell( file ); }
+	virtual unsigned long long	Size( FileHandle_t file )												{ return m_pBaseFileSystemPassThru->Size( file ); }
+	virtual unsigned long long	Size( const char *pFileName, const char *pPathID )						{ return m_pBaseFileSystemPassThru->Size( pFileName, pPathID ); }
 	virtual void			Flush( FileHandle_t file )													{ m_pBaseFileSystemPassThru->Flush( file ); }
 	virtual bool			Precache( const char *pFileName, const char *pPathID )						{ return m_pBaseFileSystemPassThru->Precache( pFileName, pPathID ); }
 	virtual bool			FileExists( const char *pFileName, const char *pPathID )					{ return m_pBaseFileSystemPassThru->FileExists( pFileName, pPathID ); }

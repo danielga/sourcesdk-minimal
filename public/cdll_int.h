@@ -20,6 +20,7 @@
 #include "inputsystem/ButtonCode.h"
 #include "modes.h"
 #include "GarrysMod/CGMODVariant.h"
+#include "datacache/imdlcache.h"
 
 #if !defined( _X360 )
 #include "xbox/xboxstubs.h"
@@ -553,25 +554,25 @@ public:
 	// Unlike Key_LookupBinding, leading '+' characters are not stripped from bindings.
 	virtual	const char			*Key_LookupBindingExact( const char *pBinding ) = 0;
 	
-	virtual void GMOD_SetTimeManipulator( float fScaleFramerate );
-	virtual	void GMOD_SendToServer( void *data, unsigned int dataSize, bool reliable );
-	virtual void GMOD_PlaceDecalMaterial( IMaterial *, bool, int, IClientEntity *, const Vector &, const Vector &, const color32_s &, float, float );
-	virtual void GMOD_GetSpew( char *buffer, unsigned int bufferSize );
-	virtual void GMOD_SetViewEntity( uint );
-	virtual void GMOD_BrushMaterialOverride( IMaterial *matOverride );
-	virtual void GMOD_R_RedownloadAllLightmaps( bool );
-	virtual void GMOD_RawClientCmd_Unrestricted( const char *command );
-	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) );
-	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable );
-	virtual MDLHandle_t GMOD_LoadModel( const char *path );
-	virtual void GMOD_DecalRemoveEntity( int index );
-	virtual const char *GMOD_TranslateAlias( const char *cmd );
-	virtual void GMOD_R_StudioInitLightingCache();
-	virtual int PrecacheSentenceFile( const char* pFileName );
-	virtual float GetPlayerVoiceVolume( unsigned long long unknown );
-	virtual void SetPlayerVoiceVolume( unsigned long long unknown, float volume );
-	virtual bool NET_IsHostLocal( const char* pHostName );
-	virtual bool IsDedicatedServer();
+	virtual void GMOD_SetTimeManipulator( float fScaleFramerate ) = 0;
+	virtual	void GMOD_SendToServer( void *data, unsigned int dataSize, bool reliable ) = 0;
+	virtual void GMOD_PlaceDecalMaterial( IMaterial *, bool, int, IClientEntity *, const Vector &, const Vector &, const color32_s &, float, float ) = 0;
+	virtual void GMOD_GetSpew( char *buffer, unsigned int bufferSize ) = 0;
+	virtual void GMOD_SetViewEntity( uint ) = 0;
+	virtual void GMOD_BrushMaterialOverride( IMaterial *matOverride ) = 0;
+	virtual void GMOD_R_RedownloadAllLightmaps( bool ) = 0;
+	virtual void GMOD_RawClientCmd_Unrestricted( const char *command ) = 0;
+	virtual IGMODDataTable *GMOD_CreateDataTable( void( * )( void *, int, const CGMODVariant & ) ) = 0;
+	virtual void GMOD_DestroyDataTable( IGMODDataTable *dataTable ) = 0;
+	virtual MDLHandle_t GMOD_LoadModel( const char *path ) = 0;
+	virtual void GMOD_DecalRemoveEntity( int index ) = 0;
+	virtual const char *GMOD_TranslateAlias( const char *cmd ) = 0;
+	virtual void GMOD_R_StudioInitLightingCache() = 0;
+	virtual int PrecacheSentenceFile( const char* pFileName ) = 0;
+	virtual float GetPlayerVoiceVolume( unsigned long long unknown ) = 0;
+	virtual void SetPlayerVoiceVolume( unsigned long long unknown, float volume ) = 0;
+	virtual bool NET_IsHostLocal( const char* pHostName ) = 0;
+	virtual bool IsDedicatedServer() = 0;
 
 };
 

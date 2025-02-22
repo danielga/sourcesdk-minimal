@@ -14,7 +14,9 @@
 #include "networkvar.h"
 #include "shared_classnames.h"
 #include "playernet_vars.h"
+#ifdef CLIENT_DLL
 #include "c_baseentity.h"
+#endif
 
 #define NUM_AUDIO_LOCAL_SOUNDS	8
 

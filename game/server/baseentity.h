@@ -1851,7 +1851,7 @@ public:
 	virtual void InitializeScriptedEntity( const char * );
 	virtual void ClearLuaData();
 	virtual ILuaObject *GetLuaTable();
-	virtual void *GetLuaEntity();
+	virtual ILuaObject *GetLuaEntity();
 	virtual void Lua_OnEntityInitialized();
 	virtual void SetLuaTable( ILuaObject * );
 	virtual bool HasLuaTable();

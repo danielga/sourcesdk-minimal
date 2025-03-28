@@ -1111,10 +1111,10 @@ bool NET_SetConVar::WriteToBuffer( bf_write &buffer )
 	// Note how many we're sending
 	buffer.WriteByte( numvars );
 
-	for (auto &cvar : m_ConVars)
+	for (auto &pCvar : m_ConVars)
 	{
-		buffer.WriteString( cvar.name  );
-		buffer.WriteString( cvar.value );
+		buffer.WriteString( pCvar.name  );
+		buffer.WriteString( pCvar.value );
 	}
 
 	return !buffer.IsOverflowed();

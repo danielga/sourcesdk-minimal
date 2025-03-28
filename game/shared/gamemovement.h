@@ -64,7 +64,7 @@ public:
 	virtual unsigned int PlayerSolidMask( bool brushOnly = false );	///< returns the solid mask for the given player, so bots can have a more-restrictive set
 	CBasePlayer		*player;
 	CMoveData *GetMoveData() { return mv; }
-protected:
+//protected:
 	// Input/Output for this movement
 	CMoveData		*mv;
 	
@@ -251,7 +251,7 @@ protected:
 	void			TryTouchGroundInQuadrants( const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm );
 
 
-protected:
+//protected:
 
 	// Performs the collision resolution for fliers.
 	void			PerformFlyCollisionResolution( trace_t &pm, Vector &move );

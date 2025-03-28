@@ -6,7 +6,7 @@ group("SourceSDK")
 		targetdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		debugdir("%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}")
 		objdir("!%{prj.location}/%{cfg.architecture}/%{cfg.buildcfg}/intermediate/%{prj.name}")
-		defines({"RAD_TELEMETRY_DISABLED", "COMMON_STATIC_LIB", "GAME_DLL", "STATIC_TIER0"})
+		defines({"RAD_TELEMETRY_DISABLED", "COMMON_STATIC_LIB", "GAME_DLL"})
 		externalincludedirs({
 			"../common",
 			"../public",

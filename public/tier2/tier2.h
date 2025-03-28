@@ -46,7 +46,7 @@ extern IMaterialSystemHardwareConfig *g_pMaterialSystemHardwareConfig;
 extern IDebugTextureInfo *g_pMaterialSystemDebugTextureInfo;
 extern IVBAllocTracker *g_VBAllocTracker;
 extern IColorCorrectionSystem *colorcorrection;
-extern IP4 *p4;
+extern IP4 *p4; //-V707
 extern IMdlLib *mdllib;
 extern IQueuedLoader *g_pQueuedLoader;
 
@@ -125,4 +125,3 @@ public:
 
 
 #endif // TIER2_H
-

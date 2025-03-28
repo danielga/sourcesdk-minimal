@@ -71,7 +71,7 @@ public:
 	virtual ~CBaseClient();
 
 public:
-
+	// IClient
 	int			GetPlayerSlot() const { return m_nClientSlot; };
 	int			GetUserID() const { return m_UserID; };
 	const USERID_t	GetNetworkID() const;
@@ -80,6 +80,8 @@ public:
 	IServer			*GetServer() { return (IServer*)m_Server; };
 	const char		*GetUserSetting(const char *cvar) const;
 	const char		*GetNetworkIDString() const;
+
+	// Others
 	uint			GetFriendsID() const { return m_nFriendsID; }
 	const char		*GetFriendsName() const { return m_FriendsName; }
 	void			UpdateName( const char *pszDefault );
@@ -185,9 +187,7 @@ public:
 	void			SetPlayerNameLocked( bool bValue ) { m_bPlayerNameLocked = bValue; }
 	bool			IsPlayerNameLocked( void ) { return m_bPlayerNameLocked; }
 
-#ifdef BUILD_GMOD
 	void			SetSignOnState( int ); // Why
-#endif
 
 private:	
 
@@ -204,6 +204,13 @@ public:
 	int				m_UserID;			// identifying number on server
 	char			m_Name[MAX_PLAYER_NAME_LENGTH];			// for printing to other people
 	char			m_GUID[SIGNED_GUID_LEN + 1]; // the clients CD key
+
+/*#if ARCHITECTURE_IS_X86_64
+	// CNETMsg_PlayerAvatarData_t m_msgAvatarData;	// Client avatar
+	// This are the offsets for the variable above. Why not add it directly? Because it depends on sooo much it would be a pain to do. Maybe if I'm bored I'll do it.
+	int _offset[23];
+	char _offset2;
+#endif*/
 
 	CSteamID		m_SteamID;			// This is valid when the client is authenticated
 	

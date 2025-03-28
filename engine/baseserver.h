@@ -153,7 +153,7 @@ public: // IConnectionlessPacketHandler implementation
 
 	CBaseClient* Client(int index) { return static_cast<CBaseClient*>(m_Clients[index]); };
 
-protected:
+public: // protected - private, doesn't matter, I want access :3
 
 	virtual IClient *ConnectClient ( netadr_t &adr, int protocol, int challenge, int clientChallenge, int authProtocol, 
 					    const char *name, const char *password, const char *hashedCDkey, int cdKeyLen );
@@ -231,7 +231,7 @@ private:
 	int			m_nUserid;			// increases by one with every new client
 
 
-protected:
+public: // Gimme that access
 
 	int			m_nMaxclients;         // Current max #
 	int			m_nSpawnCount;			// Number of servers spawned since start,

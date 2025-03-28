@@ -1821,7 +1821,7 @@ bool MM_ClientInfo::ReadFromBuffer( bf_read &buffer )
 	{
 		m_xuids[i] = buffer.ReadLongLong();	// 64 bit
 		buffer.ReadBytes( &m_cVoiceState, sizeof( m_cVoiceState ) );
-		m_iTeam[i] = buffer.ReadLong();
+		m_iTeam[i] = (char)buffer.ReadLong();
 		m_iControllers[i] = buffer.ReadByte();
 		buffer.ReadString( m_szGamertags[i], sizeof( m_szGamertags[i] ), true );
 	}

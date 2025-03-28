@@ -183,7 +183,8 @@ public: // Nothing shall be private
 	CUtlVector<int>			m_iExplicitDeleteSlots;
 };
 
+#ifndef NO_FRAMESNAPSHOTDEF
 extern CFrameSnapshotManager *framesnapshotmanager;
-
+#endif
 
 #endif // FRAMESNAPSHOT_H

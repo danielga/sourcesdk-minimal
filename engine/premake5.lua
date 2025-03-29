@@ -5,7 +5,7 @@ function IncludeSDKEngine()
 
 	filter({})
 
-	externalincludedirs(current_dir .. "/../engine")
+	externalincludedirs(current_dir)
 	links("engine")
 
 	local _project = project()

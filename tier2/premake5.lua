@@ -8,15 +8,6 @@ function IncludeSDKTier2()
 	externalincludedirs(current_dir .. "/../public/tier2")
 	links("tier2")
 
-	filter("system:windows")
-		links("tier2")
-
-	filter("system:macosx")
-		linkoptions(current_dir .. "/../lib/public/osx32/tier2.a")
-
-	filter("system:linux")
-		linkoptions(current_dir .. "/../lib/public/linux32/tier2.a")
-
 	filter({})
 
 	local _project = project()

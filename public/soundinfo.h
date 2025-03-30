@@ -47,7 +47,7 @@
 	else					\
 	{					\
 	buffer.WriteOneBit(1);		\
-	buffer.WriteSBitLong( name / scale, length ); \
+	buffer.WriteSBitLong( (int)(name / scale), length ); \
 	}
 
 #define READ_DELTA_SINT( name, length )			\
@@ -234,7 +234,7 @@ struct SoundInfo_t
 				fDelay += SOUND_DELAY_OFFSET;
 
 				// Convert to msecs
-				int iDelay = fDelay * 1000.0f;
+				int iDelay = (int)(fDelay * 1000.0f);
 
 				iDelay = clamp( iDelay, (int)(-10 * MAX_SOUND_DELAY_MSEC), (int)(MAX_SOUND_DELAY_MSEC) );
 

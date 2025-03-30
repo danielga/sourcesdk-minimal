@@ -59,7 +59,7 @@ float AssociatedLegendrePolynomial( int nL, int nM, float flX )
 	float flPmm = 1.;
 	if ( nM > 0 )
 	{
-		float flSomX2 = sqrt( ( 1 - flX ) * ( 1 + flX ) );
+		float flSomX2 = (float)sqrt( ( 1 - flX ) * ( 1 + flX ) );
 		float flFact = 1.;
 		for( int i = 0 ; i < nM; i++ )
 		{
@@ -69,13 +69,13 @@ float AssociatedLegendrePolynomial( int nL, int nM, float flX )
 	}
 	if ( nL == nM )
 		return flPmm;
-	float flPmmp1 = flX * ( 2.0 * nM + 1.0 ) * flPmm;
+	float flPmmp1 = flX * ( 2.0f * nM + 1.0f ) * flPmm;
 	if ( nL == nM + 1 ) 
 		return flPmmp1;
 	float flPll = 0.;
 	for( int nLL = nM + 2 ; nLL <= nL; nLL++ )
 	{
-		flPll = ( ( 2.0 * nLL - 1.0 ) * flX * flPmmp1 - ( nLL + nM - 1.0 ) * flPmm ) * ( 1.0 / ( nLL - nM ) );
+		flPll = ( ( 2.0f * nLL - 1.0f ) * flX * flPmmp1 - ( nLL + nM - 1.0f ) * flPmm ) * ( 1.0f / ( nLL - nM ) );
 		flPmm = flPmmp1;
 		flPmmp1 = flPll;
 	}
@@ -85,7 +85,7 @@ float AssociatedLegendrePolynomial( int nL, int nM, float flX )
 static float SHNormalizationFactor( int nL, int nM )
 {
 	double flTemp = ( ( 2. * nL + 1.0 ) * s_flFactorials[ nL - nM ] )/ ( 4. * M_PI * s_flFactorials[ nL + nM ] );
-	return sqrt( flTemp );
+	return (float)sqrt( flTemp );
 }
 
 #define SQRT_2 1.414213562373095 
@@ -96,29 +96,29 @@ FORCEINLINE float SphericalHarmonic( int nL, int nM, float flTheta, float flPhi,
 		return SHNormalizationFactor( nL, 0 ) * AssociatedLegendrePolynomial( nL, nM, flCosTheta );
 
 	if ( nM > 0 )
-		return SQRT_2 * SHNormalizationFactor( nL, nM ) * cos ( nM * flPhi ) *
-			AssociatedLegendrePolynomial( nL, nM, flCosTheta );
+		return (float)(SQRT_2 * SHNormalizationFactor( nL, nM ) * cos ( nM * flPhi ) *
+			AssociatedLegendrePolynomial( nL, nM, flCosTheta ));
 
 	return 
-		SQRT_2 * SHNormalizationFactor( nL, -nM ) * sin( -nM * flPhi ) * AssociatedLegendrePolynomial( nL, -nM, flCosTheta );
+		(float)(SQRT_2 * SHNormalizationFactor( nL, -nM ) * sin( -nM * flPhi ) * AssociatedLegendrePolynomial( nL, -nM, flCosTheta ));
 
 }
 
 float SphericalHarmonic( int nL, int nM, float flTheta, float flPhi )
 {
-	return SphericalHarmonic( nL, nM, flTheta, flPhi, cos( flTheta ) );
+	return SphericalHarmonic( nL, nM, flTheta, flPhi, (float)cos( flTheta ) );
 }
 
 float SphericalHarmonic( int nL, int nM, Vector const &vecDirection )
 {
 	Assert( fabs( VectorLength( vecDirection ) - 1.0 ) < 0.0001 );
-	float flPhi = acos( vecDirection.z );
+	float flPhi = (float)acos( vecDirection.z );
 	float flTheta = 0;
 	float S = Square( vecDirection.x ) + Square( vecDirection.y );
 	if ( S > 0 )
 	{
-		flTheta = atan2( vecDirection.y, vecDirection.x );
+		flTheta = (float)atan2( vecDirection.y, vecDirection.x );
 	}
-	return SphericalHarmonic( nL, nM, flTheta, flPhi, cos( flTheta ) );
+	return SphericalHarmonic( nL, nM, flTheta, flPhi, (float)cos( flTheta ) );
 }
 

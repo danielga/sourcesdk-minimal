@@ -233,7 +233,6 @@ private:
 	CBasePlayer *m_pParent; 
 };
 
-
 class CBasePlayer : public CBaseCombatCharacter
 {
 public:
@@ -282,7 +281,7 @@ public:
 	// Returns true if this player wants pPlayer to be moved back in time when this player runs usercmds.
 	// Saves a lot of overhead on the server if we can cull out entities that don't need to lag compensate
 	// (like team members, entities out of our PVS, etc).
-	virtual bool			WantsLagCompensationOnEntity( const CBasePlayer	*pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
+	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*entity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
 	virtual void			Spawn( void );
 	virtual void			Activate( void );
@@ -1226,6 +1225,31 @@ private:
 public:
 	virtual unsigned int PlayerSolidMask( bool brushOnly = false ) const;	// returns the solid mask for the given player, so bots can have a more-restrictive set
 
+	virtual void OnPlayerSay(const char* pszMsg);
+	virtual float RestrictPlayerPitch();
+
+	virtual float GetSprintSpeed();
+	virtual float GetWalkSpeed();
+	virtual float GetSlowWalkSpeed();
+	virtual float GetLadderSpeed();
+	virtual float GetCrouchWalkSpeed();
+	virtual float GetDuckedSpeed();
+	virtual float GetUnDuckSpeed();
+
+	virtual void SetSprintSpeed(float flVal);
+	virtual void SetWalkSpeed(float flVal);
+	virtual void SetSlowWalkSpeed(float flVal);
+	virtual void SetLadderSpeed(float flVal);
+	virtual void SetCrouchedWalkSpeed(float flVal);
+	virtual void SetDuckedSpeed(float flVal);
+	virtual void SetUnDuckSpeed(float flVal);
+
+	virtual bool CanAttack();
+
+	virtual int MouseWheel();
+	virtual void SetMouseWheel(int iVal);
+
+	virtual int GetMaxArmor();
 };
 
 typedef CHandle<CBasePlayer> CBasePlayerHandle;

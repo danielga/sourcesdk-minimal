@@ -40,9 +40,6 @@ public:
 	virtual void PickupObject ( CBaseEntity *pObject, bool bLimitMassAndSize );
 	virtual void PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper );
 
-	virtual float GetFOV( void );
-	virtual int GetFOVForNetworking( void );
-	virtual void UpdateButtonState( int nUserCmdButtonMask );
 	virtual void OnPlayerSay( const char* );
 	virtual float RestrictPlayerPitch();
 	virtual bool CanAttack();

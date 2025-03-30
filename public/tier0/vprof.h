@@ -142,6 +142,8 @@
 #define VPROF_BUDGETGROUP_ATTRIBUTES				_T("Attributes")
 #define VPROF_BUDGETGROUP_FINDATTRIBUTE				_T("FindAttribute")
 #define VPROF_BUDGETGROUP_FINDATTRIBUTEUNSAFE		_T("FindAttributeUnsafe")
+#define VPROF_BUDGETGROUP_GLUA						_T("GLUA")
+#define VPROF_BUDGETGROUP_GMOD						_T("GMOD")
 	
 #ifdef _X360
 // update flags
@@ -452,8 +454,8 @@ public:
 	void Start();
 	void Stop();
 
-	void SetTargetThreadId( unsigned id ) { m_TargetThreadId = id; }
-	unsigned GetTargetThreadId() { return m_TargetThreadId; }
+	void SetTargetThreadId( ThreadId_t id ) { m_TargetThreadId = id; }
+	ThreadId_t GetTargetThreadId() { return m_TargetThreadId; }
 	bool InTargetThread() { return ( m_TargetThreadId == ThreadGetCurrentId() ); }
 
 #ifdef _X360
@@ -674,7 +676,7 @@ protected:
 	bool					m_bTraceCompleteEvent;
 #endif
 
-	unsigned m_TargetThreadId;
+	ThreadId_t m_TargetThreadId;
 
 	StreamOut_t				m_pOutputStream;
 };
@@ -703,7 +705,7 @@ public:
 		m_Timer.End();
 		if ( Plat_FloatTime() - m_timeLast > 2.0 )
 		{
-			m_timeLast = Plat_FloatTime();
+			m_timeLast = (float)Plat_FloatTime();
 			if ( m_Timer.GetDuration().GetMillisecondsF() > m_spike )
 			{
 				g_VProfSignalSpike = true;

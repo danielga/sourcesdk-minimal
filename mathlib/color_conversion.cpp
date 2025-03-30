@@ -133,28 +133,28 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 	float g = gamma;
 	if (g > 3.0) 
 	{
-		g = 3.0;
+		g = 3.0f;
 	}
 
-	g = 1.0 / g;
+	g = 1.0f/ g;
 	g1 = texGamma * g; 
 
 	if (brightness <= 0.0) 
 	{
-		g3 = 0.125;
+		g3 = 0.125f;
 	}
 	else if (brightness > 1.0) 
 	{
-		g3 = 0.05;
+		g3 = 0.05f;
 	}
 	else 
 	{
-		g3 = 0.125 - (brightness * brightness) * 0.075;
+		g3 = 0.125f - (brightness * brightness) * 0.075f;
 	}
 
 	for (i=0 ; i<256 ; i++)
 	{
-		inf = 255 * pow ( i/255.f, g1 ); 
+		inf = (int)(255 * pow ( i/255.f, g1 )); 
 		if (inf < 0)
 			inf = 0;
 		if (inf > 255)
@@ -166,7 +166,7 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 	{
 		float f;
 
-		f = i / 1023.0;
+		f = i / 1023.0f;
 
 		// scale up
 		if (brightness > 1.0)
@@ -174,12 +174,12 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 
 		// shift up
 		if (f <= g3)
-			f = (f / g3) * 0.125;
+			f = (f / g3) * 0.125f;
 		else 
-			f = 0.125 + ((f - g3) / (1.0 - g3)) * 0.875;
+			f = 0.125f + ((f - g3) / (1.0f - g3)) * 0.875f;
 
 		// convert linear space to desired gamma space
-		inf = 255 * pow ( f, g ); 
+		inf = (int)(255 * pow ( f, g )); 
 
 		if (inf < 0)
 			inf = 0;
@@ -201,7 +201,7 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 	for (i=0 ; i<256 ; i++)
 	{
 		// convert from nonlinear texture space (0..255) to linear space (0..1)
-		texturetolinear[i] =  pow( i / 255.f, texGamma );
+		texturetolinear[i] =  (float)pow( i / 255.f, texGamma );
 
 		// convert from linear space (0..1) to nonlinear (sRGB) space (0..1)
 		g_Mathlib_LinearToGamma[i] =  LinearToGammaFullRange( i / 255.f );
@@ -213,7 +213,7 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 	for (i=0 ; i<1024 ; i++)
 	{
 		// convert from linear space (0..1) to nonlinear texture space (0..255)
-		lineartotexture[i] =  pow( i / 1023.0, 1.0 / texGamma ) * 255;
+		lineartotexture[i] =  (int)(pow( i / 1023.0, 1.0 / texGamma ) * 255);
 	}
 
 #if 0
@@ -248,7 +248,7 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 		for (i=0 ; i<4096 ; i++)
 		{
 			// convert from linear 0..4 (x1024) to screen corrected vertex space (0..1?)
-			f = pow ( i/1024.0, 1.0 / gamma );
+			f = (float)pow ( i/1024.0, 1.0 / gamma );
 
 			lineartovertex[i] = f * overbrightFactor;
 			if (lineartovertex[i] > 1)
@@ -263,12 +263,12 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 
 float GammaToLinearFullRange( float gamma )
 {
-	return pow( gamma, 2.2f );
+	return (float)pow( gamma, 2.2f );
 }
 
 float LinearToGammaFullRange( float linear )
 {
-	return pow( linear, 1.0f / 2.2f );
+	return (float)pow( linear, 1.0f / 2.2f );
 }
 
 float GammaToLinear( float gamma )
@@ -317,13 +317,13 @@ float LinearToGamma( float linear )
 float SrgbGammaToLinear( float flSrgbGammaValue )
 {
 	float x = clamp( flSrgbGammaValue, 0.0f, 1.0f );
-	return ( x <= 0.04045f ) ? ( x / 12.92f ) : ( pow( ( x + 0.055f ) / 1.055f, 2.4f ) );
+	return ( x <= 0.04045f ) ? ( x / 12.92f ) : ( (float)pow( ( x + 0.055f ) / 1.055f, 2.4f ) );
 }
 
 float SrgbLinearToGamma( float flLinearValue )
 {
 	float x = clamp( flLinearValue, 0.0f, 1.0f );
-	return ( x <= 0.0031308f ) ? ( x * 12.92f ) : ( 1.055f * pow( x, ( 1.0f / 2.4f ) ) ) - 0.055f;
+	return ( x <= 0.0031308f ) ? ( x * 12.92f ) : ( 1.055f * (float)pow( x, ( 1.0f / 2.4f ) ) ) - 0.055f;
 }
 
 float X360GammaToLinear( float fl360GammaValue )
@@ -340,7 +340,7 @@ float X360GammaToLinear( float fl360GammaValue )
 		else
 		{
 			flLinearValue = fl360GammaValue * ( 255.0f * 2.0f ) - 64.0f;
-			flLinearValue += floor( flLinearValue * ( 1.0f / 512.0f ) );
+			flLinearValue += (float)floor( flLinearValue * ( 1.0f / 512.0f ) );
 		}
 	}
 	else
@@ -348,18 +348,18 @@ float X360GammaToLinear( float fl360GammaValue )
 		if( fl360GammaValue < ( 192.0f / 255.0f ) )
 		{
 			flLinearValue = fl360GammaValue * ( 255.0f * 4.0f ) - 256.0f;
-			flLinearValue += floor( flLinearValue * ( 1.0f / 256.0f ) );
+			flLinearValue += (float)floor( flLinearValue * ( 1.0f / 256.0f ) );
 		}
 		else
 		{
 			flLinearValue = fl360GammaValue * ( 255.0f * 8.0f ) - 1024.0f;
-			flLinearValue += floor( flLinearValue * ( 1.0f / 128.0f ) );
+			flLinearValue += (float)floor( flLinearValue * ( 1.0f / 128.0f ) );
 		}
 	}
 
 	flLinearValue *= 1.0f / 1023.0f;
 
-	flLinearValue = clamp( flLinearValue, 0.0f, 1.0f );
+	flLinearValue = (float)clamp( flLinearValue, 0.0f, 1.0f );
 	return flLinearValue;
 }
 
@@ -423,7 +423,7 @@ int LinearToTexture( float f )
 {
 	Assert( s_bMathlibInitialized );
 	int i;
-	i = f * 1023;	// assume 0..1 range
+	i = (int)(f * 1023);	// assume 0..1 range
 	if (i < 0)
 		i = 0;
 	if (i > 1023)
@@ -438,7 +438,7 @@ int LinearToScreenGamma( float f )
 {
 	Assert( s_bMathlibInitialized );
 	int i;
-	i = f * 1023;	// assume 0..1 range
+	i = (int)(f * 1023);	// assume 0..1 range
 	if (i < 0)
 		i = 0;
 	if (i > 1023)
@@ -617,9 +617,9 @@ void VectorToColorRGBExp32( const Vector& vin, ColorRGBExp32 &c )
 	// This awful construction is necessary to prevent VC2005 from using the 
 	// fldcw/fnstcw control words around every float-to-unsigned-char operation.
 	{
-		int red = (vin.x * scalar);
-		int green = (vin.y * scalar);
-		int blue = (vin.z * scalar);
+		int red = (int)(vin.x * scalar);
+		int green = (int)(vin.y * scalar);
+		int blue = (int)(vin.z * scalar);
 
 		c.r = red;
 		c.g = green;

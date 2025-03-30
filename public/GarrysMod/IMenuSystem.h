@@ -15,6 +15,7 @@ struct CLuaError;
 abstract_class IMenuSystem
 {
 public:
+	virtual ~IMenuSystem();
 	virtual int Init( CreateInterfaceFn, IGet*, IGarrysMod*, CGlobalVarsBase* ) = 0;
 	virtual void Shutdown() = 0;
 	virtual void SetupNetworkString( INetworkStringTableContainer* ) = 0;
@@ -24,4 +25,5 @@ public:
 	virtual void OnLuaError( CLuaError*, IAddonSystem::Information* ) = 0;
 	virtual void SendProblemToMenu( const char* id, int severity, const char* params ) = 0;
 	virtual bool IsServerBlacklisted( const char* address, const char* hostname, const char* description, const char* gamemode, const char* map ) = 0;
+	virtual void OnPauseMenuBlockedTooManyTimes() = 0;
 };

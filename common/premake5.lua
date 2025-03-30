@@ -1,13 +1,13 @@
 local current_dir = _SCRIPT_DIR
 
 function IncludeSDKCommon()
-	IncludePackage("sourcesdk_common")
+	local refcount = IncludePackage("sourcesdk_common")
 
 	local _project = project()
 
 	defines({_project.serverside and "GAME_DLL" or "CLIENT_DLL", "RAD_TELEMETRY_DISABLED", "GMOD_USE_SOURCESDK"})
 	externalincludedirs({
-		current_dir .. "/../common",
+		current_dir,
 		current_dir .. "/../game/shared",
 		current_dir .. "/../public"
 	})
@@ -54,4 +54,11 @@ function IncludeSDKCommon()
 		libdirs(current_dir .. "/../lib/public/osx32")
 
 	filter({})
+
+	links("common")
+	if refcount == 1 then
+		dofile(current_dir .. "/premake5_create_project.lua")
+	end
+
+	project(_project.name)
 end

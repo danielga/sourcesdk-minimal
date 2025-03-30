@@ -320,10 +320,10 @@ public:
 	virtual FileHandle_t Open( const char *pFileName, const char *pOptions, const char *pathID = nullptr ) = 0;
 	virtual FileHandle_t OpenEx( const char *pFileName, const char *pOptions, unsigned flags = 0, const char *pathID = nullptr, char **ppszResolvedFilename = nullptr ) = 0;
 	virtual void Close( FileHandle_t file ) = 0;
-	virtual void Seek( FileHandle_t file, int pos, FileSystemSeek_t seekType ) = 0;
-	virtual unsigned int Tell( FileHandle_t file ) = 0;
-	virtual unsigned int Size( FileHandle_t file ) = 0;
-	virtual unsigned int Size( const char *pFileName, const char *pPathID = nullptr ) = 0;
+	virtual void Seek( FileHandle_t file, long long pos, FileSystemSeek_t seekType ) = 0;
+	virtual unsigned long long Tell( FileHandle_t file ) = 0;
+	virtual unsigned long long Size( FileHandle_t file ) = 0;
+	virtual unsigned long long Size( const char *pFileName, const char *pPathID = nullptr ) = 0;
 
 	virtual void SetBufferSize( FileHandle_t file, unsigned nBytes ) = 0;
 	virtual bool IsOk( FileHandle_t file ) = 0;

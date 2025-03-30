@@ -51,7 +51,7 @@ static float CellNoise( int ix, int iy, int iz, float xfrac, float yfrac, float 
 		float dsq=SQ(impulse_xcoords[coord_idx]-xfrac)+
 			SQ(impulse_ycoords[coord_idx]-yfrac)+
 			SQ(impulse_zcoords[coord_idx]-zfrac);
-		dsq = sqrt( dsq );
+		dsq = (float)sqrt( dsq );
 		if (dsq < 1.0 )
 		{
 			ret += (*pNoiseShapeFunction)( 1-dsq );
@@ -81,7 +81,7 @@ float FractalNoise( Vector const &pnt, int n_octaves)
 		scale *= 2.0;
 		iscale *= 0.5;
 	}
-	return ret * ( 1.0/sumscale );
+	return ret * ( 1.0f/sumscale );
 }
 
 float Turbulence( Vector const &pnt, int n_octaves)
@@ -94,12 +94,12 @@ float Turbulence( Vector const &pnt, int n_octaves)
 	{
 		Vector p1=pnt;
 		p1 *= scale;
-		ret+=iscale * fabs ( 2.0*( SparseConvolutionNoise( p1 )-.5 ) );
+		ret+=iscale * (float)fabs ( 2.0f*( SparseConvolutionNoise( p1 )-.5f ) );
 		sumscale += iscale;
 		scale *= 2.0;
 		iscale *= 0.5;
 	}
-	return ret * ( 1.0/sumscale );
+	return ret * ( 1.0f/sumscale );
 }
 
 #ifdef MEASURE_RANGE
@@ -115,9 +115,9 @@ float SparseConvolutionNoise(Vector const &pnt, float (*pNoiseShapeFunction)(flo
 	int iz=LatticeCoord(pnt.z);
 
 	// compute offsets within unit cube
-	float xfrac=pnt.x-floor(pnt.x);
-	float yfrac=pnt.y-floor(pnt.y);
-	float zfrac=pnt.z-floor(pnt.z);
+	float xfrac=pnt.x-(float)floor(pnt.x);
+	float yfrac=pnt.y-(float)floor(pnt.y);
+	float zfrac=pnt.z-(float)floor(pnt.z);
 
 	float sum_out=0.;
 
@@ -133,7 +133,7 @@ float SparseConvolutionNoise(Vector const &pnt, float (*pNoiseShapeFunction)(flo
 	fmin1=vmin(sum_out,fmin1);
 	fmax1=vmax(sum_out,fmax1);
 #endif
-	return RemapValClamped( sum_out, .544487, 9.219176, 0.0, 1.0 );
+	return RemapValClamped( sum_out, .544487f, 9.219176f, 0.0f, 1.0f );
 }
 
 
@@ -174,9 +174,9 @@ int NoiseHashIndex( int i )
 
 float ImprovedPerlinNoise( Vector const &pnt )
 {
-	float fx = floor(pnt.x);
-	float fy = floor(pnt.y);
-	float fz = floor(pnt.z);
+	float fx = (float)floor(pnt.x);
+	float fy = (float)floor(pnt.y);
+	float fz = (float)floor(pnt.z);
 
 	int X = (int)fx & 255;								// FIND UNIT CUBE THAT
 	int Y = (int)fy & 255;								// CONTAINS POINT.

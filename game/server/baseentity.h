@@ -15,7 +15,6 @@
 
 #include "entitylist.h"
 #include "entityoutput.h"
-#include "networkvar.h"
 #include "collisionproperty.h"
 #include "ServerNetworkProperty.h"
 #include "shareddefs.h"
@@ -87,6 +86,7 @@ class CSkyCamera;
 class CEntityMapData;
 class INextBot;
 class IHasAttributes;
+class CBaseAnimatingOverlay;
 
 typedef CUtlVector< CBaseEntity* > EntityList_t;
 
@@ -877,6 +877,7 @@ public:
 
 	// Returns a CBaseAnimating if the entity is derived from CBaseAnimating.
 	virtual CBaseAnimating*	GetBaseAnimating() { return 0; }
+	virtual CBaseAnimatingOverlay* GetBaseAnimatingOverlay() { return 0; }
 
 	virtual IResponseSystem *GetResponseSystem();
 	virtual void	DispatchResponse( const char *conceptName );
@@ -986,7 +987,8 @@ public:
 	virtual CBaseEntity		*GetEnemy( void ) const { return NULL; }
 
 
-	void	ViewPunch( const QAngle &angleOffset );
+	virtual void	ViewPunch( const QAngle &angleOffset );
+
 	void	VelocityPunch( const Vector &vecForce );
 
 	CBaseEntity *GetNextTarget( void );
@@ -1676,7 +1678,8 @@ private:
 	EHANDLE			m_pBlocker;
 
 	// was pev->gravity;
-	float			m_flGravity;  // rename to m_flGravityScale;
+	CNetworkVarForDerived( float, m_flGravity );
+
 	// was pev->friction
 	CNetworkVarForDerived( float, m_flFriction );
 	CNetworkVar( float, m_flElasticity );
@@ -1848,7 +1851,7 @@ public:
 	virtual void InitializeScriptedEntity( const char * );
 	virtual void ClearLuaData();
 	virtual ILuaObject *GetLuaTable();
-	virtual void *GetLuaEntity();
+	virtual ILuaObject *GetLuaEntity();
 	virtual void Lua_OnEntityInitialized();
 	virtual void SetLuaTable( ILuaObject * );
 	virtual bool HasLuaTable();
@@ -1870,8 +1873,8 @@ public:
 	bool _offset1;
 	char m_strRealClassName[256];
 	int _offset2[3];
-	float m_fCreationTime;
-	int m_iMapCreatedID;
+	float m_CreationTime;
+	BYTE gap0548[4];
 	const char* m_SubMaterials[32];
 	int m_SubMaterialIndex[32]; // This is the index for the string in the networkstring stringtable -> util.NetworkIDToString(i) == m_SubMaterials[i]
 	void* offset3[9];
@@ -1885,9 +1888,12 @@ public:
 	QAngle m_GMOD_QAngle[32];
 	EHANDLE m_GMOD_EHANDLE[32];
 	char m_GMOD_String[4][512];
-	unsigned char _offset4;
+	void* m_GMOD_DataTable;
 	int m_iCreationID;
-	int _offset5[26];
+	int m_iMapCreatedID;
+	BYTE gap1328[32];
+	int m_iGModFlags;
+	BYTE gap134C[64];
 };
 
 // Send tables exposed in this module.

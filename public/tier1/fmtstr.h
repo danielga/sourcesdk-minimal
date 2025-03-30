@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright  1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A simple class for performing safe and in-expression sprintf-style
 //			string formatting
@@ -17,9 +17,6 @@
 
 #if defined( _WIN32 )
 #pragma once
-#endif
-#if defined(POSIX)
-#pragma GCC visibility push(hidden)
 #endif
 
 //=============================================================================
@@ -102,10 +99,18 @@ public:
 	}
 
 	// Explicit reformat
-	const char *sprintf(PRINTF_FORMAT_STRING const char *pszFormat, ...) FMTFUNCTION( 2, 3 )
+	const char *sprintf(PRINTF_FORMAT_STRING const char *pszFormat, ...)	FMTFUNCTION( 2, 3 )
 	{
 		InitQuietTruncation();
 		FmtStrVSNPrintf(m_szBuf, SIZE_BUF, m_bQuietTruncation, &pszFormat, 0, pszFormat ); 
+		return m_szBuf;
+	}
+
+	// Same as sprintf above, but for compatibility with Steam interface
+	const char *Format( PRINTF_FORMAT_STRING const char *pszFormat, ... )	FMTFUNCTION( 2, 3 )
+	{
+		InitQuietTruncation();
+		FmtStrVSNPrintf( m_szBuf, SIZE_BUF, m_bQuietTruncation, &pszFormat, 0, pszFormat );
 		return m_szBuf;
 	}
 
@@ -121,7 +126,7 @@ public:
 		m_szBuf[SIZE_BUF - 1] = 0; 
 		if ( bTruncated && !m_bQuietTruncation && ( s_nWarned < 5 ) ) 
 		{ 
-			Warning( "CFmtStr truncated to %d without QUIET_TRUNCATION specified!\n", SIZE_BUF ); 
+			Warning( "CFmtStr truncated to %d without QUIET_TRUNCATION specified!\n", SIZE_BUF );
 			AssertMsg( 0, "CFmtStr truncated without QUIET_TRUNCATION specified!\n" );
 			s_nWarned++; 
 		} 
@@ -263,10 +268,6 @@ void CFmtStrN< SIZE_BUF, QUIET_TRUNCATION >::AppendFormatV( const char *pchForma
 }
 
 
-#if defined(POSIX)
-#pragma GCC visibility pop
-#endif
-
 //-----------------------------------------------------------------------------
 //
 // Purpose: Default-sized string formatter
@@ -276,6 +277,7 @@ void CFmtStrN< SIZE_BUF, QUIET_TRUNCATION >::AppendFormatV( const char *pchForma
 
 typedef CFmtStrN<FMTSTR_STD_LEN> CFmtStr;
 typedef CFmtStrQuietTruncationN<FMTSTR_STD_LEN> CFmtStrQuietTruncation;
+typedef CFmtStrN<32> CFmtStr32;
 typedef CFmtStrN<1024> CFmtStr1024;
 typedef CFmtStrN<8192> CFmtStrMax;
 
@@ -359,8 +361,8 @@ protected:
 
 //=============================================================================
 
-bool BGetLocalFormattedDateAndTime( time_t timeVal, char *pchDate, int cubDate, char *pchTime, int cubTime );
-bool BGetLocalFormattedDate( time_t timeVal, char *pchDate, int cubDate );
-bool BGetLocalFormattedTime( time_t timeVal, char *pchTime, int cubTime );
+const int k_cchFormattedDate = 64;
+const int k_cchFormattedTime = 32;
+bool BGetLocalFormattedTime( time_t timeVal, char *pchDate, int cubDate, char *pchTime, int cubTime );
 
 #endif // FMTSTR_H

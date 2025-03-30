@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: 
 //
@@ -31,6 +31,7 @@ class Color;
 class CUtlBinaryBlock;
 class CUtlString;
 class CUtlCharConversion;
+class CUtlSymbolLarge;
 
 	
 //-----------------------------------------------------------------------------
@@ -78,6 +79,10 @@ bool Unserialize( CUtlBuffer &buf, CUtlBinaryBlock &dest );
 
 bool Serialize( CUtlBuffer &buf, const CUtlString &src );
 bool Unserialize( CUtlBuffer &buf, CUtlString &dest );
+
+bool Serialize( CUtlBuffer &buf, const CUtlSymbolLarge &src );
+// There is explicitly no unserialize of CUtlSymbolLarge,
+// it requires adding the a string to a specific symbol table.
 
 
 //-----------------------------------------------------------------------------

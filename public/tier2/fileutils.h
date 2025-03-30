@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 2005-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: A higher level link library for general use in the game and tools.
 //
@@ -34,6 +34,9 @@ void ComputeModFilename( const char *pContentFileName, char *pBuf, size_t nBufLe
 // Generates a filename under the 'content' subdirectory given a subdirectory of 'game'
 void ComputeModContentFilename( const char *pGameFileName, char *pBuf, size_t nBufLen );
 
+// Finds all files matching the a name within a directory and its sub directories. Output entries are paths to found files (relative to and including szStartDirectory)
+void RecursiveFindFilesMatchingName( CUtlVector< CUtlString > *outFileList, const char* szStartDirectory, const char* szTargetFileName, const char *pathID );
+
 // Builds a list of all files under a directory with a particular extension
 void AddFilesToList( CUtlVector< CUtlString > &list, const char *pDirectory, const char *pPath, const char *pExtension );
 
@@ -54,12 +57,12 @@ bool GenerateFullPath( const char *pFileName, char const *pPathID, char *pBuf, i
 typedef bool ( *CreateCallback_t )( const char *pSourceName, const char *pTargetName, const char *pPathID, void *pExtraData );
 int UpdateOrCreate( const char *pSourceName, char *pTargetName, int targetLen, const char *pPathID, CreateCallback_t pfnCreate, bool bForce = false, void *pExtraData = NULL );
 
-char *CreateX360Filename( const char *pSourceName, char *pTargetName, int targetLen );
+char *CreatePlatformFilename( const char *pSourceName, char *pTargetName, int targetLen );
 
 FORCEINLINE const char *AdjustFileExtensionForPlatform( const char *pSourceName, char *pTargetName, int targetLen )
 {
 #ifdef PLATFORM_X360
-	return CreateX360Filename( pSourceName, pTargetName, targetLen );
+	return CreatePlatformFilename( pSourceName, pTargetName, targetLen );
 #else
 	return pSourceName;
 #endif

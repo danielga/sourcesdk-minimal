@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 2005-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: A higher level link library for general use in the game and tools.
 //
@@ -24,28 +24,18 @@ class CTier3DmAppSystem : public CTier2DmAppSystem< IInterface, ConVarFlag >
 	typedef CTier2DmAppSystem< IInterface, ConVarFlag > BaseClass;
 
 public:
-	CTier3DmAppSystem( bool bIsPrimaryAppSystem = true ) : BaseClass(	bIsPrimaryAppSystem )
-	{
-	}
-
 	virtual bool Connect( CreateInterfaceFn factory ) 
 	{
 		if ( !BaseClass::Connect( factory ) )
 			return false;
 
-		if ( IsPrimaryAppSystem() )
-		{
-			ConnectTier3Libraries( &factory, 1 );
-		}
+		ConnectTier3Libraries( &factory, 1 );
 		return true;
 	}
 
 	virtual void Disconnect() 
 	{
-		if ( IsPrimaryAppSystem() )
-		{
-			DisconnectTier3Libraries();
-		}
+		DisconnectTier3Libraries();
 		BaseClass::Disconnect();
 	}
 };

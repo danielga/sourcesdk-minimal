@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2003, Valve LLC, All rights reserved. ============
 //
 // The copyright to the contents herein is the property of Valve, L.L.C.
 // The contents may be used and/or copied only with the written permission of
@@ -219,7 +219,7 @@ namespace SurfaceV30
 
 	// restricts what gets drawn to one panel and it's children
 	// currently only works in the game
-	virtual void RestrictPaintToSinglePanel(vgui::VPANEL panel) = 0;
+	virtual void RestrictPaintToSinglePanel(vgui::VPANEL panel, bool bForceAllowNonModalSurface = false) = 0;
 
 	// these two functions obselete, use IInput::SetAppModalSurface() instead
 	virtual void SetModalPanel(vgui::VPANEL ) = 0;
@@ -258,7 +258,7 @@ namespace SurfaceV30
 	virtual bool SetFontGlyphSet(vgui::HFont font, const char *windowsFontName, int tall, int weight, int blur, int scanlines, int flags) = 0;
 
 	// adds a custom font file (only supports true type font files (.ttf) for now)
-	virtual bool AddCustomFontFile(const char *fontName, const char *fontFileName) = 0;
+	virtual bool AddCustomFontFile(const char *fontFileName) = 0;
 
 	// returns the details about the font
 	virtual int GetFontTall(vgui::HFont font) = 0;

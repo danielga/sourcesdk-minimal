@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -14,7 +14,6 @@
 //-----------------------------------------------------------------------------
 // Light structure
 //-----------------------------------------------------------------------------
-
 enum LightType_t
 {
 	MATERIAL_LIGHT_DISABLE = 0,
@@ -42,21 +41,26 @@ struct LightDesc_t
     float m_Attenuation0;									//< constant distance falloff term
     float m_Attenuation1;									//< linear term of falloff
     float m_Attenuation2;									//< quadatic term of falloff
+
+	// NOTE: theta and phi are *half angles*
     float m_Theta;											//< inner cone angle. no angular falloff 
 															//< within this cone
     float m_Phi;											//< outer cone angle
 
 	// the values below are derived from the above settings for optimizations
 	// These aren't used by DX8. . used for software lighting.
+
+	// NOTE: These dots are cos( m_Theta ), cos( m_Phi )
 	float m_ThetaDot;
 	float m_PhiDot;
+	float m_OneOverThetaDotMinusPhiDot;
 	unsigned int m_Flags;
 protected:
-	float OneOver_ThetaDot_Minus_PhiDot;
 	float m_RangeSquared;
 public:
 
 	void RecalculateDerivedValues(void);			 // calculate m_xxDot, m_Type for changed parms
+	void RecalculateOneOverThetaDotMinusPhiDot();
 
 	LightDesc_t(void)
 	{
@@ -69,7 +73,13 @@ public:
 	{
 		InitPoint( pos, color );
 	}
-	
+
+	LightDesc_t &operator=( const LightDesc_t &src )
+	{
+		memcpy( this, &src, sizeof(LightDesc_t) );
+		return *this;
+	}
+
 	/// a simple light. cone boundaries in radians. you pass a look_at point and the
 	/// direciton is derived from that.
 	LightDesc_t( const Vector &pos, const Vector &color, const Vector &point_at,
@@ -101,13 +111,15 @@ public:
 	/// light cone (for spotlights..non spots consider all rays to be within their cone)
 	bool IsDirectionWithinLightCone(const Vector &rdir) const
 	{
-		return ((m_Type!=MATERIAL_LIGHT_SPOT) || (rdir.Dot(m_Direction)>=m_PhiDot));
+		return ( ( m_Type != MATERIAL_LIGHT_SPOT ) || ( rdir.Dot(m_Direction) >= m_PhiDot ) );
 	}
 
 	float OneOverThetaDotMinusPhiDot() const
 	{
-		return OneOver_ThetaDot_Minus_PhiDot;
+		return m_OneOverThetaDotMinusPhiDot;
 	}
+
+	float DistanceAtWhichBrightnessIsLessThan( float flAmount ) const;
 };
 
 

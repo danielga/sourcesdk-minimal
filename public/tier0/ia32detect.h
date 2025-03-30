@@ -1,17 +1,17 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #ifndef IA32DETECT_H
 #define IA32DETECT_H
 
-#ifdef PLATFORM_WINDOWS_PC
-#include <intrin.h>
-#endif
-
+//#ifdef COMPILER_MSVC64
+extern "C" void __cpuid(int* CPUInfo, int InfoType);
+#pragma intrinsic (__cpuid)
+//#endif
 /*
     This section from http://iss.cs.cornell.edu/ia32.htm
 
@@ -129,12 +129,12 @@ public:
 
 		for (uint32 i = 1; i <= m; i++)
 		{
+
 #ifdef COMPILER_MSVC64
 			__cpuid((int *) (d + (i-1) * 4), i);
 
 #else
 			uint32 *t = d + (i - 1) * 4;
-
 			__asm
 			{
 				mov	eax, i;

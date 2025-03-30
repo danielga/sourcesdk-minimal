@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -108,13 +108,13 @@ class CArrayAutoPtr : public CPlainAutoPtr < T > // Warning: no polymorphic dest
 {
 public:
 	explicit CArrayAutoPtr( T *p = NULL )		{ this->Attach( p ); }
-	~CArrayAutoPtr( void )						{ this->Delete(); }
+	~CArrayAutoPtr( void )						{ Delete(); }
 
 public:
-	void Delete( void )							{ delete [] CPlainAutoPtr < T >::Detach(); }
+	void Delete( void )							{ delete [] this->Detach(); }
 
 public:
-	T & operator [] ( int k ) const				{ return CPlainAutoPtr < T >::Get()[ k ]; }
+	T & operator [] ( int k ) const				{ return this->Get()[ k ]; }
 };
 
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,7 +11,6 @@
 #define UTLHASH_H
 #pragma once
 
-#include <assert.h>
 #include <limits.h>
 #include "utlmemory.h"
 #include "utlvector.h"
@@ -31,7 +30,7 @@ public:
 	typedef K KeyFunc_t;
 	
 	// constructor/deconstructor
-	CUtlHash( int bucketCount = 0, int growCount = 0, int initCount = 0,
+	explicit CUtlHash( int bucketCount = 0, int growCount = 0, int initCount = 0,
 		      CompareFunc_t compareFunc = 0, KeyFunc_t keyFunc = 0 );
 	~CUtlHash();
 
@@ -67,6 +66,7 @@ public:
 
 	// debugging!!
 	void Log( const char *filename );
+	void Dump();
 
 protected:
 
@@ -99,6 +99,7 @@ CUtlHash<Data, C, K>::CUtlHash( int bucketCount, int growCount, int initCount,
 	m_CompareFunc( compareFunc ),
 	m_KeyFunc( keyFunc )
 {
+	bucketCount = MIN(bucketCount, 65536);
 	m_Buckets.SetSize( bucketCount );
 	for( int ndxBucket = 0; ndxBucket < bucketCount; ndxBucket++ )
 	{
@@ -183,8 +184,8 @@ inline int CUtlHash<Data, C, K>::GetKeyDataIndex( UtlHashHandle_t handle ) const
 template<class Data, typename C, typename K>
 inline UtlHashHandle_t CUtlHash<Data, C, K>::BuildHandle( int ndxBucket, int ndxKeyData ) const
 {
-	assert( ( ndxBucket >= 0 ) && ( ndxBucket < 65536 ) );
-	assert( ( ndxKeyData >= 0 ) && ( ndxKeyData < 65536 ) );
+	Assert( ( ndxBucket >= 0 ) && ( ndxBucket < 65536 ) );
+	Assert( ( ndxKeyData >= 0 ) && ( ndxKeyData < 65536 ) );
 
 	UtlHashHandle_t handle = ndxKeyData;
 	handle |= ( ndxBucket << 16 );
@@ -225,7 +226,7 @@ inline bool CUtlHash<Data, C, K>::DoFind( Data const &src, unsigned int *pBucket
 		*pBucket = ndxBucket = key % bucketCount;
 	}
 
-	int ndxKeyData;
+	int ndxKeyData = 0;
 	const CUtlVector<Data> &bucket = m_Buckets[ndxBucket];
 	int keyDataCount = bucket.Count();
 	for( ndxKeyData = 0; ndxKeyData < keyDataCount; ndxKeyData++ )
@@ -248,7 +249,7 @@ template<class Data, typename C, typename K>
 inline UtlHashHandle_t CUtlHash<Data, C, K>::Find( Data const &src ) const
 {
 	unsigned int ndxBucket;
-	int ndxKeyData;
+	int ndxKeyData = 0;
 
 	if ( DoFind( src, &ndxBucket, &ndxKeyData ) )
 	{
@@ -264,7 +265,7 @@ template<class Data, typename C, typename K>
 inline UtlHashHandle_t CUtlHash<Data, C, K>::Insert( Data const &src )
 {
 	unsigned int ndxBucket;
-	int ndxKeyData;
+	int ndxKeyData = 0;
 
 	if ( DoFind( src, &ndxBucket, &ndxKeyData ) )
 	{
@@ -282,7 +283,7 @@ template<class Data, typename C, typename K>
 inline UtlHashHandle_t CUtlHash<Data, C, K>::Insert( Data const &src, bool *pDidInsert )
 {
 	unsigned int ndxBucket;
-	int ndxKeyData;
+	int ndxKeyData = 0;
 
 	if ( DoFind( src, &ndxBucket, &ndxKeyData ) )
 	{
@@ -303,7 +304,7 @@ template<class Data, typename C, typename K>
 inline UtlHashHandle_t CUtlHash<Data, C, K>::AllocEntryFromKey( Data const &src )
 {
 	unsigned int ndxBucket;
-	int ndxKeyData;
+	int ndxKeyData = 0;
 
 	if ( DoFind( src, &ndxBucket, &ndxKeyData ) )
 	{
@@ -321,7 +322,7 @@ inline UtlHashHandle_t CUtlHash<Data, C, K>::AllocEntryFromKey( Data const &src 
 template<class Data, typename C, typename K>
 inline void CUtlHash<Data, C, K>::Remove( UtlHashHandle_t handle )
 {
-	assert( IsValidHandle( handle ) );
+	Assert( IsValidHandle( handle ) );
 
 	// check to see if the bucket exists
 	int ndxBucket = GetBucketIndex( handle );
@@ -454,6 +455,33 @@ inline void CUtlHash<Data, C, K>::Log( const char *filename )
 	fclose( pDebugFp );
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+template<class Data, typename C, typename K>
+inline void CUtlHash<Data, C, K>::Dump( )
+{
+	int maxBucketSize = 0;
+	int numBucketsEmpty = 0;
+
+	int bucketCount = m_Buckets.Count();
+	Msg( "\n%d Buckets\n", bucketCount ); 
+
+	for( int ndxBucket = 0; ndxBucket < bucketCount; ndxBucket++ )
+	{
+		int count = m_Buckets[ndxBucket].Count();
+
+		if( count > maxBucketSize ) { maxBucketSize = count; }
+		if( count == 0 )
+			numBucketsEmpty++;
+
+		Msg( "Bucket %d: %d\n", ndxBucket, count );
+	}
+
+	Msg( "\nBucketHeads Used: %d\n", bucketCount - numBucketsEmpty );
+	Msg( "Max Bucket Size: %d\n", maxBucketSize );
+}
+
 //=============================================================================
 // 
 // Fast Hash
@@ -461,7 +489,7 @@ inline void CUtlHash<Data, C, K>::Log( const char *filename )
 // Number of buckets must be a power of 2.
 // Key must be 32-bits (unsigned int).
 //
-typedef int UtlHashFastHandle_t;
+typedef intp UtlHashFastHandle_t;
 
 #define UTLHASH_POOL_SCALAR		2
 
@@ -497,28 +525,45 @@ public:
 
 	// Invalid handle.
 	static UtlHashFastHandle_t InvalidHandle( void )	{ return ( UtlHashFastHandle_t )~0; }
+	inline bool IsValidHandle( UtlHashFastHandle_t hHash ) const;
 
 	// Initialize.
 	bool Init( int nBucketCount );
 
-	// Size.
-	int Count( void );
+	// Size not available; count is meaningless for multilists.
+	// int Count( void ) const;
 
 	// Insertion.
-	UtlHashFastHandle_t Insert( unsigned int uiKey, const Data &data );
-	UtlHashFastHandle_t FastInsert( unsigned int uiKey, const Data &data );
+	UtlHashFastHandle_t Insert( uintp uiKey, const Data &data );
+	UtlHashFastHandle_t FastInsert( uintp uiKey, const Data &data );
 
 	// Removal.
 	void Remove( UtlHashFastHandle_t hHash );
 	void RemoveAll( void );
 
 	// Retrieval.
-	UtlHashFastHandle_t Find( unsigned int uiKey );
+	UtlHashFastHandle_t Find( uintp uiKey ) const;
 
 	Data &Element( UtlHashFastHandle_t hHash );
 	Data const &Element( UtlHashFastHandle_t hHash ) const;
 	Data &operator[]( UtlHashFastHandle_t hHash );
 	Data const &operator[]( UtlHashFastHandle_t hHash ) const;
+
+	// Iteration
+	struct UtlHashFastIterator_t
+	{
+		int bucket;
+		UtlHashFastHandle_t handle;
+
+		UtlHashFastIterator_t(int _bucket, const UtlHashFastHandle_t &_handle) 
+			: bucket(_bucket), handle(_handle) {};
+		// inline operator UtlHashFastHandle_t() const { return handle; };
+	};
+	inline UtlHashFastIterator_t First() const;
+	inline UtlHashFastIterator_t Next( const UtlHashFastIterator_t &hHash ) const;
+	inline bool IsValidIterator( const UtlHashFastIterator_t &iter ) const;
+	inline Data &operator[]( const UtlHashFastIterator_t &iter ) { return (*this)[iter.handle];  }
+	inline Data const &operator[]( const UtlHashFastIterator_t &iter ) const { return (*this)[iter.handle];  }
 
 //protected:
 
@@ -526,15 +571,16 @@ public:
 	template <typename HashData>
 	struct HashFastData_t_
 	{
-		unsigned int	m_uiKey;
+		uintp	m_uiKey;
 		HashData	m_Data;
 	};
 
 	typedef HashFastData_t_<Data> HashFastData_t;
 
-	unsigned int						m_uiBucketMask;	
+	uintp						m_uiBucketMask;	
 	CUtlVector<UtlHashFastHandle_t>		m_aBuckets;
 	CUtlFixedLinkedList<HashFastData_t>	m_aDataPool;
+
 };
 
 //-----------------------------------------------------------------------------
@@ -588,19 +634,23 @@ template<class Data, class HashFuncs> bool CUtlHashFast<Data,HashFuncs>::Init( i
 	return true;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: Return the number of elements in the hash.
+//          Not available because count isn't accurately maintained for multilists.
 //-----------------------------------------------------------------------------
-template<class Data, class HashFuncs> inline int CUtlHashFast<Data,HashFuncs>::Count( void )
+/*
+template<class Data, class HashFuncs> inline int CUtlHashFast<Data,HashFuncs>::Count( void ) const
 {
 	return m_aDataPool.Count();
 }
+*/
 
 //-----------------------------------------------------------------------------
-// Purpose: Insert data into the hash table given its key (unsigned int), with
+// Purpose: Insert data into the hash table given its key (uintp), with
 //          a check to see if the element already exists within the tree.
 //-----------------------------------------------------------------------------
-template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::Insert( unsigned int uiKey, const Data &data )
+template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::Insert( uintp uiKey, const Data &data )
 {
 	// Check to see if that key already exists in the buckets (should be unique).
 	UtlHashFastHandle_t hHash = Find( uiKey );
@@ -611,13 +661,13 @@ template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Da
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Insert data into the hash table given its key (unsigned int),
+// Purpose: Insert data into the hash table given its key (uintp),
 //          without a check to see if the element already exists within the tree.
 //-----------------------------------------------------------------------------
-template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::FastInsert( unsigned int uiKey, const Data &data )
+template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::FastInsert( uintp uiKey, const Data &data )
 {
 	// Get a new element from the pool.
-	int iHashData = m_aDataPool.Alloc( true );
+	intp iHashData = m_aDataPool.Alloc( true );
 	HashFastData_t *pHashData = &m_aDataPool[iHashData];
 	if ( !pHashData )
 		return InvalidHandle();
@@ -666,12 +716,12 @@ template<class Data, class HashFuncs> inline void CUtlHashFast<Data,HashFuncs>::
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::Find( unsigned int uiKey )
+template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::Find( uintp uiKey ) const
 {
 	// hash the "key" - get the correct hash table "bucket"
 	int iBucket = HashFuncs::Hash( uiKey, m_uiBucketMask );
 
-	for ( int iElement = m_aBuckets[iBucket]; iElement != m_aDataPool.InvalidIndex(); iElement = m_aDataPool.Next( iElement ) )
+	for ( intp iElement = m_aBuckets[iBucket]; iElement != m_aDataPool.InvalidIndex(); iElement = m_aDataPool.Next( iElement ) )
 	{
 		if ( m_aDataPool[iElement].m_uiKey == uiKey )
 			return iElement;
@@ -712,14 +762,77 @@ template<class Data, class HashFuncs> inline Data const &CUtlHashFast<Data,HashF
 	return ( m_aDataPool[hHash].m_Data );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: For iterating over the whole hash, return the index of the first element
+//-----------------------------------------------------------------------------
+template<class Data, class HashFuncs>  
+	typename CUtlHashFast<Data,HashFuncs>::UtlHashFastIterator_t 
+	CUtlHashFast<Data,HashFuncs>::First() const
+{
+	// walk through the buckets to find the first one that has some data
+	int bucketCount = m_aBuckets.Count();
+	const UtlHashFastHandle_t invalidIndex = m_aDataPool.InvalidIndex();
+	for ( int bucket = 0 ; bucket < bucketCount ; ++bucket )
+	{
+		UtlHashFastHandle_t iElement = m_aBuckets[bucket]; // get the head of the bucket
+		if (iElement != invalidIndex)
+			return UtlHashFastIterator_t(bucket,iElement);
+	}
+
+	// if we are down here, the list is empty 
+	return UtlHashFastIterator_t(-1, invalidIndex);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: For iterating over the whole hash, return the next element after
+// the param one. Or an invalid iterator.
+//-----------------------------------------------------------------------------
+template<class Data, class HashFuncs>  
+	typename CUtlHashFast<Data,HashFuncs>::UtlHashFastIterator_t  
+	CUtlHashFast<Data,HashFuncs>::Next( const typename CUtlHashFast<Data,HashFuncs>::UtlHashFastIterator_t  &iter ) const
+{
+	// look for the next entry in the current bucket
+	UtlHashFastHandle_t next = m_aDataPool.Next(iter.handle);
+	const UtlHashFastHandle_t invalidIndex = m_aDataPool.InvalidIndex();
+	if (next != invalidIndex)
+	{
+		// this bucket still has more elements in it
+		return UtlHashFastIterator_t(iter.bucket, next);
+	}
+	
+	// otherwise look for the next bucket with data
+	int bucketCount = m_aBuckets.Count();
+	for ( int bucket = iter.bucket+1 ; bucket < bucketCount ; ++bucket )
+	{
+		UtlHashFastHandle_t nextbucket = m_aBuckets[bucket]; // get the head of the bucket
+		if (nextbucket != invalidIndex)
+			return UtlHashFastIterator_t( bucket, nextbucket );
+	}
+
+	// if we're here, there's no more data to be had
+	return UtlHashFastIterator_t(-1, invalidIndex);
+}
+
+template<class Data, class HashFuncs>  
+	bool CUtlHashFast<Data,HashFuncs>::IsValidIterator( const typename CUtlHashFast::UtlHashFastIterator_t &iter ) const
+{
+	return ( (iter.bucket >= 0) && (m_aDataPool.IsValidIndex(iter.handle)) );
+}
+
+
+template<class Data, class HashFuncs> inline bool CUtlHashFast<Data,HashFuncs>::IsValidHandle( UtlHashFastHandle_t hHash ) const
+{
+	return m_aDataPool.IsValidIndex(hHash);
+}
+
 //=============================================================================
 // 
 // Fixed Hash
 //
 // Number of buckets must be a power of 2.
-// Key must be 32-bits (unsigned int).
+// Key must be pointer-size (uintp).
 //
-typedef int UtlHashFixedHandle_t;
+typedef intp UtlHashFixedHandle_t;
 
 template <int NUM_BUCKETS>
 class CUtlHashFixedGenericHash
@@ -932,5 +1045,255 @@ template<class Data, int NUM_BUCKETS, class HashFuncs> inline Data const &CUtlHa
 {
 	return ((HashFixedData_t *)hHash)->m_Data;
 }
+
+class CDefaultHash32
+{
+public:
+	static inline uint32 HashKey32( uint32 nKey ) { return HashIntConventional(nKey); }
+};
+
+class CPassthroughHash32
+{
+public:
+	static inline uint32 HashKey32( uint32 nKey ) { return nKey; }
+};
+
+
+// This is a simpler hash for scalar types that stores the entire hash + buckets in a single linear array
+// This is much more cache friendly for small (e.g. 32-bit) types stored in the hash
+template<class Data, class CHashFunction = CDefaultHash32> 
+class CUtlScalarHash
+{
+public:
+
+	// Constructor/Destructor.
+	CUtlScalarHash();
+	~CUtlScalarHash();
+
+	// Memory.
+	//	void Purge( void );
+
+	// Invalid handle.
+	static const UtlHashFastHandle_t InvalidHandle( void )	{ return (unsigned int)~0; }
+
+	// Initialize.
+	bool Init( int nBucketCount );
+
+	// Size.
+	int Count( void ) const { return m_dataCount; }
+
+	// Insertion.
+	UtlHashFastHandle_t Insert( unsigned int uiKey, const Data &data );
+
+	// Removal.
+	void FindAndRemove( unsigned int uiKey, const Data &dataRecord );
+	void Remove( UtlHashFastHandle_t hHash );
+	void RemoveAll( void );
+	void Grow();
+
+	// Retrieval. Finds by uiKey and then by comparing dataRecord
+	UtlHashFastHandle_t Find( unsigned int uiKey, const Data &dataRecord ) const;
+	UtlHashFastHandle_t FindByUniqueKey( unsigned int uiKey ) const;
+
+	Data &Element( UtlHashFastHandle_t hHash ) { Assert(unsigned(hHash)<=m_uiBucketMask); return m_pData[hHash].m_Data; }
+	Data const &Element( UtlHashFastHandle_t hHash ) const { Assert(unsigned(hHash)<=m_uiBucketMask); return m_pData[hHash].m_Data; }
+	Data &operator[]( UtlHashFastHandle_t hHash ) { Assert(unsigned(hHash)<=m_uiBucketMask); return m_pData[hHash].m_Data; }
+	Data const &operator[]( UtlHashFastHandle_t hHash ) const { Assert(unsigned(hHash)<=m_uiBucketMask); return m_pData[hHash].m_Data; }
+
+	unsigned int Key( UtlHashFastHandle_t hHash ) const { Assert(unsigned(hHash)<=m_uiBucketMask); return m_pData[hHash].m_uiKey; }
+
+	UtlHashFastHandle_t FirstInorder() const
+	{
+		return NextInorder(-1);
+	}
+	UtlHashFastHandle_t NextInorder( UtlHashFastHandle_t nStart ) const
+	{
+		int nElementCount = m_maxData * 2;
+		unsigned int nUnusedListElement = (unsigned int)InvalidHandle();
+		for ( int i = nStart+1; i < nElementCount; i++ )
+		{
+			if ( m_pData[i].m_uiKey != nUnusedListElement )
+				return i;
+		}
+		return nUnusedListElement;
+	}
+
+	//protected:
+
+	struct HashScalarData_t
+	{
+		unsigned int m_uiKey;
+		Data	m_Data;
+	};
+
+	unsigned int					m_uiBucketMask;	
+	HashScalarData_t				*m_pData;
+	int								m_maxData;
+	int								m_dataCount;
+};
+
+template<class Data, class CHashFunction> CUtlScalarHash<Data, CHashFunction>::CUtlScalarHash()
+{
+	m_pData = NULL;
+	m_uiBucketMask = 0;
+	m_maxData = 0;
+	m_dataCount = 0;
+}
+
+template<class Data, class CHashFunction> CUtlScalarHash<Data, CHashFunction>::~CUtlScalarHash()
+{
+	delete[] m_pData;
+}
+
+template<class Data, class CHashFunction> bool CUtlScalarHash<Data, CHashFunction>::Init( int nBucketCount )
+{
+	Assert(m_dataCount==0);
+	m_maxData = SmallestPowerOfTwoGreaterOrEqual(nBucketCount);
+	int elementCount = m_maxData * 2;
+	m_pData = new HashScalarData_t[elementCount];
+	m_uiBucketMask = elementCount - 1;
+	RemoveAll();
+	return true;
+}
+
+template<class Data, class CHashFunction> void CUtlScalarHash<Data, CHashFunction>::Grow()
+{
+	ASSERT_NO_REENTRY();
+	int oldElementCount = m_maxData * 2;
+	HashScalarData_t *pOldData = m_pData;
+
+	// Grow to a minimum size of 16
+	m_maxData = MAX( oldElementCount, 16 );
+	int elementCount = m_maxData * 2;
+	m_pData = new HashScalarData_t[elementCount];
+	m_uiBucketMask = elementCount-1;
+	m_dataCount = 0;
+	for ( int i = 0; i < elementCount; i++ )
+	{
+		m_pData[i].m_uiKey = InvalidHandle();
+	}
+	for ( int i = 0; i < oldElementCount; i++ )
+	{
+		if ( pOldData[i].m_uiKey != (unsigned)InvalidHandle() )
+		{
+			Insert( pOldData[i].m_uiKey, pOldData[i].m_Data );
+		}
+	}
+	delete[] pOldData;
+}
+
+template<class Data, class CHashFunction> UtlHashFastHandle_t CUtlScalarHash<Data, CHashFunction>::Insert( unsigned int uiKey, const Data &data )
+{
+	if ( m_dataCount >= m_maxData )
+	{
+		Grow();
+	}
+	m_dataCount++;
+	Assert(uiKey != (uint)InvalidHandle());  // This hash stores less data by assuming uiKey != ~0
+	int index = CHashFunction::HashKey32(uiKey) & m_uiBucketMask;
+	unsigned int endOfList = (unsigned int)InvalidHandle();
+	while ( m_pData[index].m_uiKey != endOfList )
+	{
+		index = (index+1) & m_uiBucketMask;
+	}
+	m_pData[index].m_uiKey = uiKey;
+	m_pData[index].m_Data = data;
+
+	return index;
+}
+
+// Removal.
+template<class Data, class CHashFunction> void CUtlScalarHash<Data, CHashFunction>::Remove( UtlHashFastHandle_t hHash )
+{
+	int mid = (m_uiBucketMask+1) / 2;
+	int lastRemoveIndex = hHash;
+	// remove the item
+	m_pData[lastRemoveIndex].m_uiKey = InvalidHandle();
+	m_dataCount--;
+
+	// now search for any items needing to be swapped down
+	unsigned int endOfList = (unsigned int)InvalidHandle();
+	for ( int index = (hHash+1) & m_uiBucketMask; m_pData[index].m_uiKey != endOfList; index = (index+1) & m_uiBucketMask )
+	{
+		int ideal = CHashFunction::HashKey32(m_pData[index].m_uiKey) & m_uiBucketMask;
+
+		// is the ideal index for this element <= (in a wrapped buffer sense) the ideal index of the removed element?
+		// if so, swap
+		int diff = ideal - lastRemoveIndex;
+		if ( diff > mid )
+		{
+			diff -= (m_uiBucketMask+1);
+		}
+		if ( diff < -mid )
+		{
+			diff += (m_uiBucketMask+1);
+		}
+
+		// should I swap this?
+		if ( diff <= 0 )
+		{
+			m_pData[lastRemoveIndex] = m_pData[index];
+			lastRemoveIndex = index;
+			m_pData[index].m_uiKey = InvalidHandle();
+		}
+	}
+}
+
+template<class Data, class CHashFunction> void CUtlScalarHash<Data, CHashFunction>::FindAndRemove( unsigned int uiKey, const Data &dataRecord  )
+{
+	int index = CHashFunction::HashKey32(uiKey) & m_uiBucketMask;
+	unsigned int endOfList = (unsigned int)InvalidHandle();
+	while ( m_pData[index].m_uiKey != endOfList )
+	{
+		if ( m_pData[index].m_uiKey == uiKey && m_pData[index].m_Data == dataRecord )
+		{
+			Remove(index);
+			return;
+		}
+		index = (index+1) & m_uiBucketMask;
+	}
+}
+
+template<class Data, class CHashFunction> void CUtlScalarHash<Data, CHashFunction>::RemoveAll( void )
+{
+	int elementCount = m_maxData * 2;
+	for ( int i = 0; i < elementCount; i++ )
+	{
+		m_pData[i].m_uiKey = (unsigned)InvalidHandle();
+	}
+	m_dataCount = 0;
+}
+
+// Retrieval.
+template<class Data, class CHashFunction> UtlHashFastHandle_t CUtlScalarHash<Data, CHashFunction>::Find( unsigned int uiKey, const Data &dataRecord ) const
+{
+	if ( m_pData == NULL ) 
+		return InvalidHandle();
+	int index = CHashFunction::HashKey32(uiKey) & m_uiBucketMask;
+	unsigned int endOfList = (unsigned int)InvalidHandle();
+	while ( m_pData[index].m_uiKey != endOfList )
+	{
+		if ( m_pData[index].m_uiKey == uiKey && m_pData[index].m_Data == dataRecord )
+			return index;
+		index = (index+1) & m_uiBucketMask;
+	}
+	return InvalidHandle();
+}
+
+template<class Data, class CHashFunction> UtlHashFastHandle_t CUtlScalarHash<Data, CHashFunction>::FindByUniqueKey( unsigned int uiKey ) const
+{
+	if ( m_pData == NULL ) 
+		return InvalidHandle();
+	int index = CHashFunction::HashKey32(uiKey) & m_uiBucketMask;
+	unsigned int endOfList = (unsigned int)InvalidHandle();
+	while ( m_pData[index].m_uiKey != endOfList )
+	{
+		if ( m_pData[index].m_uiKey == uiKey )
+			return index;
+		index = (index+1) & m_uiBucketMask;
+	}
+	return InvalidHandle();
+}
+
 
 #endif // UTLHASH_H

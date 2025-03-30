@@ -22,16 +22,16 @@ PLATFORM_INTERFACE void SetMinidumpComment( const char *pszComment );
 // writes out a minidump of the current stack trace with a unique filename
 PLATFORM_INTERFACE void WriteMiniDump( const char *pszFilenameSuffix = NULL );
 
-typedef void (*FnWMain)( int , tchar *[] );
-typedef void (*FnVoidPtrFn)( void * );
+typedef void( *FnWMain )(int, tchar *[]);
+typedef void( *FnVoidPtrFn )(void *);
 
 #if defined(_WIN32) && !defined(_X360)
 
 // calls the passed in function pointer and catches any exceptions/crashes thrown by it, and writes a minidump
 // use from wmain() to protect the whole program
-typedef void (*FnWMain)( int , tchar *[] );
-typedef int (*FnWMainIntRet)( int , tchar *[] );
-typedef void (*FnVoidPtrFn)( void * );
+typedef void( *FnWMain )(int, tchar *[]);
+typedef int( *FnWMainIntRet )(int, tchar *[]);
+typedef void( *FnVoidPtrFn )(void *);
 
 enum ECatchAndWriteMinidumpAction
 {
@@ -50,12 +50,13 @@ PLATFORM_INTERFACE void CatchAndWriteMiniDumpExForVoidPtrFn( FnVoidPtrFn pfn, vo
 // Let's not include this.  We'll use forwards instead.
 //#include <dbghelp.h>
 struct _EXCEPTION_POINTERS;
+typedef _EXCEPTION_POINTERS ExceptionInfo_t;
 
 // Replaces the current function pointer with the one passed in.
 // Returns the previously-set function.
 // The function is called internally by WriteMiniDump() and CatchAndWriteMiniDump()
 // The default is the built-in function that uses DbgHlp.dll's MiniDumpWriteDump function
-typedef void (*FnMiniDump)( unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS * pExceptionInfo, const char *pszFilenameSuffix );
+typedef void( *FnMiniDump )(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS * pExceptionInfo, const char *pszFilenameSuffix);
 PLATFORM_INTERFACE FnMiniDump SetMiniDumpFunction( FnMiniDump pfn );
 
 // Use this to write a minidump explicitly.
@@ -67,9 +68,30 @@ PLATFORM_INTERFACE FnMiniDump SetMiniDumpFunction( FnMiniDump pfn );
 // If ptchMinidumpFileNameBuffer is NULL the name of the minidump file written will not
 // be available after the function returns.
 //
-PLATFORM_INTERFACE bool WriteMiniDumpUsingExceptionInfo( 
+
+// NOTE: Matches windows.h
+enum MinidumpType_t 
+{
+	MINIDUMP_Normal                           = 0x00000000,
+	MINIDUMP_WithDataSegs                     = 0x00000001,
+	MINIDUMP_WithFullMemory                   = 0x00000002,
+	MINIDUMP_WithHandleData                   = 0x00000004,
+	MINIDUMP_FilterMemory                     = 0x00000008,
+	MINIDUMP_ScanMemory                       = 0x00000010,
+	MINIDUMP_WithUnloadedModules              = 0x00000020,
+	MINIDUMP_WithIndirectlyReferencedMemory   = 0x00000040,
+	MINIDUMP_FilterModulePaths                = 0x00000080,
+	MINIDUMP_WithProcessThreadData            = 0x00000100,
+	MINIDUMP_WithPrivateReadWriteMemory       = 0x00000200,
+	MINIDUMP_WithoutOptionalData              = 0x00000400,
+	MINIDUMP_WithFullMemoryInfo               = 0x00000800,
+	MINIDUMP_WithThreadInfo                   = 0x00001000,
+	MINIDUMP_WithCodeSegs                     = 0x00002000 
+};
+
+PLATFORM_INTERFACE bool WriteMiniDumpUsingExceptionInfo(
 	unsigned int uStructuredExceptionCode,
-	_EXCEPTION_POINTERS * pExceptionInfo, 
+	_EXCEPTION_POINTERS * pExceptionInfo,
 	int /* MINIDUMP_TYPE */ minidumpType,
 	const char *pszFilenameSuffix = NULL,
 	tchar *ptchMinidumpFileNameBuffer = NULL
@@ -82,23 +104,6 @@ PLATFORM_INTERFACE void MinidumpSetUnhandledExceptionFunction( FnMiniDump pfn );
 // being silently swallowed. We should always call this at startup.
 PLATFORM_INTERFACE void EnableCrashingOnCrashes();
 
-#endif // defined(_WIN32) && !defined(_X360)
-
-//
-// Minidump User Stream Info Comments.
-//
-// There currently is a single header string, and an array of 64 comment strings.
-//	MinidumpUserStreamInfoSetHeader() will set the single header string.
-//	MinidumpUserStreamInfoAppend() will round robin through and array and set the comment strings, overwriting old.
-PLATFORM_INTERFACE void MinidumpUserStreamInfoSetHeader( const char *pFormat, ... );
-PLATFORM_INTERFACE void MinidumpUserStreamInfoAppend( const char *pFormat, ... );
-
-// Retrieve the StreamInfo strings.
-//  Index 0: header string
-//  Index 1..: comment string
-//  Returns NULL when you've reached the end of the comment string array
-//  Empty strings ("\0") can be returned if comment hasn't been set
-PLATFORM_INTERFACE const char *MinidumpUserStreamInfoGet( int Index );
+#endif
 
 #endif // MINIDUMP_H
-

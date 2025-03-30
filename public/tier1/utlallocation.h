@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2010, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 // The CUtlAllocation class:

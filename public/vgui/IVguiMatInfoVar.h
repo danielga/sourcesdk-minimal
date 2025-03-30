@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,11 +13,6 @@
 class IVguiMatInfoVar
 {
 public:
-	// Add a virtual destructor to silence the clang warning.
-	// This is harmless but not important since the only derived class
-	// doesn't have a destructor.
-	virtual ~IVguiMatInfoVar() {}
-
 	virtual int GetIntValue ( void ) const = 0;
 	virtual void SetIntValue ( int val ) = 0;
 

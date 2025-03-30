@@ -215,7 +215,7 @@ public:
 	// repurposing the other 16 bits to cache off the index without changing
 	// the overall layout or size of this struct. existing mods compiled with
 	// a full 32-bit serial number field should still work. henryg 8/17/2011
-#if VALVE_LITTLE_ENDIAN
+#if PLAT_LITTLE_ENDIAN
 	short m_NetworkSerialNumber;
 	short m_EdictIndex;
 #else

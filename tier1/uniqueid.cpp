@@ -10,12 +10,17 @@
 #include "tier0/platform.h"
 
 #ifdef IS_WINDOWS_PC
-#include <windows.h> // UUIDCreate
+#include <windows.h> // uuidcreate
 #else
 #include "checksum_crc.h"
 #endif
 #include "tier1/uniqueid.h"
 #include "tier1/utlbuffer.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
 
 //-----------------------------------------------------------------------------
 // Creates a new unique id
@@ -45,13 +50,13 @@ bool UniqueIdFromString( UniqueId_t *pDest, const char *pBuf, int nMaxLen )
 	char *pTemp = (char*)stackalloc( nMaxLen + 1 );
 	V_strncpy( pTemp, pBuf, nMaxLen + 1 );
 	--nMaxLen;
-	while( (nMaxLen >= 0) && isspace( pTemp[nMaxLen] ) )
+	while( (nMaxLen >= 0) && V_isspace( pTemp[nMaxLen] ) )
 	{
 		--nMaxLen;
 	}
 	pTemp[ nMaxLen + 1 ] = 0;
 
-	while( *pTemp && isspace( *pTemp ) )
+	while( *pTemp && V_isspace( *pTemp ) )
 	{
 		++pTemp;
 	}
@@ -163,7 +168,7 @@ bool Unserialize( CUtlBuffer &buf, UniqueId_t &dest )
 	{
 		int nTextLen = buf.PeekStringLength();
 		char *pBuf = (char*)stackalloc( nTextLen );
-		buf.GetStringManualCharCount( pBuf, nTextLen );
+		buf.GetString( pBuf, nTextLen );
 		UniqueIdFromString( &dest, pBuf, nTextLen );
 	}
 	else

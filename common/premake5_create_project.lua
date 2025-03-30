@@ -19,8 +19,12 @@ group("SourceSDK")
 		files({
 			"netmessages.cpp",
 			"../game/server/gameinterface.cpp",
+			"../interfaces/interfaces.cpp",
+			"../public/interfaces/interfaces.h"
 		})
-		vpaths({["Source files/*"] = "*.cpp"})
+		vpaths({["Source files/*"] = {"*.cpp", "*.h"}})
+
+		IncludeSDKCommonInternal()
 
 		filter("system:windows")
 			disablewarnings("4324")

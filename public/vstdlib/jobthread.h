@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========== Copyright � 2005, Valve Corporation, All rights reserved. ========
 //
 // Purpose:	A utility for a discrete job-oriented worker thread.
 //
@@ -33,7 +33,6 @@
 #include "tier1/utllinkedlist.h"
 #include "tier1/utlvector.h"
 #include "tier1/functors.h"
-#include "tier0/vprof_telemetry.h"
 
 #include "vstdlib/vstdlib.h"
 
@@ -92,25 +91,35 @@ enum JobPriority_t
 {
 	JP_LOW,
 	JP_NORMAL,
-	JP_HIGH
+	JP_HIGH,
+	JP_IMMEDIATE,
+
+	JP_NUM_PRIORITIES,
+
+	// Priority aliases for game jobs
+	JP_FRAME			= JP_NORMAL,
+	JP_FRAME_SEGMENT	= JP_HIGH,
 };
 
 #define TP_MAX_POOL_THREADS	64
 struct ThreadPoolStartParams_t
 {
-	ThreadPoolStartParams_t( bool bIOThreads = false, unsigned nThreads = -1, int *pAffinities = NULL, ThreeState_t fDistribute = TRS_NONE, unsigned nStackSize = -1, int iThreadPriority = SHRT_MIN )
-		: bIOThreads( bIOThreads ), nThreads( nThreads ), fDistribute( fDistribute ), nStackSize( nStackSize ), iThreadPriority( iThreadPriority ), nThreadsMax( -1 )
+	ThreadPoolStartParams_t( bool IOThreads = false, unsigned Threads = (unsigned)-1, int *Affinities = NULL, ThreeState_t Distribute = TRS_NONE, unsigned StackSize = (unsigned)-1, int ThreadPriority = SHRT_MIN )
+		: bIOThreads( IOThreads ), nThreads( Threads ), nThreadsMax( -1 ), fDistribute( Distribute ), nStackSize( StackSize ), iThreadPriority( ThreadPriority )
 	{
 		bExecOnThreadPoolThreadsOnly = false;
+#if defined( DEDICATED ) && IsPlatformLinux()
+		bEnableOnLinuxDedicatedServer = false; // by default, thread pools don't start up on Linux DS
+#endif
 
-		bUseAffinityTable = ( pAffinities != NULL ) && ( fDistribute == TRS_TRUE ) && ( nThreads != -1 );
+		bUseAffinityTable = ( Affinities != NULL ) && ( Distribute == TRS_TRUE ) && ( Threads != (unsigned)-1 );
 		if ( bUseAffinityTable )
 		{
 			// user supplied an optional 1:1 affinity mapping to override normal distribute behavior
-			nThreads = MIN( TP_MAX_POOL_THREADS, nThreads );
-			for ( unsigned int i = 0; i < nThreads; i++ )
+			Threads = MIN( TP_MAX_POOL_THREADS, Threads );
+			for ( unsigned int i = 0; i < Threads; i++ )
 			{
-				iAffinityTable[i] = pAffinities[i];
+				iAffinityTable[i] = Affinities[i];
 			}
 		}
 	}
@@ -125,6 +134,9 @@ struct ThreadPoolStartParams_t
 	bool			bIOThreads : 1;
 	bool			bUseAffinityTable : 1;
 	bool			bExecOnThreadPoolThreadsOnly : 1;
+#if defined( DEDICATED ) && IsPlatformLinux()
+	bool			bEnableOnLinuxDedicatedServer : 1;
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -142,10 +154,13 @@ enum ThreadPoolMessages_t
 {
 	TPM_EXIT,		// Exit the thread
 	TPM_SUSPEND,		// Suspend after next operation
-	TPM_RUNFUNCTOR,	// Run functor, reply when done.
 };
 
 //---------------------------------------------------------
+
+#ifdef Yield
+#undef Yield
+#endif
 
 abstract_class IThreadPool : public IRefCounted
 {
@@ -183,15 +198,10 @@ public:
 
 	//-----------------------------------------------------
 	// Add a native job to the queue (master thread)
+	// See AddPerFrameJob below if you want to add a job that
+	// wants to be run before the end of the frame
 	//-----------------------------------------------------
 	virtual void AddJob( CJob * ) = 0;
-
-	//-----------------------------------------------------
-	// All threads execute pFunctor asap. Thread will either wake up
-	//  and execute or execute pFunctor right after completing current job and
-	//  before looking for another job.
-	//-----------------------------------------------------
-	virtual void ExecuteHighPriorityFunctor( CFunctor *pFunctor ) = 0;
 
 	//-----------------------------------------------------
 	// Add an function object to the queue (master thread)
@@ -211,7 +221,10 @@ public:
 	virtual int AbortAll() = 0;
 
 	//-----------------------------------------------------
-	virtual void Reserved1() = 0;
+	// Add a native job to the queue (master thread)
+	// Call YieldWaitPerFrameJobs() to wait only until all per-frame jobs are done
+	//-----------------------------------------------------
+	virtual void AddPerFrameJob( CJob * ) = 0;
 
 	//-----------------------------------------------------
 	// Add an arbitrary call to the queue (master thread) 
@@ -415,12 +428,14 @@ public:
 	virtual void Distribute( bool bDistribute = true, int *pAffinityTable = NULL ) = 0;
 
 	virtual bool Start( const ThreadPoolStartParams_t &startParams, const char *pszNameOverride ) = 0;
+
+	virtual int YieldWaitPerFrameJobs( ) = 0;
 };
 
 //-----------------------------------------------------------------------------
 
-JOB_INTERFACE IThreadPool *V_CreateThreadPool();
-JOB_INTERFACE void V_DestroyThreadPool( IThreadPool *pPool );
+JOB_INTERFACE IThreadPool *CreateNewThreadPool();
+JOB_INTERFACE void DestroyThreadPool( IThreadPool *pPool );
 
 //-------------------------------------
 
@@ -429,6 +444,9 @@ JOB_INTERFACE void RunThreadPoolTests();
 //-----------------------------------------------------------------------------
 
 JOB_INTERFACE IThreadPool *g_pThreadPool;
+#ifdef _X360
+JOB_INTERFACE IThreadPool *g_pAlternateThreadPool;
+#endif
 
 //-----------------------------------------------------------------------------
 // Class to combine the metadata for an operation and the ability to perform
@@ -449,7 +467,20 @@ public:
 		m_CompleteEvent( true ),
 		m_iServicingThread( -1 )
 	{
-		m_szDescription[ 0 ] = 0;
+		// m_reserved = 0; - useful for debugging
+	}
+
+	void Reset() // this prepares the job for reuse. Only use on jobs that have finished.
+	{
+		AUTO_LOCK( m_mutex ); // when worker thread signals end of execution, it's still in the critical section before 
+		m_status = JOB_STATUS_UNSERVICED;
+		m_ThreadPoolData = JOB_NO_DATA;
+		m_priority = JP_NORMAL;
+		m_flags = 0;
+		m_pThreadPool = NULL;
+		m_CompleteEvent.Reset(); // <Sergiy> this should really be a CV in posix..
+		m_iServicingThread = -1;
+		// m_reserved = 0; - useful for debugging
 	}
 
 	//-----------------------------------------------------
@@ -476,11 +507,6 @@ public:
 	bool CanExecute() const							{ return ( m_status == JOB_STATUS_PENDING || m_status == JOB_STATUS_UNSERVICED ); }
 	bool IsFinished() const							{ return ( m_status != JOB_STATUS_PENDING && m_status != JOB_STATUS_INPROGRESS && m_status != JOB_STATUS_UNSERVICED ); }
 	JobStatus_t GetStatus() const					{ return m_status; }
-
-	/// Slam the status to a particular value.  This is named "slam" instead of "set,"
-	/// to warn you that it should only be used in unusual situations.  Otherwise, the
-	/// job manager really should manage the status for you, and you should not manhandle it.
-	void SlamStatus(JobStatus_t s) { m_status = s; }
 	
 	//-----------------------------------------------------
 	// Try to acquire ownership (to satisfy). If you take the lock, you must either execute or abort.
@@ -509,20 +535,11 @@ public:
 	//-----------------------------------------------------
 	JobStatus_t Abort( bool bDiscard = true );
 
-	virtual char const *Describe()					{ return m_szDescription[ 0 ] ? m_szDescription : "Job"; }
-	virtual void SetDescription( const char *pszDescription )
-	{
-		if( pszDescription )
-		{
-			Q_strncpy( m_szDescription, pszDescription, sizeof( m_szDescription ) );
-		}
-		else
-		{
-			m_szDescription[ 0 ] = 0;
-		}
-	}
+	virtual char const *Describe()					{ return "Job"; }
 
 private:
+	JobStatus_t ExecuteInternal();
+	friend void ServiceJobAndRelease( CJob *pJob, int iThread );
 	//-----------------------------------------------------
 	friend class CThreadPool;
 
@@ -535,7 +552,10 @@ private:
 	ThreadPoolData_t	m_ThreadPoolData;
 	IThreadPool *		m_pThreadPool;
 	CThreadEvent		m_CompleteEvent;
-	char				m_szDescription[ 32 ];
+
+#if defined( THREAD_PARENT_STACK_TRACE_ENABLED )
+	void *				m_ParentStackTrace[THREAD_PARENT_STACK_TRACE_LENGTH];
+#endif
 
 private:
 	//-----------------------------------------------------
@@ -710,21 +730,19 @@ private:
 // Work splitting: array split, best when cost per item is roughly equal
 //-----------------------------------------------------------------------------
 
-#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4389)
 #pragma warning(disable:4018)
 #pragma warning(disable:4701)
-#endif
 
 #define DEFINE_NON_MEMBER_ITER_RANGE_PARALLEL(N) \
 	template <typename FUNCTION_CLASS, typename FUNCTION_RETTYPE FUNC_TEMPLATE_FUNC_PARAMS_##N FUNC_TEMPLATE_ARG_PARAMS_##N, typename ITERTYPE1, typename ITERTYPE2> \
-	void IterRangeParallel(FUNCTION_RETTYPE ( FUNCTION_CLASS::*pfnProxied )( ITERTYPE1, ITERTYPE2 FUNC_ADDL_TEMPLATE_FUNC_PARAMS_##N ), ITERTYPE1 from, ITERTYPE2 to FUNC_ARG_FORMAL_PARAMS_##N ) \
+	void IterRangeParallel(FUNCTION_RETTYPE ( FUNCTION_CLASS::*pfnProxied )( ITERTYPE1, ITERTYPE2 FUNC_SEPARATOR_##N FUNC_BASE_TEMPLATE_FUNC_PARAMS_##N ), ITERTYPE1 from, ITERTYPE2 to FUNC_ARG_FORMAL_PARAMS_##N ) \
 	{ \
 		const int MAX_THREADS = 16; \
 		int nIdle = g_pThreadPool->NumIdleThreads(); \
 		ITERTYPE1 range = to - from; \
-		int nThreads = MIN( nIdle + 1, range ); \
+		int nThreads = min( nIdle + 1, range ); \
 		if ( nThreads > MAX_THREADS ) \
 		{ \
 			nThreads = MAX_THREADS; \
@@ -754,12 +772,12 @@ FUNC_GENERATE_ALL( DEFINE_NON_MEMBER_ITER_RANGE_PARALLEL );
 
 #define DEFINE_MEMBER_ITER_RANGE_PARALLEL(N) \
 	template <typename OBJECT_TYPE, typename FUNCTION_CLASS, typename FUNCTION_RETTYPE FUNC_TEMPLATE_FUNC_PARAMS_##N FUNC_TEMPLATE_ARG_PARAMS_##N, typename ITERTYPE1, typename ITERTYPE2> \
-	void IterRangeParallel(OBJECT_TYPE *pObject, FUNCTION_RETTYPE ( FUNCTION_CLASS::*pfnProxied )( ITERTYPE1, ITERTYPE2 FUNC_ADDL_TEMPLATE_FUNC_PARAMS_##N ), ITERTYPE1 from, ITERTYPE2 to FUNC_ARG_FORMAL_PARAMS_##N ) \
+	void IterRangeParallel(OBJECT_TYPE *pObject, FUNCTION_RETTYPE ( FUNCTION_CLASS::*pfnProxied )( ITERTYPE1, ITERTYPE2 FUNC_SEPARATOR_##N FUNC_BASE_TEMPLATE_FUNC_PARAMS_##N ), ITERTYPE1 from, ITERTYPE2 to FUNC_ARG_FORMAL_PARAMS_##N ) \
 	{ \
 		const int MAX_THREADS = 16; \
 		int nIdle = g_pThreadPool->NumIdleThreads(); \
 		ITERTYPE1 range = to - from; \
-		int nThreads = MIN( nIdle + 1, range ); \
+		int nThreads = min( nIdle + 1, range ); \
 		if ( nThreads > MAX_THREADS ) \
 		{ \
 			nThreads = MAX_THREADS; \
@@ -786,6 +804,7 @@ FUNC_GENERATE_ALL( DEFINE_NON_MEMBER_ITER_RANGE_PARALLEL );
 	}
 
 FUNC_GENERATE_ALL( DEFINE_MEMBER_ITER_RANGE_PARALLEL );
+
 
 //-----------------------------------------------------------------------------
 // Work splitting: competitive, best when cost per item varies a lot
@@ -841,28 +860,80 @@ public:
 
 protected:
 	OBJECT_TYPE *m_pObject;
+
 	void (FUNCTION_CLASS::*m_pfnProcess)( T & );
 	void (FUNCTION_CLASS::*m_pfnBegin)();
 	void (FUNCTION_CLASS::*m_pfnEnd)();
 };
 
-template <typename ITEM_TYPE, class ITEM_PROCESSOR_TYPE>
+template <typename T>
+class CLoopFuncJobItemProcessor : public CJobItemProcessor<T>
+{
+public:
+	void Init(void (*pfnProcess)( T*, int, int ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL )
+	{
+		m_pfnProcess = pfnProcess;
+		m_pfnBegin = pfnBegin;
+		m_pfnEnd = pfnEnd;
+	}
+
+	void Begin()									{ if ( m_pfnBegin ) (*m_pfnBegin)(); }
+	void Process( T* pContext, int nFirst, int nCount )	{ (*m_pfnProcess)( pContext, nFirst, nCount ); }
+	void End()										{ if ( m_pfnEnd ) (*m_pfnEnd)(); }
+
+protected:
+	void (*m_pfnProcess)( T*, int, int );
+	void (*m_pfnBegin)();
+	void (*m_pfnEnd)();
+};
+
+template <typename T, class OBJECT_TYPE, class FUNCTION_CLASS = OBJECT_TYPE >
+class CLoopMemberFuncJobItemProcessor : public CJobItemProcessor<T>
+{
+public:
+	void Init( OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( T*, int, int ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL )
+	{
+		m_pObject = pObject;
+		m_pfnProcess = pfnProcess;
+		m_pfnBegin = pfnBegin;
+		m_pfnEnd = pfnEnd;
+	}
+
+	void Begin()									{ if ( m_pfnBegin ) ((*m_pObject).*m_pfnBegin)(); }
+	void Process( T *item, int nFirst, int nCount )	{ ((*m_pObject).*m_pfnProcess)( item, nFirst, nCount ); }
+	void End()										{ if ( m_pfnEnd ) ((*m_pObject).*m_pfnEnd)(); }
+
+protected:
+	OBJECT_TYPE *m_pObject;
+
+	void (FUNCTION_CLASS::*m_pfnProcess)( T*, int, int );
+	void (FUNCTION_CLASS::*m_pfnBegin)();
+	void (FUNCTION_CLASS::*m_pfnEnd)();
+};
+
+
+#pragma warning(push)
+#pragma warning(disable:4189)
+
+template <typename ITEM_TYPE, class ITEM_PROCESSOR_TYPE, int ID_TO_PREVENT_COMDATS_IN_PROFILES = 1>
 class CParallelProcessor
 {
 public:
-	CParallelProcessor( const char *pszDescription )
+	CParallelProcessor()
 	{
 		m_pItems = m_pLimit= 0;
-		m_szDescription = pszDescription;
 	}
 
-	void Run( ITEM_TYPE *pItems, unsigned nItems, int nMaxParallel = INT_MAX, IThreadPool *pThreadPool = NULL )
+	void Run( ITEM_TYPE *pItems, unsigned nItems, int nChunkSize = 1, int nMaxParallel = INT_MAX, IThreadPool *pThreadPool = NULL )
 	{
-		tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "Run %s %d", m_szDescription, nItems );
-
 		if ( nItems == 0 )
 			return;
 
+#if defined(_X360)
+		volatile int ignored = ID_TO_PREVENT_COMDATS_IN_PROFILES;
+#endif
+
+		m_nChunkSize = nChunkSize;
 		if ( !pThreadPool )
 		{
 			pThreadPool = g_pThreadPool;
@@ -890,15 +961,14 @@ public:
 			nJobs = nThreads;
 		}
 
-		if ( nJobs > 1 )
+		if ( nJobs > 0 )
 		{
 			CJob **jobs = (CJob **)stackalloc( nJobs * sizeof(CJob **) );
 			int i = nJobs;
 
 			while( i-- )
 			{
-				jobs[i] = pThreadPool->QueueCall( this, &CParallelProcessor<ITEM_TYPE, ITEM_PROCESSOR_TYPE>::DoExecute );
-				jobs[i]->SetDescription( m_szDescription );
+				jobs[i] = pThreadPool->QueueCall( this, &CParallelProcessor<ITEM_TYPE, ITEM_PROCESSOR_TYPE, ID_TO_PREVENT_COMDATS_IN_PROFILES>::DoExecute );
 			}
 
 			DoExecute();
@@ -920,99 +990,167 @@ public:
 private:
 	void DoExecute()
 	{
-		tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "DoExecute %s", m_szDescription );
-
 		if ( m_pItems < m_pLimit )
 		{
+#if defined(_X360)
+			volatile int ignored = ID_TO_PREVENT_COMDATS_IN_PROFILES;
+#endif
 			m_ItemProcessor.Begin();
 
 			ITEM_TYPE *pLimit = m_pLimit;
 
+			int nChunkSize = m_nChunkSize;
 			for (;;)
 			{
-				ITEM_TYPE *pCurrent = m_pItems++;
-				if ( pCurrent < pLimit )
+				ITEM_TYPE *pCurrent = m_pItems.AtomicAdd( nChunkSize );
+				ITEM_TYPE *pLast = MIN( pLimit, pCurrent + nChunkSize );
+				while( pCurrent < pLast )
 				{
 					m_ItemProcessor.Process( *pCurrent );
+					pCurrent++;
 				}
-				else
+				if ( pCurrent >= pLimit )
 				{
 					break;
 				}
 			}
-
 			m_ItemProcessor.End();
 		}
 	}
 	CInterlockedPtr<ITEM_TYPE>	m_pItems;
 	ITEM_TYPE *					m_pLimit;
-	const char *				m_szDescription;
+	int m_nChunkSize;
+
 };
 
-template <typename ITEM_TYPE> 
-inline void ParallelProcess( const char *pszDescription, ITEM_TYPE *pItems, unsigned nItems, void (*pfnProcess)( ITEM_TYPE & ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
-{
-	CParallelProcessor<ITEM_TYPE, CFuncJobItemProcessor<ITEM_TYPE> > processor( pszDescription );
-	processor.m_ItemProcessor.Init( pfnProcess, pfnBegin, pfnEnd );
-	processor.Run( pItems, nItems, nMaxParallel );
+#pragma warning(pop)
 
+template <typename ITEM_TYPE> 
+inline void ParallelProcess( ITEM_TYPE *pItems, unsigned nItems, void (*pfnProcess)( ITEM_TYPE & ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+{
+	CParallelProcessor<ITEM_TYPE, CFuncJobItemProcessor<ITEM_TYPE> > processor;
+	processor.m_ItemProcessor.Init( pfnProcess, pfnBegin, pfnEnd );
+	processor.Run( pItems, nItems, 1, nMaxParallel );
 }
 
 template <typename ITEM_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
-inline void ParallelProcess( const char *pszDescription, ITEM_TYPE *pItems, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( ITEM_TYPE & ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+inline void ParallelProcess( ITEM_TYPE *pItems, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( ITEM_TYPE & ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
 {
-	CParallelProcessor<ITEM_TYPE, CMemberFuncJobItemProcessor<ITEM_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor( pszDescription );
+	CParallelProcessor<ITEM_TYPE, CMemberFuncJobItemProcessor<ITEM_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
 	processor.m_ItemProcessor.Init( pObject, pfnProcess, pfnBegin, pfnEnd );
-	processor.Run( pItems, nItems, nMaxParallel );
+	processor.Run( pItems, nItems, 1, nMaxParallel );
 }
 
 // Parallel Process that lets you specify threadpool
 template <typename ITEM_TYPE> 
-inline void ParallelProcess( const char *pszDescription, IThreadPool *pPool, ITEM_TYPE *pItems, unsigned nItems, void (*pfnProcess)( ITEM_TYPE & ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+inline void ParallelProcess( IThreadPool *pPool, ITEM_TYPE *pItems, unsigned nItems, void (*pfnProcess)( ITEM_TYPE & ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
 {
-	CParallelProcessor<ITEM_TYPE, CFuncJobItemProcessor<ITEM_TYPE> > processor( pszDescription );
+	CParallelProcessor<ITEM_TYPE, CFuncJobItemProcessor<ITEM_TYPE> > processor;
 	processor.m_ItemProcessor.Init( pfnProcess, pfnBegin, pfnEnd );
-	processor.Run( pItems, nItems, nMaxParallel, pPool );
+	processor.Run( pItems, nItems, 1, nMaxParallel, pPool );
+}
+
+template <typename ITEM_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
+inline void ParallelProcess( IThreadPool *pPool, ITEM_TYPE *pItems, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( ITEM_TYPE & ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+{
+	CParallelProcessor<ITEM_TYPE, CMemberFuncJobItemProcessor<ITEM_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
+	processor.m_ItemProcessor.Init( pObject, pfnProcess, pfnBegin, pfnEnd );
+	processor.Run( pItems, nItems, 1, nMaxParallel, pPool );
+}
+
+// ParallelProcessChunks lets you specify a minimum # of items to process per job. Use this when
+// you may have a large set of work items which only take a small amount of time per item, and so
+// need to reduce dispatch overhead.
+template <typename ITEM_TYPE> 
+inline void ParallelProcessChunks( ITEM_TYPE *pItems, unsigned nItems, void (*pfnProcess)( ITEM_TYPE & ), int nChunkSize, int nMaxParallel = INT_MAX )
+{
+	CParallelProcessor<ITEM_TYPE, CFuncJobItemProcessor<ITEM_TYPE> > processor;
+	processor.m_ItemProcessor.Init( pfnProcess, NULL, NULL );
+	processor.Run( pItems, nItems, nChunkSize, nMaxParallel );
+}
+
+template <typename ITEM_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
+inline void ParallelProcessChunks( ITEM_TYPE *pItems, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( ITEM_TYPE & ), int nChunkSize, int nMaxParallel = INT_MAX )
+{
+	CParallelProcessor<ITEM_TYPE, CMemberFuncJobItemProcessor<ITEM_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
+	processor.m_ItemProcessor.Init( pObject, pfnProcess, NULL, NULL );
+	processor.Run( pItems, nItems, nChunkSize, nMaxParallel );
+}
+
+template <typename ITEM_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
+inline void ParallelProcessChunks( IThreadPool *pPool, ITEM_TYPE *pItems, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( ITEM_TYPE & ), int nChunkSize, int nMaxParallel = INT_MAX )
+{
+	CParallelProcessor<ITEM_TYPE, CMemberFuncJobItemProcessor<ITEM_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
+	processor.m_ItemProcessor.Init( pObject, pfnProcess, NULL, NULL );
+	processor.Run( pItems, nItems, nChunkSize, nMaxParallel, pPool );
 }
 
 
-template <class ITEM_PROCESSOR_TYPE>
+template <class CONTEXT_TYPE, class ITEM_PROCESSOR_TYPE>
 class CParallelLoopProcessor
 {
 public:
-	CParallelLoopProcessor( const char *pszDescription )
+	CParallelLoopProcessor()
 	{
-		m_lIndex = m_lLimit= 0;
+		m_nIndex = m_nLimit = 0;
+		m_nChunkCount = 0;
 		m_nActive = 0;
-		m_szDescription = pszDescription;
 	}
 
-	void Run( long lBegin, long nItems, int nMaxParallel = INT_MAX )
+	void Run( CONTEXT_TYPE *pContext, int nBegin, int nItems, int nChunkCount, int nMaxParallel = INT_MAX, IThreadPool *pThreadPool = NULL )
 	{
-		if ( nItems )
-		{
-			m_lIndex = lBegin;
-			m_lLimit = lBegin + nItems;
-			int i = g_pThreadPool->NumIdleThreads();
+		if ( !nItems )
+			return;
 
-			if ( nMaxParallel < i)
-			{
-				i = nMaxParallel;
-			}
+		if ( !pThreadPool )
+		{
+			pThreadPool = g_pThreadPool;
+		}
+
+		m_pContext = pContext;
+		m_nIndex = nBegin;
+		m_nLimit = nBegin + nItems;
+		nChunkCount = MAX( MIN( nItems, nChunkCount ), 1 );
+		m_nChunkCount = ( nItems + nChunkCount - 1 ) / nChunkCount;
+		int nJobs = ( nItems + m_nChunkCount - 1 ) / m_nChunkCount;
+		if ( nJobs > nMaxParallel )
+		{
+			nJobs = nMaxParallel;
+		}
+
+		if ( !pThreadPool )									// only possible on linux
+		{
+			DoExecute( );
+			return;
+		}
+
+		int nThreads = pThreadPool->NumThreads();
+		if ( nJobs > nThreads )
+		{
+			nJobs = nThreads;
+		}
+
+		if ( nJobs > 0 )
+		{
+			CJob **jobs = (CJob **)stackalloc( nJobs * sizeof(CJob **) );
+			int i = nJobs;
 
 			while( i-- )
 			{
-				++m_nActive;
-				ThreadExecute( this, &CParallelLoopProcessor<ITEM_PROCESSOR_TYPE>::DoExecute )->Release();
+				jobs[i] = pThreadPool->QueueCall( this, &CParallelLoopProcessor<CONTEXT_TYPE, ITEM_PROCESSOR_TYPE>::DoExecute );
 			}
 
-			++m_nActive;
 			DoExecute();
 
-			while ( m_nActive )
+			for ( i = 0; i < nJobs; i++ )
 			{
-				ThreadPause();
+				jobs[i]->Abort(); // will either abort ones that never got a thread, or noop on ones that did
+				jobs[i]->Release();
 			}
+		}
+		else
+		{
+			DoExecute();
 		}
 	}
 
@@ -1021,51 +1159,62 @@ public:
 private:
 	void DoExecute()
 	{
-		tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "DoExecute %s", m_szDescription );
-
 		m_ItemProcessor.Begin();
-
-		long lLimit = m_lLimit;
-
 		for (;;)
 		{
-			long lIndex = m_lIndex ++;
-			if ( lIndex < lLimit )
+			int nIndex = m_nIndex.AtomicAdd( m_nChunkCount );
+			if ( nIndex < m_nLimit )
 			{
-				m_ItemProcessor.Process( lIndex );
+				int nCount = MIN( m_nChunkCount, m_nLimit - nIndex );
+				m_ItemProcessor.Process( m_pContext, nIndex, nCount );
 			}
 			else
 			{
 				break;
 			}
 		}
-
 		m_ItemProcessor.End();
-
 		--m_nActive;
 	}
-	CInterlockedInt				m_lIndex;
-	long						m_lLimit;
+
+	CONTEXT_TYPE				*m_pContext;
+	CInterlockedInt				m_nIndex;
+	int							m_nLimit;
+	int							m_nChunkCount;
 	CInterlockedInt				m_nActive;
-	const char *				m_szDescription;
 };
 
-inline void ParallelLoopProcess( const char *szDescription, long lBegin, unsigned nItems, void (*pfnProcess)( long const & ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+template < typename CONTEXT_TYPE > 
+inline void ParallelLoopProcess( IThreadPool *pPool, CONTEXT_TYPE *pContext, int nStart, int nCount, void (*pfnProcess)( CONTEXT_TYPE*, int, int ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
 {
-	CParallelLoopProcessor< CFuncJobItemProcessor< long const > > processor( szDescription );
+	CParallelLoopProcessor< CONTEXT_TYPE, CLoopFuncJobItemProcessor< CONTEXT_TYPE > > processor;
 	processor.m_ItemProcessor.Init( pfnProcess, pfnBegin, pfnEnd );
-	processor.Run( lBegin, nItems, nMaxParallel );
-
+	processor.Run( pContext, nStart, nCount, 1, nMaxParallel, pPool );
 }
 
-template < typename OBJECT_TYPE, typename FUNCTION_CLASS > 
-inline void ParallelLoopProcess( const char *szDescription, long lBegin, unsigned nItems, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( long const & ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+template < typename CONTEXT_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
+inline void ParallelLoopProcess( IThreadPool *pPool, CONTEXT_TYPE *pContext, int nStart, int nCount, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( CONTEXT_TYPE*, int, int ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
 {
-	CParallelLoopProcessor< CMemberFuncJobItemProcessor<long const, OBJECT_TYPE, FUNCTION_CLASS> > processor( szDescription );
+	CParallelLoopProcessor< CONTEXT_TYPE, CLoopMemberFuncJobItemProcessor<CONTEXT_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
 	processor.m_ItemProcessor.Init( pObject, pfnProcess, pfnBegin, pfnEnd );
-	processor.Run( lBegin, nItems, nMaxParallel );
+	processor.Run( pContext, nStart, nCount, 1, nMaxParallel, pPool );
 }
 
+template < typename CONTEXT_TYPE > 
+inline void ParallelLoopProcessChunks( IThreadPool *pPool, CONTEXT_TYPE *pContext, int nStart, int nCount, int nChunkSize, void (*pfnProcess)( CONTEXT_TYPE*, int, int ), void (*pfnBegin)() = NULL, void (*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+{
+	CParallelLoopProcessor< CONTEXT_TYPE, CLoopFuncJobItemProcessor< CONTEXT_TYPE > > processor;
+	processor.m_ItemProcessor.Init( pfnProcess, pfnBegin, pfnEnd );
+	processor.Run( pContext, nStart, nCount, nChunkSize, nMaxParallel, pPool );
+}
+
+template < typename CONTEXT_TYPE, typename OBJECT_TYPE, typename FUNCTION_CLASS > 
+inline void ParallelLoopProcessChunks( IThreadPool *pPool, CONTEXT_TYPE *pContext, int nStart, int nCount, int nChunkSize, OBJECT_TYPE *pObject, void (FUNCTION_CLASS::*pfnProcess)( CONTEXT_TYPE*, int, int ), void (FUNCTION_CLASS::*pfnBegin)() = NULL, void (FUNCTION_CLASS::*pfnEnd)() = NULL, int nMaxParallel = INT_MAX )
+{
+	CParallelLoopProcessor< CONTEXT_TYPE, CLoopMemberFuncJobItemProcessor<CONTEXT_TYPE, OBJECT_TYPE, FUNCTION_CLASS> > processor;
+	processor.m_ItemProcessor.Init( pObject, pfnProcess, pfnBegin, pfnEnd );
+	processor.Run( pContext, nStart, nCount, nChunkSize, nMaxParallel, pPool );
+}
 
 template <class Derived>
 class CParallelProcessorBase
@@ -1078,11 +1227,6 @@ public:
 	CParallelProcessorBase()
 	{
 		m_nActive = 0;
-		m_szDescription = NULL;
-	}
-	void SetDescription( const char *pszDescription )
-	{
-		m_szDescription = pszDescription;
 	}
 
 protected:
@@ -1124,8 +1268,6 @@ protected:
 private:
 	void DoExecute()
 	{
-		tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "DoExecute %s", m_szDescription );
-
 		static_cast<Derived *>( this )->OnBegin();
 
 		while ( static_cast<Derived *>( this )->OnProcess() )
@@ -1137,7 +1279,6 @@ private:
 	}
 
 	CInterlockedInt				m_nActive;
-	const char *				m_szDescription;
 };
 
 
@@ -1147,7 +1288,7 @@ private:
 // Raw thread launching
 //-----------------------------------------------------------------------------
 
-inline unsigned FunctorExecuteThread( void *pParam )
+inline uintp FunctorExecuteThread( void *pParam )
 {
 	CFunctor *pFunctor = (CFunctor *)pParam;
 	(*pFunctor)();
@@ -1158,11 +1299,10 @@ inline unsigned FunctorExecuteThread( void *pParam )
 inline ThreadHandle_t ThreadExecuteSoloImpl( CFunctor *pFunctor, const char *pszName = NULL )
 {
 	ThreadHandle_t hThread;
-	ThreadId_t threadId;
-	hThread = CreateSimpleThread( FunctorExecuteThread, pFunctor, &threadId );
+	hThread = CreateSimpleThread( FunctorExecuteThread, pFunctor );
 	if ( pszName )
 	{
-		ThreadSetDebugName( threadId, pszName );
+		ThreadSetDebugName( hThread, pszName );
 	}
 	return hThread;
 }
@@ -1216,9 +1356,9 @@ inline ThreadHandle_t ThreadExecuteSoloRef( const char *pszName, T1 a1, T2 a2, T
 
 //-----------------------------------------------------------------------------
 
-inline bool IThreadPool::YieldWait( CThreadEvent &event, unsigned timeout )
+inline bool IThreadPool::YieldWait( CThreadEvent &theEvent, unsigned timeout )
 {
-	CThreadEvent *pEvent = &event;
+	CThreadEvent *pEvent = &theEvent;
 	return ( YieldWait( &pEvent, 1, true, timeout ) != TW_TIMEOUT );
 }
 
@@ -1236,11 +1376,21 @@ inline JobStatus_t CJob::Execute()
 		return m_status;
 	}
 
-	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s %s %d", __FUNCTION__, Describe(), m_status );
-
 	AUTO_LOCK( m_mutex );
-	AddRef();
+	AddRef(); // <sergiy> This AddRef/Release pair is only useful if the job releases itself in DoExecute() AND the caller doesn't hold a reference to it
 
+	JobStatus_t result = ExecuteInternal();
+
+	Release();
+
+	return result;
+}
+
+
+
+// The mutex must be locked, the caller must own at least one reference to the job (so that it can release itself from within DoExecute())
+inline JobStatus_t CJob::ExecuteInternal()
+{
 	JobStatus_t result;
 
 	switch ( m_status )
@@ -1250,14 +1400,24 @@ inline JobStatus_t CJob::Execute()
 		{
 			// Service it
 			m_status = JOB_STATUS_INPROGRESS;
+
+#if defined( THREAD_PARENT_STACK_TRACE_ENABLED )
+			//replace thread parent trace with job parent
+			{
+				CStackTop_ReferenceParentStack stackTop( m_ParentStackTrace, ARRAYSIZE( m_ParentStackTrace ) );
+				result = m_status = DoExecute();
+			}
+#else
 			result = m_status = DoExecute();
+#endif			
+
 			DoCleanup();
 			m_CompleteEvent.Set();
 			break;
 		}
 
 	case JOB_STATUS_INPROGRESS:
-		AssertMsg(0, "Mutex Should have protected use while processing");
+		AssertMsg( 0, "Mutex Should have protected use while processing" );
 		// fall through...
 
 	case JOB_OK:
@@ -1266,11 +1426,9 @@ inline JobStatus_t CJob::Execute()
 		break;
 
 	default:
-		AssertMsg( m_status < JOB_OK, "Unknown job state");
+		AssertMsg( m_status < JOB_OK, "Unknown job state" );
 		result = m_status;
 	}
-
-	Release();
 
 	return result;
 }
@@ -1280,8 +1438,6 @@ inline JobStatus_t CJob::Execute()
 
 inline JobStatus_t CJob::TryExecute()
 {
-	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s %s %d", __FUNCTION__, Describe(), m_status );
-
 	// TryLock() would only fail if another thread has entered
 	// Execute() or Abort()
 	if ( !IsFinished() && TryLock() )
@@ -1302,8 +1458,6 @@ inline JobStatus_t CJob::Abort( bool bDiscard )
 		return m_status;
 	}
 
-	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s %s %d", __FUNCTION__, Describe(), m_status );
-
 	AUTO_LOCK( m_mutex );
 	AddRef();
 
@@ -1314,8 +1468,6 @@ inline JobStatus_t CJob::Abort( bool bDiscard )
 	case JOB_STATUS_UNSERVICED:
 	case JOB_STATUS_PENDING:
 		{
-			tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "CJob::DoAbort" );
-
 			result = m_status = DoAbort( bDiscard );
 			if ( bDiscard )
 				DoCleanup();

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -13,7 +13,7 @@
 #endif
 
 #include "tier1/interface.h"
-#include <vgui/VGUI.h>
+#include <vgui/vgui.h>
 
 #include "appframework/iappsystem.h"
 
@@ -33,6 +33,12 @@ enum
 
 // safe handle to a panel - can be converted to and from a VPANEL
 typedef unsigned long HPanel;
+
+class IMessageContextIdHandler
+{
+public:
+	virtual void SetMessageContextId( int id ) = 0;
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: Interface to core vgui components
@@ -96,15 +102,10 @@ public:
 	// data accessor for above
 	virtual bool GetShouldVGuiControlSleep() = 0;
 
-	// enables VR mode
-	virtual void SetVRMode( bool bVRMode ) = 0;
-	virtual bool GetVRMode() = 0;
-
-	// add a tick signal like above, but to the head of the list of tick signals
-	virtual void AddTickSignalToHead( VPANEL panel, int intervalMilliseconds = 0 ) = 0;
+	// Resets a particular context, use DEFAULT_VGUI_CONTEXT
+	// to get the one normally used by VGUI
+	virtual void ResetContext( HContext context ) = 0;
 };
-
-#define VGUI_IVGUI_INTERFACE_VERSION "VGUI_ivgui008"
 
 };
 

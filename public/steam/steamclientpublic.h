@@ -791,7 +791,7 @@ private:
 	{
 		struct SteamIDComponent_t
 		{
-#ifdef VALVE_BIG_ENDIAN
+#ifdef PLAT_BIG_ENDIAN
 			EUniverse			m_EUniverse : 8;	// universe this account belongs to
 			unsigned int		m_EAccountType : 4;			// type of account - can't show as EAccountType, due to signed / unsigned difference
 			unsigned int		m_unAccountInstance : 20;	// dynamic instance ID
@@ -1072,7 +1072,7 @@ public:
 
 	struct GameID_t
 	{
-#ifdef VALVE_BIG_ENDIAN
+#ifdef PLAT_BIG_ENDIAN
 		unsigned int m_nModID : 32;
 		unsigned int m_nType : 8;
 		unsigned int m_nAppID : 24;

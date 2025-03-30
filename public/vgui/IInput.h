@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 #pragma once
 #endif
 
-#include <vgui/VGUI.h>
+#include <vgui/vgui.h>
 #include "tier1/interface.h"
 #include "vgui/MouseCode.h"
 #include "vgui/KeyCode.h"
@@ -50,7 +50,7 @@ public:
 	virtual void SetMouseCapture(VPANEL panel) = 0;
 
 	// returns the string name of a scan code
-	virtual void GetKeyCodeText(KeyCode code, OUT_Z_BYTECAP(buflen) char *buf, int buflen) = 0;
+	virtual void GetKeyCodeText(KeyCode code, char *buf, int buflen) = 0;
 
 	// focus
 	virtual VPANEL GetFocus() = 0;
@@ -183,9 +183,12 @@ public:
 	virtual bool	ShouldModalSubTreeReceiveMessages() const = 0;
 
 	virtual VPANEL 	GetMouseCapture() = 0;
-};
 
-#define VGUI_INPUT_INTERFACE_VERSION "VGUI_Input005"
+	virtual VPANEL  GetMouseFocus() = 0;
+
+ 	virtual void	SetModalSubTreeShowMouse( bool state ) = 0;
+ 	virtual bool	ShouldModalSubTreeShowMouse() const = 0;
+};
 
 } // namespace vgui
 

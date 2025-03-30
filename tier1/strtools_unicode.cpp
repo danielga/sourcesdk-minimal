@@ -6,12 +6,9 @@
 //
 //=============================================================================//
 
-#include <limits.h>
 #include "tier0/dbg.h"
 #include "tier1/strtools.h"
 
-// This code was copied from steam
-#define DbgAssert Assert
 
 //-----------------------------------------------------------------------------
 // Purpose: determine if a uchar32 represents a valid Unicode code point
@@ -232,14 +229,6 @@ namespace // internal use only
 	template < typename SrcType, typename DstType, bool bStopAtNull, int (&DecodeSrc)( const SrcType*, uchar32&, bool& ), int (&EncodeDstLen)( uchar32 ), int (&EncodeDst)( uchar32, DstType* ) >
 	int Q_UnicodeConvertT( const SrcType *pIn, int nInChars, DstType *pOut, int nOutBytes, EStringConvertErrorPolicy ePolicy )
 	{
-		if ( !pIn )
-		{
-			// For now, assert and return 0. Once these are cleaned out a bit
-			//  we should remove this return and just leave in the assert...
-			AssertMsg( pIn, "We shouldn't be passing in NULL!" );
-			return 0;
-		}
-
 		int nOut = 0;
 
 		if ( !pOut )

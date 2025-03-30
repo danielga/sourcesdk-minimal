@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Defines a large symbol table (intp sized handles, can store more than 64k strings)
 //
@@ -189,15 +189,15 @@ public:
 	{
 		// Nothing, only matters for thread-safe tables
 	}
-	inline int Insert( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
+	inline intp Insert( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
 	{
 		return CNonThreadsafeTreeType::Insert( entry );
 	}
-	inline int Find( CUtlSymbolTableLargeBaseTreeEntry_t *entry ) const
+	inline intp Find( CUtlSymbolTableLargeBaseTreeEntry_t *entry ) const
 	{
 		return CNonThreadsafeTreeType::Find( entry );
 	}
-	inline int InvalidIndex() const
+	inline intp InvalidIndex() const
 	{
 		return CNonThreadsafeTreeType::InvalidIndex();
 	}
@@ -264,19 +264,19 @@ public:
 	{
 		CThreadsafeTreeType::Commit();
 	}
-	inline int Insert( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
+	inline UtlTSHashHandle_t Insert( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
 	{
 		return CThreadsafeTreeType::Insert( entry, entry );
 	}
-	inline int Find( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
+	inline UtlTSHashHandle_t Find( CUtlSymbolTableLargeBaseTreeEntry_t *entry )
 	{
 		return CThreadsafeTreeType::Find( entry );
 	}
-	inline int InvalidIndex() const
+	inline UtlTSHashHandle_t InvalidIndex() const
 	{
 		return CThreadsafeTreeType::InvalidHandle();
 	}
-	inline int GetElements( int nFirstElement, int nCount, CUtlSymbolLarge *pElements ) const
+	inline int GetElements( UtlTSHashHandle_t nFirstElement, int nCount, CUtlSymbolLarge *pElements ) const
 	{
 		CUtlVector< UtlTSHashHandle_t > list;
 		list.EnsureCount( nCount );
@@ -322,6 +322,11 @@ public:
 	int GetElements( int nFirstElement, int nCount, CUtlSymbolLarge *pElements ) const
 	{
 		return m_Lookup.GetElements( nFirstElement, nCount, pElements );
+	}
+
+	const char *GetElementString(int nElement) const
+	{
+		return m_Lookup.Element(nElement)->String();
 	}
 
 	uint64 GetMemoryUsage() const
@@ -387,7 +392,7 @@ inline CUtlSymbolLarge CUtlSymbolTableLargeBase<TreeType, CASEINSENSITIVE, POOL_
 	search->m_Hash = CUtlSymbolLarge_Hash( CASEINSENSITIVE, pString, len );
 	Q_memcpy( (char *)&search->m_String[ 0 ], pString, len );
 
-	int idx = const_cast< TreeType & >(m_Lookup).Find( search );
+	intp idx = const_cast< TreeType & >(m_Lookup).Find( search );
 
 	if ( idx == m_Lookup.InvalidIndex() )
 		return UTL_INVAL_SYMBOL_LARGE;
@@ -432,7 +437,7 @@ inline CUtlSymbolLarge CUtlSymbolTableLargeBase<TreeType, CASEINSENSITIVE, POOL_
 	// This assert seems to be invalid because LargeSymbolTableHashDecoration_t is always
 	// a uint32, by design.
 	//COMPILE_TIME_ASSERT(sizeof(LargeSymbolTableHashDecoration_t) == sizeof(intp));
-	lenDecorated = ALIGN_VALUE(lenDecorated, sizeof( intp ) );
+	lenDecorated = ALIGN_VALUE(lenDecorated, sizeof( LargeSymbolTableHashDecoration_t ) );
 
 	// Find a pool with space for this string, or allocate a new one.
 	int iPool = FindPoolWithSpace( lenDecorated );
@@ -466,26 +471,28 @@ inline CUtlSymbolLarge CUtlSymbolTableLargeBase<TreeType, CASEINSENSITIVE, POOL_
 
 	// insert the string into the database
 	MEM_ALLOC_CREDIT();
-	int idx = m_Lookup.Insert( entry );
-	return m_Lookup.Element( idx )->ToSymbol();
+	return m_Lookup.Element( m_Lookup.Insert( entry ) )->ToSymbol();
 }
 
 //-----------------------------------------------------------------------------
 // Remove all symbols in the table.
 //-----------------------------------------------------------------------------
+#ifdef ANALYZE_SUPPRESS // So that swig builds
+ANALYZE_SUPPRESS( 6001 ); // warning C6001: Using uninitialized memory '*m_StringPools.public: ...
+#endif
 template < class TreeType, bool CASEINSENSITIVE, size_t POOL_SIZE >
 inline void CUtlSymbolTableLargeBase<TreeType, CASEINSENSITIVE, POOL_SIZE>::RemoveAll()
 {
 	m_Lookup.Purge();
 
 	for ( int i=0; i < m_StringPools.Count(); i++ )
-	{
-		StringPool_t * pString = m_StringPools[i];
-		free( pString );
-	}
+		free( m_StringPools[i] );
 
 	m_StringPools.RemoveAll();
 }
+#ifdef ANALYZE_UNSUPPRESS // So that swig builds
+ANALYZE_UNSUPPRESS(); // warning C6001: Using uninitialized memory '*m_StringPools.public: ...
+#endif
 
 // Case-sensitive
 typedef CUtlSymbolTableLargeBase< CNonThreadsafeTree< false >, false > CUtlSymbolTableLarge;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Multiple linked list container class 
 //
@@ -332,8 +332,10 @@ inline bool CUtlMultiList<T,I>::IndexInRange( int index ) // Static method
 
 	// Do a couple of static checks here: the invalid index should be (I)~0 given how we use m_MaxElementIndex,
 	// and 'I' should be unsigned (to avoid signed arithmetic errors for plausibly exhaustible ranges).
-	COMPILE_TIME_ASSERT( (I)M::INVALID_INDEX == (I)~0 );
-	COMPILE_TIME_ASSERT( ( sizeof(I) > 2 ) || ( ( (I)-1 ) > 0 ) );
+	// These COMPILE_TIME_ASSERT checks need to be in individual scopes to avoid build breaks
+	// on MacOS and Linux due to a gcc bug.
+	{ COMPILE_TIME_ASSERT( (I)M::INVALID_INDEX == (I)~0 ); }
+	{ COMPILE_TIME_ASSERT( ( sizeof(I) > 2 ) || ( ( (I)-1 ) > 0 ) ); }
 
 	return ( ( (I)index == index ) && ( (I)index != InvalidIndex() ) );
 }

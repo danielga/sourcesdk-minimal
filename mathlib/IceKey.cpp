@@ -5,7 +5,12 @@
 #if !defined(_STATIC_LINKED) || defined(_SHARED_LIB)
 
 #include "mathlib/IceKey.H"
+#include "tier1/strtools.h"
+
+// NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
+
+
 #pragma warning(disable: 4244)
 
 
@@ -389,5 +394,36 @@ IceKey::blockSize () const
 {
 	return (8);
 }
+
+
+// Valve-written routine  to decode a buffer
+void DecodeICE( unsigned char *pBuffer, int nSize, const unsigned char *pKey)
+{
+	if ( !pKey )
+		return;
+
+	IceKey ice( 0 ); // level 0 = 64bit key
+	ice.set( pKey ); // set key
+
+	int nBlockSize = ice.blockSize();
+
+	unsigned char *pTemp = (unsigned char *) stackalloc( PAD_NUMBER( nSize, nBlockSize ) );
+	unsigned char *p1 = pBuffer;
+	unsigned char *p2 = pTemp;
+
+	// encrypt data in 8 byte blocks
+	int nBytesLeft = nSize;
+	while ( nBytesLeft >= nBlockSize )
+	{
+		ice.decrypt( p1, p2 );
+		nBytesLeft -= nBlockSize;
+		p1+=nBlockSize;
+		p2+=nBlockSize;
+	}
+
+	// copy encrypted data back to original buffer
+	Q_memcpy( pBuffer, pTemp, nSize - nBytesLeft );
+}
+
 
 #endif // !_STATIC_LINKED || _SHARED_LIB

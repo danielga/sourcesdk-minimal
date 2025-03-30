@@ -11,8 +11,11 @@ function IncludeSDKTier1()
 	filter("system:windows")
 		links({"vstdlib", "ws2_32", "rpcrt4"})
 
-	filter("system:linux")
-		links(_project.serverside and "vstdlib_srv" or "vstdlib")
+	filter({"system:linux", "architecture:x86"})
+		links("vstdlib")
+
+	filter({"system:linux", "architecture:x86_64"})
+		links(_project.serverside and "vstdlib" or "vstdlib_client")
 
 	filter("system:macosx")
 		links({"vstdlib", "iconv"})

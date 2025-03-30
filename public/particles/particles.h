@@ -924,7 +924,7 @@ struct ParticleRenderData_t
 	float m_flSortKey;										// what we sort by
 	int   m_nIndex;									 // index or fudged index (for child particles)
 	float m_flRadius;					   // effective radius, using visibility
-#if VALVE_LITTLE_ENDIAN
+#if PLAT_LITTLE_ENDIAN
 	uint8 m_nAlpha;							// effective alpha, combining alpha and alpha2 and vis. 0 - 255
 	uint8 m_nAlphaPad[3];										// this will be written to
 #else

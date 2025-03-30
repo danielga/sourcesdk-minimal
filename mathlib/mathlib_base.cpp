@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright � 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Math primitives.
 //
@@ -7,25 +7,28 @@
 /// FIXME: As soon as all references to mathlib.c are gone, include it in here
 
 #include <math.h>
-#include <float.h>	// Needed for FLT_EPSILON
+#include <float.h>	// needed for flt_epsilon
 
 #include "tier0/basetypes.h"
-#include <memory.h>
+//#include <memory.h>
 #include "tier0/dbg.h"
 
 #include "tier0/vprof.h"
 //#define _VPROF_MATHLIB
 
+#if !defined(__SPU__)
 #pragma warning(disable:4244)   // "conversion from 'const int' to 'float', possible loss of data"
 #pragma warning(disable:4730)	// "mixing _m64 and floating point expressions may result in incorrect code"
+#endif
 
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
-#if !defined( _X360 )
-#include "mathlib/amd3dx.h"
-#ifndef OSX
-#include "3dnow.h"
+#include "mathlib/vplane.h"
+#if !defined(__SPU__)
+#include "mathlib/vmatrix.h"
 #endif
+
+#if !defined( _X360 )
 #include "sse.h"
 #endif
 
@@ -36,7 +39,6 @@
 #include "tier0/memdbgon.h"
 
 bool s_bMathlibInitialized = false;
-
 #ifdef PARANOID
 // User must provide an implementation of Sys_Error()
 void Sys_Error (char *error, ...);
@@ -44,9 +46,17 @@ void Sys_Error (char *error, ...);
 
 const Vector vec3_origin(0,0,0);
 const QAngle vec3_angle(0,0,0);
+const Quaternion quat_identity(0,0,0,1);
 const Vector vec3_invalid( FLT_MAX, FLT_MAX, FLT_MAX );
 const int nanmask = 255<<23;
 
+const matrix3x4a_t g_MatrixIdentity(
+	1,0,0,0,
+	0,1,0,0,
+	0,0,1,0
+);
+
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Standard C implementations of optimized routines:
 //-----------------------------------------------------------------------------
@@ -63,7 +73,8 @@ float _rsqrtf(float x)
 	return 1.f / _sqrtf( x );
 }
 
-float FASTCALL _VectorNormalize (Vector& vec)
+#ifndef PLATFORM_PPC
+float VectorNormalize (Vector& vec)
 {
 #ifdef _VPROF_MATHLIB
 	VPROF_BUDGET( "_VectorNormalize", "Mathlib" );
@@ -80,6 +91,8 @@ float FASTCALL _VectorNormalize (Vector& vec)
 	
 	return radius;
 }
+#endif
+
 
 // TODO: Add fast C VectorNormalizeFast.
 // Perhaps use approximate rsqrt trick, if the accuracy isn't too bad.
@@ -103,17 +116,11 @@ float _InvRSquared(const float* v)
 	return r2 < 1.f ? 1.f : 1/r2;
 }
 
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Function pointers selecting the appropriate implementation
 //-----------------------------------------------------------------------------
-float (*pfSqrt)(float x)  = _sqrtf;
-float (*pfRSqrt)(float x) = _rsqrtf;
-float (*pfRSqrtFast)(float x) = _rsqrtf;
-float (FASTCALL *pfVectorNormalize)(Vector& v) = _VectorNormalize;
 void  (FASTCALL *pfVectorNormalizeFast)(Vector& v) = _VectorNormalizeFast;
-float (*pfInvRSquared)(const float* v) = _InvRSquared;
-void  (*pfFastSinCos)(float x, float* s, float* c) = SinCos;
-float (*pfFastCos)(float x) = cosf;
 
 float SinCosTable[SIN_TABLE_SIZE];
 void InitSinCosTable()
@@ -123,6 +130,8 @@ void InitSinCosTable()
 		SinCosTable[i] = sin(i * 2.0 * M_PI / SIN_TABLE_SIZE);
 	}
 }
+#endif // !defined(__SPU__)
+
 
 qboolean VectorsEqual( const float *v1, const float *v2 )
 {
@@ -131,7 +140,7 @@ qboolean VectorsEqual( const float *v1, const float *v2 )
 		     ( v1[1] == v2[1] ) &&
 			 ( v1[2] == v2[2] ) );
 }
-
+#endif // #if !defined(__SPU__)
 
 //-----------------------------------------------------------------------------
 // Purpose: Generates Euler angles given a left-handed orientation matrix. The
@@ -254,15 +263,39 @@ void MatrixAngles( const matrix3x4_t& matrix, float *angles )
 	}
 }
 
+Vector MatrixNormalize( const matrix3x4_t &in, matrix3x4_t &out )
+{
+	Vector vScale;
+	vScale.x = sqrt( in[ 0 ][ 0 ] * in[ 0 ][ 0 ] + in[ 1 ][ 0 ] * in[ 1 ][ 0 ] + in[ 2 ][ 0 ] * in[ 2 ][ 0 ] );
+	vScale.y = sqrt( in[ 0 ][ 1 ] * in[ 0 ][ 1 ] + in[ 1 ][ 1 ] * in[ 1 ][ 1 ] + in[ 2 ][ 1 ] * in[ 2 ][ 1 ] );
+	vScale.z = sqrt( in[ 0 ][ 2 ] * in[ 0 ][ 2 ] + in[ 1 ][ 2 ] * in[ 1 ][ 2 ] + in[ 2 ][ 2 ] * in[ 2 ][ 2 ] );
 
+	matrix3x4_t norm;
+	float flInvScaleX = 1.0f / vScale.x;
+	float flInvScaleY = 1.0f / vScale.y;
+	float flInvScaleZ = 1.0f / vScale.z;
+	out[ 0 ][ 0 ] = in[ 0 ][ 0 ] * flInvScaleX; out[ 1 ][ 0 ] = in[ 1 ][ 0 ] * flInvScaleX; out[ 2 ][ 0 ] = in[ 2 ][ 0 ] * flInvScaleX;
+	out[ 0 ][ 1 ] = in[ 0 ][ 1 ] * flInvScaleY; out[ 1 ][ 1 ] = in[ 1 ][ 1 ] * flInvScaleY; out[ 2 ][ 1 ] = in[ 2 ][ 1 ] * flInvScaleY;
+	out[ 0 ][ 2 ] = in[ 0 ][ 2 ] * flInvScaleZ; out[ 1 ][ 2 ] = in[ 1 ][ 2 ] * flInvScaleZ; out[ 2 ][ 2 ] = in[ 2 ][ 2 ] * flInvScaleZ;
+	out[ 0 ][ 3 ] = in[ 0 ][ 3 ]; out[ 1 ][ 3 ] = in[ 1 ][ 3 ]; out[ 2 ][ 3 ] = in[ 2 ][ 3 ];
+
+	return vScale;
+}
+
+
+
+#if !defined(__SPU__)
 // transform in1 by the matrix in2
-void VectorTransform (const float *in1, const matrix3x4_t& in2, float *out)
+void VectorTransform (const float * RESTRICT in1, const matrix3x4_t& in2, float * RESTRICT out)
 {
 	Assert( s_bMathlibInitialized );
-	Assert( in1 != out );
-	out[0] = DotProduct(in1, in2[0]) + in2[0][3];
-	out[1] = DotProduct(in1, in2[1]) + in2[1][3];
-	out[2] = DotProduct(in1, in2[2]) + in2[2][3];
+	float x = DotProduct(in1, in2[0]) + in2[0][3];
+	float y = DotProduct(in1, in2[1]) + in2[1][3];
+	float z = DotProduct(in1, in2[2]) + in2[2][3];
+
+	out[ 0 ] = x;
+	out[ 1 ] = y;
+	out[ 2 ] = z;
 }
 
 
@@ -276,22 +309,30 @@ void VectorITransform (const float *in1, const matrix3x4_t& in2, float *out)
 	in1t[1] = in1[1] - in2[1][3];
 	in1t[2] = in1[2] - in2[2][3];
 
-	out[0] = in1t[0] * in2[0][0] + in1t[1] * in2[1][0] + in1t[2] * in2[2][0];
-	out[1] = in1t[0] * in2[0][1] + in1t[1] * in2[1][1] + in1t[2] * in2[2][1];
-	out[2] = in1t[0] * in2[0][2] + in1t[1] * in2[1][2] + in1t[2] * in2[2][2];
-}
+	float x = in1t[0] * in2[0][0] + in1t[1] * in2[1][0] + in1t[2] * in2[2][0];
+	float y = in1t[0] * in2[0][1] + in1t[1] * in2[1][1] + in1t[2] * in2[2][1];
+	float z = in1t[0] * in2[0][2] + in1t[1] * in2[1][2] + in1t[2] * in2[2][2];
 
+	out[ 0 ] = x;
+	out[ 1 ] = y;
+	out[ 2 ] = z;
+}
+#endif // #if !defined(__SPU__)
 
 // assume in2 is a rotation and rotate the input vector
-void VectorRotate( const float *in1, const matrix3x4_t& in2, float *out )
+void VectorRotate( const float * RESTRICT in1, const matrix3x4_t& in2, float * RESTRICT out )
 {
 	Assert( s_bMathlibInitialized );
-	Assert( in1 != out );
-	out[0] = DotProduct( in1, in2[0] );
-	out[1] = DotProduct( in1, in2[1] );
-	out[2] = DotProduct( in1, in2[2] );
+	float x = DotProduct( in1, in2[ 0 ] );
+	float y = DotProduct( in1, in2[ 1 ] );
+	float z = DotProduct( in1, in2[ 2 ] );
+
+	out[ 0 ] = x;
+	out[ 1 ] = y;
+	out[ 2 ] = z;
 }
 
+#if !defined(__SPU__)
 // assume in2 is a rotation and rotate the input vector
 void VectorRotate( const Vector &in1, const QAngle &in2, Vector &out )
 {
@@ -303,14 +344,35 @@ void VectorRotate( const Vector &in1, const QAngle &in2, Vector &out )
 // assume in2 is a rotation and rotate the input vector
 void VectorRotate( const Vector &in1, const Quaternion &in2, Vector &out )
 {
+#if WE_WANT_OUR_CODE_TO_BE_POINTLESSLY_SLOW
 	matrix3x4_t matRotate;
 	QuaternionMatrix( in2, matRotate );
 	VectorRotate( in1, matRotate, out );
+#else
+	// rotation is  q * v * q^-1
+
+	Quaternion conjugate = in2.Conjugate();
+
+
+	// do the rotation as unrolled flop code ( QuaternionMult is a function call, which murders instruction scheduling )
+	// first q*v
+	Quaternion temp;
+	temp.x =  in2.y * in1.z - in2.z * in1.y + in2.w * in1.x;
+	temp.y = -in2.x * in1.z + in2.z * in1.x + in2.w * in1.y;
+	temp.z =  in2.x * in1.y - in2.y * in1.x + in2.w * in1.z;
+	temp.w = -in2.x * in1.x - in2.y * in1.y - in2.z * in1.z;
+
+	// now  (qv)(q*)
+	out.x =  temp.x * conjugate.w + temp.y * conjugate.z - temp.z * conjugate.y + temp.w * conjugate.x;
+	out.y = -temp.x * conjugate.z + temp.y * conjugate.w + temp.z * conjugate.x + temp.w * conjugate.y;
+	out.z =  temp.x * conjugate.y - temp.y * conjugate.x + temp.z * conjugate.w + temp.w * conjugate.z;
+	Assert( fabs(-temp.x * conjugate.x - temp.y * conjugate.y - temp.z * conjugate.z + temp.w * conjugate.w) < 0.0001 );
+#endif
 }
 
 
 // rotate by the inverse of the matrix
-void VectorIRotate( const float *in1, const matrix3x4_t& in2, float *out )
+void VectorIRotate( const float * RESTRICT in1, const matrix3x4_t& in2, float * RESTRICT out )
 {
 	Assert( s_bMathlibInitialized );
 	Assert( in1 != out );
@@ -375,6 +437,8 @@ bool MatricesAreEqual( const matrix3x4_t &src1, const matrix3x4_t &src2, float f
 	}
 	return true;
 }
+#endif // #if !defined(__SPU__)
+
 
 // NOTE: This is just the transpose not a general inverse
 void MatrixInvert( const matrix3x4_t& in, matrix3x4_t& out )
@@ -427,34 +491,7 @@ void MatrixSetColumn( const Vector &in, int column, matrix3x4_t& out )
 	out[2][column] = in.z;
 }
 
-void MatrixScaleBy ( const float flScale, matrix3x4_t &out )
-{
-	out[0][0] *= flScale;
-	out[1][0] *= flScale;
-	out[2][0] *= flScale;
-	out[0][1] *= flScale;
-	out[1][1] *= flScale;
-	out[2][1] *= flScale;
-	out[0][2] *= flScale;
-	out[1][2] *= flScale;
-	out[2][2] *= flScale;
-}
-
-void MatrixScaleByZero ( matrix3x4_t &out )
-{
-	out[0][0] = 0.0f;
-	out[1][0] = 0.0f;
-	out[2][0] = 0.0f;
-	out[0][1] = 0.0f;
-	out[1][1] = 0.0f;
-	out[2][1] = 0.0f;
-	out[0][2] = 0.0f;
-	out[1][2] = 0.0f;
-	out[2][2] = 0.0f;
-}
-
-
-
+#if !defined(__SPU__)
 int VectorCompare (const float *v1, const float *v2)
 {
 	Assert( s_bMathlibInitialized );
@@ -477,12 +514,25 @@ void CrossProduct (const float* v1, const float* v2, float* cross)
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
-int Q_log2(int val)
+size_t Q_log2( unsigned int val )
 {
+#ifdef _X360 // use hardware
+	// both zero and one return zero (per old implementation)
+	return ( val == 0 ) ? 0 : 31 - _CountLeadingZeros( val );
+#else // use N. Compoop's algorithm ( inherited from days of yore )
 	int answer=0;
 	while (val>>=1)
 		answer++;
 	return answer;
+#endif
+}
+
+// Matrix is right-handed x=forward, y=left, z=up.  We a left-handed convention for vectors in the game code (forward, right, up)
+void MatrixVectorsFLU( const matrix3x4_t &matrix, Vector* pForward, Vector *pLeft, Vector *pUp )
+{
+	MatrixGetColumn( matrix, FORWARD_AXIS, *pForward );
+	MatrixGetColumn( matrix, LEFT_AXIS, *pLeft );
+	MatrixGetColumn( matrix, UP_AXIS, *pUp );
 }
 
 // Matrix is right-handed x=forward, y=left, z=up.  We a left-handed convention for vectors in the game code (forward, right, up)
@@ -500,7 +550,7 @@ void VectorVectors( const Vector &forward, Vector &right, Vector &up )
 	Assert( s_bMathlibInitialized );
 	Vector tmp;
 
-	if (forward[0] == 0 && forward[1] == 0)
+	if ( fabs( forward[0] ) < 1e-6 && fabs( forward[1] ) < 1e-6 )
 	{
 		// pitch 90 degrees up/down from identity
 		right[0] = 0;	
@@ -531,6 +581,62 @@ void VectorMatrix( const Vector &forward, matrix3x4_t& matrix)
 	MatrixSetColumn( up, 2, matrix );
 }
 
+void VectorPerpendicularToVector( Vector const &in, Vector *pvecOut )
+{
+	float flY = in.y * in.y;
+	pvecOut->x = RemapVal( flY, 0, 1, in.z, 1 );
+	pvecOut->y = 0;
+	pvecOut->z = -in.x;
+	pvecOut->NormalizeInPlace();
+	float flDot = DotProduct( *pvecOut, in );
+	*pvecOut -= flDot * in;
+	pvecOut->NormalizeInPlace();
+}
+
+//-----------------------------------------------------------------------------
+// Euler QAngle -> Basis Vectors.  Each vector is optional
+//-----------------------------------------------------------------------------
+void AngleVectorsFLU( const QAngle &angles, Vector *pForward, Vector *pLeft, Vector *pUp )
+{
+	Assert( s_bMathlibInitialized );
+
+	float sr, sp, sy, cr, cp, cy;
+
+#ifdef _X360
+	fltx4 radians, scale, sine, cosine;
+	radians = LoadUnaligned3SIMD( angles.Base() );
+	scale = ReplicateX4( M_PI_F / 180.f ); 
+	radians = MulSIMD( radians, scale );
+	SinCos3SIMD( sine, cosine, radians ); 	
+	sp = SubFloat( sine, 0 );	sy = SubFloat( sine, 1 );	sr = SubFloat( sine, 2 );
+	cp = SubFloat( cosine, 0 );	cy = SubFloat( cosine, 1 );	cr = SubFloat( cosine, 2 );
+#else
+	SinCos( DEG2RAD( angles[YAW] ), &sy, &cy );
+	SinCos( DEG2RAD( angles[PITCH] ), &sp, &cp );
+	SinCos( DEG2RAD( angles[ROLL] ), &sr, &cr );
+#endif
+
+	if ( pForward )
+	{
+		(*pForward)[FORWARD_AXIS] = cp*cy;
+		(*pForward)[LEFT_AXIS] = cp*sy;
+		(*pForward)[UP_AXIS] = -sp;
+	}
+
+	if ( pLeft )
+	{
+		(*pLeft)[FORWARD_AXIS] = (sr*sp*cy+cr*-sy);
+		(*pLeft)[LEFT_AXIS] = (sr*sp*sy+cr*cy);
+		(*pLeft)[UP_AXIS] = sr*cp;
+	}
+
+	if ( pUp )
+	{
+		(*pUp)[FORWARD_AXIS] = (cr*sp*cy+-sr*-sy);
+		(*pUp)[LEFT_AXIS] = (cr*sp*sy+-sr*cy);
+		(*pUp)[UP_AXIS] = cr*cp;
+	}
+}
 
 void VectorAngles( const float *forward, float *angles )
 {
@@ -592,12 +698,14 @@ void ConcatRotations (const float in1[3][3], const float in2[3][3], float out[3]
 	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] +
 				in1[2][2] * in2[2][2];
 }
+#endif // #if !defined(__SPU__)
 
-void ConcatTransforms_Aligned( const matrix3x4_t &m0, const matrix3x4_t &m1, matrix3x4_t &out )
+
+void ConcatTransforms_Aligned( const matrix3x4a_t &m0, const matrix3x4a_t &m1, matrix3x4a_t &out )
 {
-	Assert( (((size_t)&m0) % 16) == 0 );
-	Assert( (((size_t)&m1) % 16) == 0 );
-	Assert( (((size_t)&out) % 16) == 0 );
+	AssertAligned( &m0 );
+	AssertAligned( &m1 );
+	AssertAligned( &out );
 
 	fltx4 lastMask = *(fltx4 *)(&g_SIMD_ComponentMask[3]);
 	fltx4 rowA0 = LoadAlignedSIMD( m0.m_flMatVal[0] );
@@ -727,7 +835,7 @@ numer and denom, both of which should contain no fractional part. The
 quotient must fit in 32 bits.
 ====================
 */
-
+#if !defined(__SPU__)
 void FloorDivMod (double numer, double denom, int *quotient,
 		int *rem)
 {
@@ -1073,6 +1181,8 @@ void VectorAngles( const Vector &forward, const Vector &pseudoup, QAngle &angles
 	}	
 }
 
+#endif // #if !defined(__SPU__)
+
 void SetIdentityMatrix( matrix3x4_t& matrix )
 {
 	memset( matrix.Base(), 0, sizeof(float)*3*4 );
@@ -1082,6 +1192,7 @@ void SetIdentityMatrix( matrix3x4_t& matrix )
 }
 
 
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Builds a scale matrix
 //-----------------------------------------------------------------------------
@@ -1160,7 +1271,7 @@ void MatrixTranspose( const matrix3x4_t& src, matrix3x4_t& dst )
 	dst[1][0] = src[0][1]; dst[1][1] = src[1][1]; dst[1][2] = src[2][1]; dst[1][3] = 0.0f;
 	dst[2][0] = src[0][2]; dst[2][1] = src[1][2]; dst[2][2] = src[2][2]; dst[2][3] = 0.0f;
 }
-
+#endif // #if !defined(__SPU__)
 
 //-----------------------------------------------------------------------------
 // Purpose: converts engine euler angles into a matrix
@@ -1220,16 +1331,12 @@ void AngleMatrix( const QAngle &angles, matrix3x4_t& matrix )
 	matrix[1][0] = cp*sy;
 	matrix[2][0] = -sp;
 
-	float crcy = cr*cy;
-	float crsy = cr*sy;
-	float srcy = sr*cy;
-	float srsy = sr*sy;
-	matrix[0][1] = sp*srcy-crsy;
-	matrix[1][1] = sp*srsy+crcy;
+	// NOTE: Do not optimize this to reduce multiplies! optimizer bug will screw this up.
+	matrix[0][1] = sr*sp*cy+cr*-sy;
+	matrix[1][1] = sr*sp*sy+cr*cy;
 	matrix[2][1] = sr*cp;
-
-	matrix[0][2] = (sp*crcy+srsy);
-	matrix[1][2] = (sp*crsy-srcy);
+	matrix[0][2] = (cr*sp*cy+-sr*-sy);
+	matrix[1][2] = (cr*sp*sy+-sr*cy);
 	matrix[2][2] = cr*cp;
 
 	matrix[0][3] = 0.0f;
@@ -1237,6 +1344,7 @@ void AngleMatrix( const QAngle &angles, matrix3x4_t& matrix )
 	matrix[2][3] = 0.0f;
 }
 
+#if !defined(__SPU__)
 void AngleIMatrix( const RadianEuler& angles, matrix3x4_t& matrix )
 {
 	QAngle quakeEuler( RAD2DEG( angles.y ), RAD2DEG( angles.z ), RAD2DEG( angles.x ) );
@@ -1277,8 +1385,9 @@ void AngleIMatrix (const QAngle &angles, const Vector &position, matrix3x4_t &ma
 	vecTranslation *= -1.0f;
 	MatrixSetColumn( vecTranslation, 3, mat );
 }
+#endif // #if !defined(__SPU__)
 
-
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Bounding box construction methods
 //-----------------------------------------------------------------------------
@@ -1286,8 +1395,8 @@ void AngleIMatrix (const QAngle &angles, const Vector &position, matrix3x4_t &ma
 void ClearBounds (Vector& mins, Vector& maxs)
 {
 	Assert( s_bMathlibInitialized );
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
+	mins[0] = mins[1] = mins[2] = FLT_MAX;
+	maxs[0] = maxs[1] = maxs[2] = -FLT_MAX;
 }
 
 void AddPointToBounds (const Vector& v, Vector& mins, Vector& maxs)
@@ -1304,6 +1413,32 @@ void AddPointToBounds (const Vector& v, Vector& mins, Vector& maxs)
 		if (val > maxs[i])
 			maxs[i] = val;
 	}
+}
+
+bool AreBoundsValid( const Vector &vMin, const Vector &vMax )
+{
+	for ( int i = 0; i < 3; ++ i )
+	{
+		if ( vMin[i] > vMax[i] )
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool IsPointInBounds( const Vector &vPoint, const Vector &vMin, const Vector &vMax )
+{
+	for ( int i = 0; i < 3; ++ i )
+	{
+		if ( vPoint[i] < vMin[i] || vPoint[i] > vMax[i] )
+		{
+			return false;			
+		}
+	}
+
+	return true;
 }
 
 // solve a x^2 + b x + c = 0
@@ -1461,9 +1596,7 @@ float Bias( float x, float biasAmt )
 	{
 		lastExponent = log( biasAmt ) * -1.4427f; // (-1.4427 = 1 / log(0.5))
 	}
-	float fRet = pow( x, lastExponent );
-	Assert ( !IS_NAN( fRet ) );
-	return fRet;
+	return pow( x, lastExponent );
 }
 
 
@@ -1479,9 +1612,7 @@ float Gain( float x, float biasAmt )
 
 float SmoothCurve( float x )
 {
-	// Actual smooth curve. Visualization:
-	// http://www.wolframalpha.com/input/?i=plot%5B+0.5+*+%281+-+cos%5B2+*+pi+*+x%5D%29+for+x+%3D+%280%2C+1%29+%5D
-	return 0.5f * (1 - cos( 2.0f * M_PI * x ) );
+	return (1 - cos( x * M_PI )) * 0.5f;
 }
 
 
@@ -1501,6 +1632,8 @@ float SmoothCurve_Tweak( float x, float flPeakPos, float flPeakSharpness )
 	float flSharpened = Gain( flMovedPeak, flPeakSharpness );
 	return SmoothCurve( flSharpened );
 }
+
+#endif  // !defined(__SPU__)
 
 //-----------------------------------------------------------------------------
 // make sure quaternions are within 180 degrees of one another, if not, reverse q
@@ -1657,7 +1790,7 @@ void QuaternionSlerpNoAlign( const Quaternion &p, const Quaternion &q, float t, 
 	Assert( qt.IsValid() );
 }
 
-
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Purpose: Returns the angular delta between the two normalized quaternions in degrees.
 //-----------------------------------------------------------------------------
@@ -1729,6 +1862,18 @@ void QuaternionInvert( const Quaternion &p, Quaternion &q )
 	}
 }
 
+void QuaternionMultiply( const Quaternion &q, const Vector &v, Vector &result )
+{
+	Vector t, t2;
+	CrossProduct( q.ImaginaryPart(), v, t );
+	t *= 2.0f;
+	VectorMA( v, q.RealPart(), t, result );
+	CrossProduct( q.ImaginaryPart(), t, t2 );
+	result += t2;
+}
+
+#endif // #if !defined(__SPU__)
+
 //-----------------------------------------------------------------------------
 // Make sure the quaternion is of unit length
 //-----------------------------------------------------------------------------
@@ -1775,7 +1920,7 @@ void QuaternionScale( const Quaternion &p, float t, Quaternion &q )
 	// FIXME: nick, this isn't overly sensitive to accuracy, and it may be faster to 
 	// use the cos part (w) of the quaternion (sin(omega)*N,cos(omega)) to figure the new scale.
 	float sinom = sqrt( DotProduct( &p.x, &p.x ) );
-	sinom = vmin( sinom, 1.f );
+	sinom = MIN( sinom, 1.f );
 
 	float sinsom = sin( asin( sinom ) * t );
 
@@ -1858,12 +2003,126 @@ void QuaternionMult( const Quaternion &p, const Quaternion &q, Quaternion &qt )
 }
 
 
+#if !defined(__SPU__)
+
+void QuaternionExp( const Quaternion &p, Quaternion &q )
+{
+	float r  = sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+	float et = exp(p[3]);
+	float s  = r>=0.00001f? et*sin(r)/r: 0.f;
+	q.Init( s*p[0],s*p[1],s*p[2], et*cos( r ) );
+}
+
+void QuaternionLn( const Quaternion &p, Quaternion &q )
+{
+	float r  = sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+	float t  = r>0.00001f? atan2(r,p[3])/r: 0.f;
+	float norm = p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3];
+	q.Init( t*p[0],t*p[1],t*p[2],0.5*log(norm) );
+}
+
+// Average using exponential method
+// Qave = exp( 1 / n * log( Q1 ) + ... + 1 / n * log( Qn ) ) where
+// if pflWeights passed in 1/n is replaced by normalized weighting
+void QuaternionAverageExponential( Quaternion &q, int nCount, const Quaternion *pQuaternions, const float *pflWeights /*=NULL*/ )
+{
+	Assert( nCount >= 1 );
+	Assert( pQuaternions );
+
+	// Nothing to do if only one input quaternions
+	if ( nCount == 1 )
+	{
+		q = pQuaternions[ 0 ];
+		return;
+	}
+
+	float ooWeightSum = 1.0f;
+	float flWeightSum = 0.0f;
+	for ( int i = 0 ; i < nCount; ++i )
+	{
+		if ( pflWeights )
+		{
+			flWeightSum += pflWeights[ i ];
+		}
+		else
+		{
+			flWeightSum += 1.0f;
+		}
+	}
+	
+	if ( flWeightSum > 0.0f ) 
+	{
+		ooWeightSum = 1.0f / flWeightSum;
+	}
+
+	Quaternion sum( 0, 0, 0, 0 );
+	// Now sum the ln of the quaternions
+	for ( int i = 0; i < nCount; ++i )
+	{
+		float weight = ooWeightSum;
+		if ( pflWeights )
+		{
+			weight *= pflWeights[ i ];
+		}
+
+		// Make sure all quaternions are aligned with the 
+		// first to avoid blending the wrong direction.
+		Quaternion alignedQuat;
+		QuaternionAlign( pQuaternions[ 0 ], pQuaternions[ i ], alignedQuat );
+
+		Quaternion qLn;
+		QuaternionLn( alignedQuat, qLn );
+		for ( int j = 0; j < 4; ++j )
+		{
+			sum[ j ] += ( qLn[ j ] * weight );
+		}
+	}
+
+	// then exponentiate to get final value
+	QuaternionExp( sum, q );
+}
+
+// Given a vector and a pseudo-up reference vector, create a quaternion which represents
+//  the orientation of the forward vector.  Note, will be unstable if vecForward is close
+//  to referenceUp
+void QuaternionLookAt( const Vector &vecForward, const Vector &referenceUp, Quaternion &q ) 
+{ 
+	Vector forward = vecForward;
+	forward.NormalizeInPlace();
+	float ratio = DotProduct( forward, referenceUp );
+	Vector up = referenceUp - ( forward * ratio );
+	up.NormalizeInPlace();
+
+	Vector right = forward.Cross( up );
+	right.NormalizeInPlace();
+
+	const Vector &x = right;
+	const Vector &y = forward;
+	const Vector &z = up; 
+
+	float tr = x.x + y.y + z.z; 
+	q.Init( y.z - z.y , z.x - x.z, x.y - y.x, tr + 1.0f ); 
+	QuaternionNormalize( q ); 
+
+	/*
+	Vector z = vecForward; 
+	z.NormalizeInPlace();
+	Vector x = referenceUp.Cross( z );
+	x.NormalizeInPlace();
+	Vector y = z.Cross( x ); 
+	y.NormalizeInPlace();
+
+	float tr = x.x + y.y + z.z; 
+	q.Init( y.z - z.y , z.x - x.z, x.y - y.x, tr + 1.0f ); 
+	QuaternionNormalize( q ); 
+	*/
+} 
+
+#endif // !defined(__SPU__)
+
 void QuaternionMatrix( const Quaternion &q, const Vector &pos, matrix3x4_t& matrix )
 {
-	if ( !HushAsserts() )
-	{
-		Assert( pos.IsValid() );
-	}
+	Assert( pos.IsValid() );
 
 	QuaternionMatrix( q, matrix );
 
@@ -1872,13 +2131,25 @@ void QuaternionMatrix( const Quaternion &q, const Vector &pos, matrix3x4_t& matr
 	matrix[2][3] = pos.z;
 }
 
+void QuaternionMatrix( const Quaternion &q, const Vector &pos, const Vector &vScale, matrix3x4_t& mat )
+{
+	Assert( pos.IsValid() );
+	Assert( q.IsValid() );
+	Assert( vScale.IsValid() );
+
+	QuaternionMatrix( q, mat );
+
+	mat[ 0 ][ 0 ] *= vScale.x; mat[ 1 ][ 0 ] *= vScale.x; mat[ 2 ][ 0 ] *= vScale.x;
+	mat[ 0 ][ 1 ] *= vScale.y; mat[ 1 ][ 1 ] *= vScale.y; mat[ 2 ][ 1 ] *= vScale.y;
+	mat[ 0 ][ 2 ] *= vScale.z; mat[ 1 ][ 2 ] *= vScale.z; mat[ 2 ][ 2 ] *= vScale.z;
+	mat[ 0 ][ 3 ] = pos.x; mat[ 1 ][ 3 ] = pos.y; mat[ 2 ][ 3 ] = pos.z;
+}
+
+
 void QuaternionMatrix( const Quaternion &q, matrix3x4_t& matrix )
 {
 	Assert( s_bMathlibInitialized );
-	if ( !HushAsserts() )
-	{
-		Assert( q.IsValid() );
-	}
+	Assert( q.IsValid() );
 
 #ifdef _VPROF_MATHLIB
 	VPROF_BUDGET( "QuaternionMatrix", "Mathlib" );
@@ -1938,6 +2209,109 @@ void QuaternionMatrix( const Quaternion &q, matrix3x4_t& matrix )
 }
 
 
+const Vector Quaternion::GetForward()const
+{
+	Vector vAxisX;
+	vAxisX.x = 1.0 - 2.0 * y * y - 2.0 * z * z;
+	vAxisX.y = 2.0 * x * y + 2.0 * w * z;
+	vAxisX.z = 2.0 * x * z - 2.0 * w * y;
+	return vAxisX;
+}
+
+
+const Vector Quaternion::GetLeft()const
+{
+	Vector vAxisY;
+	vAxisY.x = 2.0f * x * y - 2.0f * w * z;
+	vAxisY.y = 1.0f - 2.0f * x * x - 2.0f * z * z;
+	vAxisY.z = 2.0f * y * z + 2.0f * w * x;
+	return vAxisY;
+}
+
+
+
+const Vector Quaternion::GetUp()const
+{
+	Vector vAxisZ;
+	vAxisZ.x = 2.0f * x * z + 2.0f * w * y;
+	vAxisZ.y = 2.0f * y * z - 2.0f * w * x;
+	vAxisZ.z = 1.0f - 2.0f * x * x - 2.0f * y * y;
+	return vAxisZ;
+}
+
+
+
+const Quaternion RotateBetween( const Vector& v1, const Vector& v2 )
+{
+	// Find quaternion that rotates v1 into v2
+	Quaternion qOut;
+
+	Vector vBisector = 0.5f * ( v1 + v2 );
+	if ( vBisector.LengthSqr() > 1e-9f )
+	{
+		qOut.Init( CrossProduct( v1, vBisector ), DotProduct( v1, vBisector ) );
+	}
+	else
+	{
+		// Anti-parallel: Use a perpendicular vector
+		if ( fabsf( v1.x ) > 0.5f )
+		{
+			qOut.x = v1.y;
+			qOut.y = -v1.x;
+			qOut.z = 0.0f;
+		}
+		else
+		{
+			qOut.x = 0.0f;
+			qOut.y = v1.z;
+			qOut.z = -v1.y;
+		}
+
+		qOut.w = 0.0f;
+	}
+
+	// The algorithm is simplified and made more accurate by normalizing at the end
+	QuaternionNormalize( qOut );
+
+	Assert( ( VectorTransform( v1, QuaternionMatrix( qOut ) ) - v2 ).Length() < 2e-3f );
+
+	return qOut;
+}
+
+
+void UnitTestQuatExpLog()
+{
+	for ( int i = 0; i < 300000; ++i )
+	{
+		Quaternion q = RandomQuaternion();
+		Vector l = QuaternionLog( q );
+		Quaternion q2 = Exp( l );
+		Assert( QuaternionLength( q - q2 ) < 0.0001f );
+	}
+}
+
+
+void UnitTestRotateBetween()
+{
+	RandomSeed( 1 );
+	float flMaxError = 0;
+	int nMaxError;
+	for ( int i = 0; i < 3000000; ++i )
+	{
+		Vector u = RandomVectorOnUnitSphere(), v = RandomVectorOnUnitSphere();
+		Quaternion q = RotateBetween( u, v );
+
+		float flError = ( VectorTransform( u, QuaternionMatrix( q ) ) - v ).Length();
+		if ( flMaxError < flError )
+		{
+			flMaxError = flError;
+			nMaxError = i;
+		}
+	}
+	Assert( flMaxError < 0.001f );
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Converts a quaternion into engine angles
 // Input  : *quaternion - q3 + q0.i + q1.j + q2.k
@@ -1975,6 +2349,97 @@ void QuaternionAngles( const Quaternion &q, QAngle &angles )
 	Assert( angles.IsValid() );
 }
 
+
+float QuaternionionGetYaw( const Quaternion &q )
+{
+	// FIXME: doing it this way calculates too much data, need to do an optimized version...
+	QAngle angles;
+	matrix3x4_t matrix;
+	QuaternionMatrix( q, matrix );
+	MatrixAngles( matrix, angles );
+	return angles[ YAW ];
+}
+
+float QuaternionionGetPitch( const Quaternion &q )
+{
+	// FIXME: doing it this way calculates too much data, need to do an optimized version...
+	QAngle angles;
+	matrix3x4_t matrix;
+	QuaternionMatrix( q, matrix );
+	MatrixAngles( matrix, angles );
+	return angles[ PITCH ];
+}
+
+float QuaternionionGetRoll( const Quaternion &q )
+{
+	// FIXME: doing it this way calculates too much data, need to do an optimized version...
+	QAngle angles;
+	matrix3x4_t matrix;
+	QuaternionMatrix( q, matrix );
+	MatrixAngles( matrix, angles );
+	return angles[ ROLL ];
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Converts a quaternion into FLU vectors
+// Input  : *quaternion - q3 + q0.i + q1.j + q2.k
+//			basis vectors, each vector is optional
+//-----------------------------------------------------------------------------
+void QuaternionVectorsFLU( Quaternion const &q, Vector *pForward, Vector *pLeft, Vector *pUp )
+{
+	Assert( s_bMathlibInitialized );
+	Assert( q.IsValid() );
+
+#ifdef _VPROF_MATHLIB
+	// @TODO: VPROF_BUDGET( "QuaternionVectorsFLU", "Mathlib" );
+#endif
+
+	// Note: it's pretty much identical to just computing the quaternion matrix and assigning its columns to the vectors
+	*pForward = q.GetForward();
+	*pLeft = q.GetLeft();
+	*pUp = q.GetUp();
+#ifdef DBGFLAG_ASSERT
+	matrix3x4_t matrix;
+	QuaternionMatrix( q, matrix );
+	Vector forward, left, up;
+	MatrixVectorsFLU( matrix, &forward, &left, &up );
+	Assert( ( forward - *pForward ).Length() + ( left - *pLeft ).Length() + ( up - *pUp ).Length() < 1e-4f );
+#endif
+}
+
+void QuaternionVectorsForward( const Quaternion& q, Vector *pForward )
+{
+	Assert( s_bMathlibInitialized );
+	Assert( q.IsValid() );
+
+#ifdef _VPROF_MATHLIB
+	// @TODO: VPROF_BUDGET( "QuaternionVectorsForward", "Mathlib" );
+#endif
+
+	*pForward = q.GetForward();
+#ifdef DBGFLAG_ASSERT
+	matrix3x4_t matrix;
+	QuaternionMatrix( q, matrix );
+	Assert( ( MatrixGetColumn( matrix, FORWARD_AXIS ) - *pForward ).Length() < 1e-4f );
+#endif
+}
+
+
+void UnitTestVectorFLU()
+{
+	for ( int i = 0; i < 100000; ++i )
+	{
+		Quaternion q = RandomQuaternion();
+		Vector forward, left, up;
+		QuaternionVectorsForward( q, &forward );
+		QuaternionVectorsFLU( q, &forward, &left, &up );
+	}
+}
+
+
+
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Purpose: Converts a quaternion to an axis / angle in degrees
 //			(exponential map)
@@ -2006,7 +2471,7 @@ void AxisAngleQuaternion( const Vector &axis, float angle, Quaternion &q )
 	q.z = axis.z * sa;
 	q.w = ca;
 }
-
+#endif // #if !defined(__SPU__)
 
 //-----------------------------------------------------------------------------
 // Purpose: Converts radian-euler axis aligned angles to a quaternion
@@ -2050,6 +2515,72 @@ void AngleQuaternion( const RadianEuler &angles, Quaternion &outQuat )
 	outQuat.z = crXcp*sy-srXsp*cy; // Z
 	outQuat.w = crXcp*cy+srXsp*sy; // W (real component)
 }
+
+#ifdef _X360
+//-----------------------------------------------------------------------------
+// Purpose: Converts radian-euler axis aligned angles to a quaternion, returning
+//			it on a vector register.
+// Input  : *vAngles - Right-handed Euler angles in radians (roll pitch yaw)
+//
+// Algorithm based on that found in the XDK (which really uses RPY order, as
+//  opposed to this which takes the parameters in RPY order but catenates them
+//  in PYR order).
+//-----------------------------------------------------------------------------
+fltx4 AngleQuaternionSIMD( FLTX4 vAngles )
+{
+	Assert( s_bMathlibInitialized );
+	//	Assert( angles.IsValid() );
+
+#ifdef _VPROF_MATHLIB
+	VPROF_BUDGET( "AngleQuaternion", "Mathlib" );
+#endif
+
+	// we compute the sin and cos of half all the angles.
+	// in the comments I'll call these components
+	// sr = sin(r/2), cp = cos(p/2), sy = sin(y/2), etc.
+
+	fltx4 OneHalf = __vspltisw(1);
+	OneHalf = __vcfsx(OneHalf, 1);
+
+	fltx4 HalfAngles = MulSIMD(vAngles, OneHalf);
+	fltx4 sine,cosine;
+	SinCos3SIMD(sine, cosine, HalfAngles);
+	
+	fltx4 SignMask = __vspltisw(-1);
+	fltx4 Zero = __vspltisw(0);
+	SignMask = __vslw(SignMask, SignMask); // shift left so 1 is only in the sign bit
+	SignMask = __vrlimi(SignMask, Zero, 0x5, 0); // { -1, 0, -1, 0 }
+
+	fltx4 Rc, Pc, Yc, Rs, Ps, Ys, retsum, retval;
+
+	Rc = __vspltw(cosine, 0);	// cr cr cr cr
+	Pc = __vspltw(cosine, 1);	// cp cp cp cp
+	Yc = __vspltw(cosine, 2);	// cy cy cy cy
+	Rs = __vspltw(sine,   0);		// sr sr sr sr
+	Ps = __vspltw(sine,   1);		// sp sp sp sp
+	Ys = __vspltw(sine,   2);		// sy sy sy sy
+
+	Rc = __vrlimi(Rc, sine,	  0x8, 0);	// sr cr cr cr
+	Rs = __vrlimi(Rs, cosine, 0x8, 0);	// cr sr sr sr
+	Pc = __vrlimi(Pc, sine,   0x4, 0);	// cp sp cp cp 
+	Ps = __vrlimi(Ps, cosine, 0x4, 0);	// sp cp sp sp 
+	Yc = __vrlimi(Yc, sine,   0x2, 0);	// cy cy sy cy 
+	Ys = __vrlimi(Ys, cosine, 0x2, 0);	// sy sy cy sy
+
+	retsum = __vxor(Rs, SignMask);	// -cr sr -sr sr
+	retval = __vmulfp(Pc, Yc);		//  cp*cy  sp*cy  cp*sy  cp*cy
+	retsum = __vmulfp(retsum, Ys);	// -cr*sy  sr*sy -sr*cy  sr*sy
+	retval = __vmulfp(retval, Rc);	//  cp*cy*sr  sp*cy*cr  cp*sy*cr  cp*cy*cr
+	retval = __vmaddfp(retsum, Ps, retval); //  cp*cy*sr + -cr*sy*sp ...
+
+	return retval;
+}
+
+inline fltx4 AngleQuaternionSIMD( const RadianEuler &angles )
+{
+	return AngleQuaternionSIMD(LoadUnaligned3SIMD(angles.Base()));
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -2095,7 +2626,7 @@ void AngleQuaternion( const QAngle &angles, Quaternion &outQuat )
 	outQuat.w = crXcp*cy+srXsp*sy; // W (real component)
 }
 
-
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Purpose: Converts a basis to a quaternion
 //-----------------------------------------------------------------------------
@@ -2181,7 +2712,116 @@ void MatrixQuaternion( const matrix3x4_t &mat, Quaternion &q )
 	MatrixAngles( mat, angles );
 	AngleQuaternion( angles, q );
 }
+#endif // #if !defined(__SPU__)
 
+void MatrixQuaternionFast( const matrix3x4_t &mat, Quaternion &q )
+{
+	float t;
+	if ( mat[ 2 ][ 2 ] < 0 )
+	{
+		if ( mat[ 0 ][ 0 ] > mat[ 1 ][ 1 ] )
+		{
+			t = 1 + mat[ 0 ][ 0 ] - mat[ 1 ][ 1 ] - mat[ 2 ][ 2 ];
+			q.Init( t, mat[ 0 ][ 1 ] + mat[ 1 ][ 0 ], mat[ 2 ][ 0 ] + mat[ 0 ][ 2 ], mat[ 2 ][ 1 ] - mat[ 1 ][ 2 ] );
+		}
+		else
+		{
+			t = 1 - mat[ 0 ][ 0 ] + mat[ 1 ][ 1 ] - mat[ 2 ][ 2 ];
+			q.Init( mat[ 0 ][ 1 ] + mat[ 1 ][ 0 ], t, mat[ 1 ][ 2 ] + mat[ 2 ][ 1 ], mat[ 0 ][ 2 ] - mat[ 2 ][ 0 ] );
+		}
+	}
+	else
+	{
+		if ( mat[ 0 ][ 0 ] < -mat[ 1 ][ 1 ] )
+		{
+			t = 1 - mat[ 0 ][ 0 ] - mat[ 1 ][ 1 ] + mat[ 2 ][ 2 ];
+			q.Init( mat[ 2 ][ 0 ] + mat[ 0 ][ 2 ], mat[ 1 ][ 2 ] + mat[ 2 ][ 1 ], t, mat[ 1 ][ 0 ] - mat[ 0 ][ 1 ] );
+		}
+		else
+		{
+			t = 1 + mat[ 0 ][ 0 ] + mat[ 1 ][ 1 ] + mat[ 2 ][ 2 ];
+			q.Init( mat[ 2 ][ 1 ] - mat[ 1 ][ 2 ], mat[ 0 ][ 2 ] - mat[ 2 ][ 0 ], mat[ 1 ][ 0 ] - mat[ 0 ][ 1 ], t );
+		}
+	}
+	q = q * ( 0.5f / sqrtf( t ) );
+}
+
+
+float MatrixQuaternionTest( uint nCount )
+{
+	float flMaxError = 0, flSumError = 0;
+	for ( uint i = 0; i < nCount; ++i )
+	{
+		Quaternion q = RandomQuaternion(), r;
+		Assert( fabsf( q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w - 1 ) < 1e-5f );
+		matrix3x4_t mat;
+		QuaternionMatrix( q, mat );
+		MatrixQuaternion( mat, r );
+		if ( QuaternionDotProduct( q, r ) < 0 )
+		{
+			r = -r;
+		}
+		float flError = Sqr( q.x - r.x ) + Sqr( q.y - r.y ) + Sqr( q.z - r.z ) + Sqr( q.w - r.w );
+		flSumError += flError;
+		if ( flError > flMaxError )
+		{
+			flMaxError = flError;
+		}
+	}
+	NOTE_UNUSED( flMaxError ); NOTE_UNUSED( flSumError );
+	return flSumError / nCount;
+}
+
+float MatrixQuaternionFastTest( uint nCount )
+{
+	float flMaxError = 0, flSumError = 0;
+	for ( uint i = 0; i < nCount; ++i )
+	{
+		Quaternion q = RandomQuaternion(), r;
+		Assert( fabsf( q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w - 1 ) < 1e-5f );
+		matrix3x4_t mat;
+		QuaternionMatrix( q, mat );
+		MatrixQuaternionFast( mat, r );
+		if ( QuaternionDotProduct( q, r ) < 0 )
+		{
+			r = -r;
+		}
+		float flError = Sqr( q.x - r.x ) + Sqr( q.y - r.y ) + Sqr( q.z - r.z ) + Sqr( q.w - r.w );
+		flSumError += flError;
+		if ( flError > flMaxError )
+		{
+			flMaxError = flError;
+		}
+	}
+	NOTE_UNUSED( flMaxError ); NOTE_UNUSED( flSumError );
+	return flSumError / nCount;
+}
+
+// the same as MatrixQuaternionTest, but uses inline helper functions that return matrix and quaternion instead of using return-by-reference versions
+// on MSVC10, this generates the same code as MatrixQuaternionTest, but it's easier to read, write and maintain code
+float MatrixQuaternionTest2( uint nCount )
+{
+	float flMaxError = 0, flSumError = 0;
+	for ( uint i = 0; i < nCount; ++i )
+	{
+		Quaternion q = RandomQuaternion(), r;
+		Assert( fabsf( q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w - 1 ) < 1e-5f );
+		matrix3x4_t mat = QuaternionMatrix( q );
+		r = MatrixQuaternion( mat );
+		if ( QuaternionDotProduct( q, r ) < 0 )
+		{
+			r = -r;
+		}
+		float flError = Sqr( q.x - r.x ) + Sqr( q.y - r.y ) + Sqr( q.z - r.z ) + Sqr( q.w - r.w );
+		flSumError += flError;
+		if ( flError > flMaxError )
+		{
+			flMaxError = flError;
+		}
+	}
+	NOTE_UNUSED( flMaxError ); NOTE_UNUSED( flSumError );
+	return flSumError / nCount;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Converts a quaternion into engine angles
@@ -2201,6 +2841,7 @@ void QuaternionAngles( const Quaternion &q, RadianEuler &angles )
 	Assert( angles.IsValid() );
 }
 
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Purpose: A helper function to normalize p2.x->p1.x and p3.x->p4.x to 
 //  be the same length as p2.x->p3.x
@@ -2235,7 +2876,9 @@ void Spline_Normalize(
 		}
 	}
 }
+#endif // #if !defined(__SPU__)
 
+#if !defined(__SPU__)
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : 
@@ -2439,6 +3082,7 @@ void Catmull_Rom_Spline_NormalizeX(
 	Catmull_Rom_Spline( p1n, p2, p3, p4n, t, output );
 }
 
+#endif // !defined(__SPU__)
 
 //-----------------------------------------------------------------------------
 // Purpose: basic hermite spline.  t = 0 returns p1, t = 1 returns p2, 
@@ -2520,7 +3164,9 @@ void Hermite_SplineBasis( float t, float basis[4] )
 //-----------------------------------------------------------------------------
 
 // BUG: the VectorSubtract()'s calls go away if the global optimizer is enabled
+#if !defined(__SPU__)
 #pragma optimize( "g", off )
+#endif
 
 void Hermite_Spline( const Vector &p0, const Vector &p1, const Vector &p2, float t, Vector& output )
 {
@@ -2530,7 +3176,9 @@ void Hermite_Spline( const Vector &p0, const Vector &p1, const Vector &p2, float
 	Hermite_Spline( p1, p2, e10, e21, t, output );
 }
 
+#if !defined(__SPU__)
 #pragma optimize( "", on )
+#endif
 
 float Hermite_Spline( float p0, float p1, float p2,	float t )
 {
@@ -2555,6 +3203,8 @@ void Hermite_Spline( const Quaternion &q0, const Quaternion &q1, const Quaternio
 	QuaternionNormalize( output );
 }
 
+
+#if !defined(__SPU__)
 // See http://en.wikipedia.org/wiki/Kochanek-Bartels_curves
 // 
 // Tension:  -1 = Round -> 1 = Tight
@@ -2855,6 +3505,33 @@ void Parabolic_Spline_NormalizeX(
 }
 
 //-----------------------------------------------------------------------------
+// Cubic Bernstein basis functions
+// http://mathworld.wolfram.com/BernsteinPolynomial.html
+//
+// Purpose: Evaluate the cubic Bernstein basis for the input parametric coordinate.
+// Output is the coefficient for that basis polynomial.
+//-----------------------------------------------------------------------------
+float CubicBasis0( float t )
+{
+	float invT = 1.0f-t;
+	return invT*invT*invT;
+}
+float CubicBasis1( float t )
+{
+	float invT = 1.0f-t;
+	return 3.0f*t*invT*invT;
+}
+float CubicBasis2( float t )
+{
+	float invT = 1.0f-t;
+	return 3.0f*t*t*invT;
+}
+float CubicBasis3( float t )
+{
+	return t*t*t;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Compress the input values for a ranged result such that from 75% to 200% smoothly of the range maps 
 //-----------------------------------------------------------------------------
 
@@ -2926,6 +3603,8 @@ void TransformAABB( const matrix3x4_t& transform, const Vector &vecMinsIn, const
 
 	VectorSubtract( worldCenter, worldExtents, vecMinsOut );
 	VectorAdd( worldCenter, worldExtents, vecMaxsOut );
+	// sanity chec	
+	Assert( vecMinsOut.LengthSqr()  + vecMaxsOut.LengthSqr() < 1e+12 ); 
 }
 
 
@@ -3139,7 +3818,7 @@ void CalcClosestPointOnLineSegment( const Vector &P, const Vector &vLineA, const
 {
 	Vector vDir;
 	float t = CalcClosestPointToLineT( P, vLineA, vLineB, vDir );
-	t = clamp( t, 0.f, 1.f );
+	t = clamp( t, 0, 1 );
 	if ( outT ) 
 	{
 		*outT = t;
@@ -3211,7 +3890,7 @@ void CalcClosestPointOnLineSegment2D( const Vector2D &P, const Vector2D &vLineA,
 {
 	Vector2D vDir;
 	float t = CalcClosestPointToLineT2D( P, vLineA, vLineB, vDir );
-	t = clamp( t, 0.f, 1.f );
+	t = clamp( t, 0, 1 );
 	if ( outT )
 	{
 		*outT = t;
@@ -3286,13 +3965,16 @@ bool CalcLineToLineIntersectionSegment(
    *t1 = numer / denom;
    *t2 = (d1343 + d4321 * (*t1)) / d4343;
 
-   s1->x = p1.x + *t1 * p21.x;
-   s1->y = p1.y + *t1 * p21.y;
-   s1->z = p1.z + *t1 * p21.z;
-   s2->x = p3.x + *t2 * p43.x;
-   s2->y = p3.y + *t2 * p43.y;
-   s2->z = p3.z + *t2 * p43.z;
-
+   if ( s1 != NULL && s2 != NULL )
+   {
+	   s1->x = p1.x + *t1 * p21.x;
+	   s1->y = p1.y + *t1 * p21.y;
+	   s1->z = p1.z + *t1 * p21.z;
+	   s2->x = p3.x + *t2 * p43.x;
+	   s2->y = p3.y + *t2 * p43.y;
+	   s2->z = p3.z + *t2 * p43.z;
+   }
+   
    return true;
 }
 
@@ -3304,145 +3986,63 @@ bool CalcLineToLineIntersectionSegment(
 
 #pragma optimize( "", on )
 
-static bool s_b3DNowEnabled = false;
-static bool s_bMMXEnabled = false;
-static bool s_bSSEEnabled = false;
-static bool s_bSSE2Enabled = false;
+
+#ifndef NDEBUG
+volatile static char const *pDebugString;
+#endif
 
 void MathLib_Init( float gamma, float texGamma, float brightness, int overbright, bool bAllow3DNow, bool bAllowSSE, bool bAllowSSE2, bool bAllowMMX )
 {
 	if ( s_bMathlibInitialized )
 		return;
+#ifdef _WIN32
+	Assert( _rotl( 0xC7654321, 1 ) == 0x8ECA8643 );
+	Assert( _rotl64( 0xC7654321ABCDEF00ull, 1 ) == 0x8ECA8643579BDE01ull );
+#endif
+#ifndef NDEBUG
+	pDebugString = "mathlib.lib built debug!";
+#endif
 
 	// FIXME: Hook SSE into VectorAligned + Vector4DAligned
 
-#if !defined( _X360 )
+#if !defined( _GAMECONSOLE )
 	// Grab the processor information:
-	const CPUInformation& pi = *GetCPUInformation();
+	const CPUInformation& pi = GetCPUInformation();
 
-	// Select the default generic routines.
-	pfSqrt = _sqrtf;
-	pfRSqrt = _rsqrtf;
-	pfRSqrtFast = _rsqrtf;
-	pfVectorNormalize = _VectorNormalize;
-	pfVectorNormalizeFast = _VectorNormalizeFast;
-	pfInvRSquared = _InvRSquared;
-	pfFastSinCos = SinCos;
-	pfFastCos = cosf;
+	if ( ! ( pi.m_bSSE && pi.m_bSSE2 ) )
+	{
+		Assert( 0 );
+		Error( "SSE and SSE2 are required." );
+	}
+#endif //!360
 
-	if ( bAllowMMX && pi.m_bMMX )
-	{
-		// Select the MMX specific routines if available
-		// (MMX routines were used by SW span fillers - not currently used for HW)
-		s_bMMXEnabled = true;
-	}
-	else
-	{
-		s_bMMXEnabled = false;
-	}
-
-	// SSE Generally performs better than 3DNow when present, so this is placed 
-	// first to allow SSE to override these settings.
-#if !defined( OSX ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined(LINUX)
-	if ( bAllow3DNow && pi.m_b3DNow )
-	{
-		s_b3DNowEnabled = true;
-
-		// Select the 3DNow specific routines if available;
-		pfVectorNormalize = _3DNow_VectorNormalize;
-		pfVectorNormalizeFast = _3DNow_VectorNormalizeFast;
-		pfInvRSquared = _3DNow_InvRSquared;
-		pfSqrt = _3DNow_Sqrt;
-		pfRSqrt = _3DNow_RSqrt;
-		pfRSqrtFast = _3DNow_RSqrt;
-	}
-	else
-#endif
-	{
-		s_b3DNowEnabled = false;
-	}
-
-	if ( bAllowSSE && pi.m_bSSE )
-	{
-		s_bSSEEnabled = true;
-
-#ifndef PLATFORM_WINDOWS_PC64
-		// These are not yet available.
-		// Select the SSE specific routines if available
-		pfVectorNormalize = _VectorNormalize;
-		pfVectorNormalizeFast = _SSE_VectorNormalizeFast;
-		pfInvRSquared = _SSE_InvRSquared;
-		pfSqrt = _SSE_Sqrt;
-		pfRSqrt = _SSE_RSqrtAccurate;
-		pfRSqrtFast = _SSE_RSqrtFast;
-#endif
-#ifdef PLATFORM_WINDOWS_PC32
-		pfFastSinCos = _SSE_SinCos;
-		pfFastCos = _SSE_cos;
-#endif
-	}
-	else
-	{
-		s_bSSEEnabled = false;
-	}
-
-	if ( bAllowSSE2 && pi.m_bSSE2 )
-	{
-		s_bSSE2Enabled = true;
-#ifdef PLATFORM_WINDOWS_PC32
-		pfFastSinCos = _SSE2_SinCos;
-		pfFastCos = _SSE2_cos;
-#endif
-	} 
-	else
-	{
-		s_bSSE2Enabled = false;
-	}
-#endif // !_X360
 
 	s_bMathlibInitialized = true;
 
 	InitSinCosTable();
 	BuildGammaTable( gamma, texGamma, brightness, overbright );
+	SeedRandSIMD( 0x31415926 );
 }
 
-bool MathLib_3DNowEnabled( void )
-{
-	Assert( s_bMathlibInitialized );
-	return s_b3DNowEnabled;
-}
 
 bool MathLib_MMXEnabled( void )
 {
 	Assert( s_bMathlibInitialized );
-	return s_bMMXEnabled;
+	return true;
 }
 
 bool MathLib_SSEEnabled( void )
 {
 	Assert( s_bMathlibInitialized );
-	return s_bSSEEnabled;
+	return true;
 }
 
 bool MathLib_SSE2Enabled( void )
 {
 	Assert( s_bMathlibInitialized );
-	return s_bSSE2Enabled;
+	return true;
 }
 
-float Approach( float target, float value, float speed )
-{
-	float delta = target - value;
-
-	if ( delta > speed )
-		value += speed;
-	else if ( delta < -speed )
-		value -= speed;
-	else 
-		value = target;
-
-	return value;
-}
 
 // BUGBUG: Why doesn't this call angle diff?!?!?
 float ApproachAngle( float target, float value, float speed )
@@ -3569,6 +4169,34 @@ void RotationDelta( const QAngle &srcAngles, const QAngle &destAngles, QAngle *o
 	}
 }
 
+void ClipLineSegmentToPlane( const Vector &vNormal, const Vector &vPlanePoint, Vector *p1, Vector *p2, float flBias )
+{
+	float flDot1, flDot2;
+	flDot1 = ( *p1 - vPlanePoint ).Dot( vNormal ) + flBias;
+	flDot2 = ( *p2 - vPlanePoint ).Dot( vNormal ) + flBias;
+
+	if ( flDot1 >= 0 && flDot2 >= 0 )
+	{
+		return;
+	}
+
+	if ( flDot1 >= 0 )
+	{
+		Vector vRay = *p2 - *p1;
+		*p2 = *p1 + vRay * flDot1 / ( flDot1 - flDot2 );
+	}
+	else if ( flDot2 >= 0 )
+	{
+		Vector vRay = *p1 - *p2;
+		*p1 = *p2 + vRay * flDot2 / ( flDot2 - flDot1 );
+	}
+	else
+	{
+		*p1 = vec3_invalid;
+		*p2 = vec3_invalid;
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Computes a triangle normal
 //-----------------------------------------------------------------------------
@@ -3583,13 +4211,48 @@ void ComputeTrianglePlane( const Vector& v1, const Vector& v2, const Vector& v3,
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Calculate the volume of a tetrahedron with these vertices
+// Input  : p0 - points of tetrahedron
+//			p1 - 
+//			p2 - 
+//			p3 - 
+// Output : float (volume in units^3)
+//-----------------------------------------------------------------------------
+float TetrahedronVolume( const Vector &p0, const Vector &p1, const Vector &p2, const Vector &p3 )
+{
+	Vector a, b, c, cross;
+	float volume = 1.0f / 6.0f;
+
+	a = p1 - p0;
+	b = p2 - p0;
+	c = p3 - p0;
+	cross = CrossProduct( b, c );
+
+	volume *= DotProduct( a, cross );
+	if ( volume < 0 )
+		return -volume;
+	return volume;
+}
+
+
+// computes the area of a triangle given three verts
+float TriangleArea( const Vector &v0, const Vector &v1, const Vector &v2 )
+{
+	Vector vecEdge0, vecEdge1, vecCross;
+	VectorSubtract( v1, v0, vecEdge0 );
+	VectorSubtract( v2, v0, vecEdge1 );
+	CrossProduct( vecEdge0, vecEdge1, vecCross );
+	return ( VectorLength( vecCross ) * 0.5f );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: This is a clone of BaseWindingForPlane()
-// Input  : *outVerts - an array of preallocated verts to build the polygon in
+// Input  : *pOutVerts - an array of preallocated verts to build the polygon in
 //			normal - the plane normal
 //			dist - the plane constant
 // Output : int - vert count (always 4)
 //-----------------------------------------------------------------------------
-int PolyFromPlane( Vector *outVerts, const Vector& normal, float dist, float fHalfScale )
+int PolyFromPlane( Vector *pOutVerts, const Vector& normal, float dist, float fHalfScale )
 {
 	int		i, x;
 	vec_t	max, v;
@@ -3641,20 +4304,70 @@ int PolyFromPlane( Vector *outVerts, const Vector& normal, float dist, float fHa
 	VectorScale (vright, fHalfScale, vright);
 
 	// Move diagonally away from org to create the corner verts
-	VectorSubtract (org, vright, outVerts[0]);	// left
-	VectorAdd (outVerts[0], vup, outVerts[0]);	// up
+	VectorSubtract (org, vright, pOutVerts[0]);	// left
+	VectorAdd (pOutVerts[0], vup, pOutVerts[0]);	// up
 
-	VectorAdd (org, vright, outVerts[1]);		// right
-	VectorAdd (outVerts[1], vup, outVerts[1]);	// up
+	VectorAdd (org, vright, pOutVerts[1]);		// right
+	VectorAdd (pOutVerts[1], vup, pOutVerts[1]);	// up
 
-	VectorAdd (org, vright, outVerts[2]);		// right
-	VectorSubtract (outVerts[2], vup, outVerts[2]);	// down
+	VectorAdd (org, vright, pOutVerts[2]);		// right
+	VectorSubtract (pOutVerts[2], vup, pOutVerts[2]);	// down
 
-	VectorSubtract (org, vright, outVerts[3]);		// left
-	VectorSubtract (outVerts[3], vup, outVerts[3]);	// down
+	VectorSubtract (org, vright, pOutVerts[3]);		// left
+	VectorSubtract (pOutVerts[3], vup, pOutVerts[3]);	// down
 
 	// The four corners form a planar quadrilateral normal to "normal"
 	return 4;
+}
+
+// Returns void as it was impossible for the function to returns anything other than 4.
+// Any absolute of a floating value will always return a number greater than -16384. That test seemed bogus.
+void PolyFromPlane_SIMD( fltx4 *pOutVerts, const fltx4 & plane, float fHalfScale )
+{
+	// So we need to find the biggest component of all three,
+	// And depending of the value, we need to build a unit vector along something that is not the major axis.
+
+	fltx4 f4Abs = AbsSIMD( plane );
+	fltx4 x = SplatXSIMD( f4Abs );
+	fltx4 y = SplatYSIMD( f4Abs );
+	fltx4 z = SplatZSIMD( f4Abs );
+	fltx4 max = MaxSIMD( x, y );
+	max = MaxSIMD( max, z );
+
+	// Simplify the code, if Z is the biggest component, we will use 1 0 0.
+	// If X or Y are the biggest, we will use 0 0 1.
+	bi32x4 fIsMax = CmpEqSIMD( max, f4Abs );		// isMax will be set for the components that are the max
+	fltx4 fIsZMax = SplatZSIMD( (fltx4)fIsMax );	// 0 if Z is not the max, 0xffffffff is Z is the max
+	// And depending if Z is max or not, we are going to select one unit vector or the other
+	fltx4 vup = MaskedAssign( (bi32x4)fIsZMax, g_SIMD_Identity[0], g_SIMD_Identity[2] );
+
+	fltx4 normal = SetWToZeroSIMD( plane );
+	fltx4 dist = SplatWSIMD( plane );
+
+	// Remove the component of this vector along the normal
+	fltx4 v = Dot3SIMD( vup, normal );
+	vup = MaddSIMD( -v, normal, vup);
+	// Make it a unit (perpendicular)
+	vup = Normalized3SIMD( vup );
+
+	// Center of the poly is at normal * dist
+	fltx4 org = MulSIMD( dist, normal );
+	// Calculate the third orthonormal basis vector for our plane space (this one and vup are in the plane)
+	fltx4 vright = CrossProductSIMD( vup, normal);
+
+	// Make the plane's basis vectors big (these are the half-sides of the polygon we're making)
+	fltx4 f4HalfScale = ReplicateX4( fHalfScale );
+	vup = MulSIMD( f4HalfScale, vup );
+	vright = MulSIMD( f4HalfScale, vright );
+
+	// Move diagonally away from org to create the corner verts
+	fltx4 vleft = SubSIMD( org, vright );
+	vright = AddSIMD( org, vright );
+
+	pOutVerts[0] = AddSIMD( vleft, vup );		// left + up
+	pOutVerts[1] = AddSIMD( vright, vup );		// right + up
+	pOutVerts[2] = SubSIMD( vright, vup );		// right + down
+	pOutVerts[3] = SubSIMD( vleft, vup );		// left + down
 }
 
 //-----------------------------------------------------------------------------
@@ -3756,6 +4469,119 @@ int ClipPolyToPlane( Vector *inVerts, int vertCount, Vector *outVerts, const Vec
 	return outCount;
 }
 
+int ClipPolyToPlane_SIMD( fltx4 *pInVerts, int nVertCount, fltx4 *pOutVerts, const fltx4& plane, float fOnPlaneEpsilon )
+{
+	vec_t	*dists = (vec_t *)stackalloc( sizeof(vec_t) * nVertCount * 4 ); //4* nVertCount should cover all cases
+	uint8	*sides = (uint8 *)stackalloc( sizeof(uint8) * nVertCount * 4 );
+	int		i;
+
+/*
+ * It seems something could be done here... Especially in relation with the code below i, i + 1, etc...
+	fltx4 f4OnPlaneEpsilonP = ReplicateX4( fOnPlaneEpsilon );
+	fltx4 f4OnPlaneEpsilonM = -f4OnPlaneEpsilonP;
+	Also we could store the full fltx4 instead of a single float. It would avoid doing a SubFloat() here,
+	and a ReplicateX4() later. Trading off potential LHS against L2 cache misses?
+*/
+	// determine sides for each point
+	int nAllSides = 0;
+	fltx4 f4Dist = SplatWSIMD( plane );
+	for ( i = 0; i < nVertCount; i++ )
+	{
+		// dot = DotProduct( pInVerts[i], normal) - dist;
+		fltx4 dot = Dot3SIMD( pInVerts[i], plane );
+		dot = SubSIMD( dot, f4Dist );
+		float fDot = SubFloat( dot, 0 );
+		dists[i] = fDot;
+		// Look how to update sides with a branch-less version
+		int nSide = OR_SIDE_ON;
+		if ( fDot > fOnPlaneEpsilon )
+		{
+			nSide = OR_SIDE_FRONT;
+		}
+		else if ( fDot < -fOnPlaneEpsilon )
+		{
+			nSide = OR_SIDE_BACK;
+		}
+		sides[i] = nSide;
+		nAllSides |= nSide;
+	}
+	sides[i] = sides[0];
+	dists[i] = dists[0];
+
+	// Shortcuts (either completely clipped or not clipped at all)
+	if ( ( nAllSides & OR_SIDE_FRONT ) == 0 )
+	{
+		return 0;	// Completely clipped
+	}
+
+	if ( ( nAllSides & OR_SIDE_BACK ) == 0 )
+	{
+		// Not clipped at all, copy to output verts
+		Assert ( i == nVertCount );
+		int nIndex = 0;
+		while ( i >= 4 )
+		{
+			pOutVerts[nIndex] = pInVerts[nIndex];
+			pOutVerts[nIndex + 1] = pInVerts[nIndex + 1];
+			pOutVerts[nIndex + 2] = pInVerts[nIndex + 2];
+			pOutVerts[nIndex + 3] = pInVerts[nIndex + 3];
+			nIndex += 4;
+			i -= 4;
+		}
+		while ( i > 0 )
+		{
+			pOutVerts[nIndex] = pInVerts[nIndex];
+			++nIndex;
+			--i;
+		}
+		return nVertCount;
+	}
+
+	fltx4 f4one = Four_Ones;
+	fltx4 f4MOne = -f4one;
+
+	fltx4 f4OneMask = (fltx4)CmpEqSIMD( plane, f4one );
+	fltx4 f4mOneMask = (fltx4)CmpEqSIMD( plane, f4MOne );
+	fltx4 f4AllMask = OrSIMD( f4OneMask, f4mOneMask );					// 0xffffffff where normal was 1 or -1, 0 otherwise
+	f4OneMask = AndSIMD( f4OneMask, f4Dist );							// Dist where normal.* was 1
+	f4mOneMask = AndSIMD( f4mOneMask, -f4Dist );						// -Dist where normal.* was -1
+	fltx4 f4AllValue = OrSIMD( f4OneMask, f4mOneMask );					// Dist and -Dist where normal.* was 1 and -1
+	// f4AllMask and f4AllValue will be used together (to override the default calculation).
+
+	int nOutCount = 0;
+	for ( i = 0; i < nVertCount; i++ )
+	{
+		const fltx4& p1 = pInVerts[i];
+
+		if (sides[i] == OR_SIDE_ON)
+		{
+			pOutVerts[nOutCount++] = p1;
+			continue;
+		}
+
+		if (sides[i] == OR_SIDE_FRONT)
+		{
+			pOutVerts[nOutCount++] = p1;
+		}
+
+		if (sides[i+1] == OR_SIDE_ON || sides[i+1] == sides[i])
+			continue;
+
+		// generate a split point
+		fltx4& p2 = pInVerts[(i+1)%nVertCount];
+
+		float fDot = dists[i] / (dists[i]-dists[i+1]);
+		fltx4 f4Dot = ReplicateX4( fDot );
+
+		// mid[j] = v1[j] + dot*(v2[j]-v1[j]);		- For j=0...2
+		fltx4 f4Result = MaddSIMD( f4Dot, SubSIMD( p2, p1) , p1);
+		// If normal.* is 1, it should be dist, if -1, it should be -dist, otherwise it should be mid[j] = v1[j] + dot*(v2[j]-v1[j]);
+		fltx4 mid = MaskedAssign( (bi32x4)f4AllMask, f4AllValue, f4Result );
+		pOutVerts[nOutCount++] = mid;
+	}
+
+	return nOutCount;
+}
 
 int ClipPolyToPlane_Precise( double *inVerts, int vertCount, double *outVerts, const double *normal, double dist, double fOnPlaneEpsilon )
 {
@@ -3916,19 +4742,21 @@ float CalcFovX( float flFovY, float flAspect )
 	return RAD2DEG( atan( tan( DEG2RAD( flFovY ) * 0.5f ) * flAspect ) ) * 2.0f;
 }
 
+#endif // !defined(__SPU__)
 
+#if !defined(__SPU__) 
 //-----------------------------------------------------------------------------
 // Generate a frustum based on perspective view parameters
 //-----------------------------------------------------------------------------
 void GeneratePerspectiveFrustum( const Vector& origin, const Vector &forward, 
 	const Vector &right, const Vector &up, float flZNear, float flZFar, 
-	float flFovX, float flFovY, Frustum_t &frustum )
+	float flFovX, float flFovY, VPlane *pPlanesOut )
 {
 	float flIntercept = DotProduct( origin, forward );
 
 	// Setup the near and far planes.
-	frustum.SetPlane( FRUSTUM_FARZ, PLANE_ANYZ, -forward, -flZFar - flIntercept );
-	frustum.SetPlane( FRUSTUM_NEARZ, PLANE_ANYZ, forward, flZNear + flIntercept );
+	pPlanesOut[FRUSTUM_FARZ].Init( -forward, -flZFar - flIntercept );
+	pPlanesOut[FRUSTUM_NEARZ].Init( forward, flZNear + flIntercept );
 
 	flFovX *= 0.5f;
 	flFovY *= 0.5f;
@@ -3945,8 +4773,8 @@ void GeneratePerspectiveFrustum( const Vector& origin, const Vector &forward,
 	VectorNormalize( normalPos );
 	VectorNormalize( normalNeg );
 
-	frustum.SetPlane( FRUSTUM_LEFT, PLANE_ANYZ, normalPos, normalPos.Dot( origin ) );
-	frustum.SetPlane( FRUSTUM_RIGHT, PLANE_ANYZ, normalNeg, normalNeg.Dot( origin ) );
+	pPlanesOut[FRUSTUM_LEFT].Init( normalPos, normalPos.Dot( origin ) );
+	pPlanesOut[FRUSTUM_RIGHT].Init( normalNeg, normalNeg.Dot( origin ) );
 
 	VectorMA( up, flTanY, forward, normalPos );
 	VectorMA( normalPos, -2.0f, up, normalNeg );
@@ -3954,41 +4782,665 @@ void GeneratePerspectiveFrustum( const Vector& origin, const Vector &forward,
 	VectorNormalize( normalPos );
 	VectorNormalize( normalNeg );
 
-	frustum.SetPlane( FRUSTUM_BOTTOM, PLANE_ANYZ, normalPos, normalPos.Dot( origin ) );
-	frustum.SetPlane( FRUSTUM_TOP, PLANE_ANYZ, normalNeg, normalNeg.Dot( origin ) );
+	pPlanesOut[FRUSTUM_BOTTOM].Init( normalPos, normalPos.Dot( origin ) );
+	pPlanesOut[FRUSTUM_TOP].Init( normalNeg, normalNeg.Dot( origin ) );
 }
 
+//-----------------------------------------------------------------------------
+// Generate a frustum based on orthographic parameters
+//-----------------------------------------------------------------------------
+void GenerateOrthoFrustum( const Vector &origin, const Vector &forward, const Vector &right, const Vector &up, float flLeft, float flRight, float flBottom, float flTop, float flZNear, float flZFar, VPlane *pPlanesOut )
+{
+	float flIntercept = DotProduct( origin, forward );
+
+	pPlanesOut[FRUSTUM_NEARZ].Init( forward, flZNear + flIntercept );
+	pPlanesOut[FRUSTUM_FARZ].Init( -forward, -flZFar - flIntercept );
+
+	flIntercept = DotProduct( origin, right );
+
+	pPlanesOut[FRUSTUM_RIGHT].Init( -right, -flRight - flIntercept );
+	pPlanesOut[FRUSTUM_LEFT].Init( right, flLeft + flIntercept );
+
+	flIntercept = DotProduct( origin, up );
+
+	pPlanesOut[FRUSTUM_BOTTOM].Init( up, flBottom + flIntercept );
+	pPlanesOut[FRUSTUM_TOP].Init( -up, -flTop - flIntercept );
+}
 
 //-----------------------------------------------------------------------------
 // Version that accepts angles instead of vectors
 //-----------------------------------------------------------------------------
 void GeneratePerspectiveFrustum( const Vector& origin, const QAngle &angles, float flZNear, float flZFar, float flFovX, float flAspectRatio, Frustum_t &frustum )
 {
+	VPlane planes[FRUSTUM_NUMPLANES];
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( angles, &vecForward, &vecRight, &vecUp );
 	float flFovY = CalcFovY( flFovX, flAspectRatio );
-	GeneratePerspectiveFrustum( origin, vecForward, vecRight, vecUp, flZNear, flZFar, flFovX, flFovY, frustum );
+	GeneratePerspectiveFrustum( origin, vecForward, vecRight, vecUp, flZNear, flZFar, flFovX, flFovY, planes );
+	frustum.SetPlanes( planes );
 }
 
-bool R_CullBox( const Vector& mins, const Vector& maxs, const Frustum_t &frustum )
+void fourplanes_t::ComputeSignbits()
 {
-	return (( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_RIGHT) ) == 2 ) || 
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_LEFT) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_TOP) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_BOTTOM) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_NEARZ) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_FARZ) ) == 2 ) );
+	xSign = CmpLtSIMD( nX, Four_Zeros );
+	ySign = CmpLtSIMD( nY, Four_Zeros );
+	zSign = CmpLtSIMD( nZ, Four_Zeros );
+	nXAbs = fabs(nX);
+	nYAbs = fabs(nY);
+	nZAbs = fabs(nZ);
 }
 
-bool R_CullBoxSkipNear( const Vector& mins, const Vector& maxs, const Frustum_t &frustum )
+void fourplanes_t::GetPlane( int index, Vector *pNormalOut, float *pDistOut ) const
 {
-	return (( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_RIGHT) ) == 2 ) || 
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_LEFT) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_TOP) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_BOTTOM) ) == 2 ) ||
-			( BoxOnPlaneSide( mins, maxs, frustum.GetPlane(FRUSTUM_FARZ) ) == 2 ) );
+	pNormalOut->x = SubFloat(nX,index);
+	pNormalOut->y = SubFloat(nY,index);
+	pNormalOut->z = SubFloat(nZ,index);
+	*pDistOut = SubFloat(dist,index);
+}
+void fourplanes_t::SetPlane( int index, const Vector &vecNormal, float planeDist )
+{
+	SubFloat(nX,index) = vecNormal.x;
+	SubFloat(nY,index) = vecNormal.y;
+	SubFloat(nZ,index) = vecNormal.z;
+	SubFloat(dist,index) = planeDist;
+	ComputeSignbits();
 }
 
+void fourplanes_t::Set4Planes( const VPlane *pPlanes )
+{
+	nX = LoadUnalignedSIMD( &pPlanes[0].m_Normal.x );
+	nY = LoadUnalignedSIMD( &pPlanes[1].m_Normal.x );
+	nZ = LoadUnalignedSIMD( &pPlanes[2].m_Normal.x );
+	dist = LoadUnalignedSIMD( &pPlanes[3].m_Normal.x );
+	TransposeSIMD(nX, nY, nZ, dist);
+	ComputeSignbits();
+}
+
+void fourplanes_t::Set2Planes( const VPlane *pPlanes )
+{
+	nX = LoadUnalignedSIMD( &pPlanes[0].m_Normal.x );
+	nY = LoadUnalignedSIMD( &pPlanes[1].m_Normal.x );
+	nZ = Four_Zeros;
+	dist = Four_Zeros;
+	TransposeSIMD(nX, nY, nZ, dist);
+	ComputeSignbits();
+}
+
+void fourplanes_t::Get4Planes( VPlane *pPlanesOut ) const
+{
+	fltx4 p0 = nX;
+	fltx4 p1 = nY;
+	fltx4 p2 = nZ;
+	fltx4 p3 = dist;
+	TransposeSIMD(p0, p1, p2, p3);
+	StoreUnalignedSIMD( &pPlanesOut[0].m_Normal.x, p0 );
+	StoreUnalignedSIMD( &pPlanesOut[1].m_Normal.x, p1 );
+	StoreUnalignedSIMD( &pPlanesOut[2].m_Normal.x, p2 );
+	StoreUnalignedSIMD( &pPlanesOut[3].m_Normal.x, p3 );
+}
+
+void fourplanes_t::Get2Planes( VPlane *pPlanesOut ) const
+{
+	fltx4 p0 = nX;
+	fltx4 p1 = nY;
+	fltx4 p2 = nZ;
+	fltx4 p3 = dist;
+	TransposeSIMD(p0, p1, p2, p3);
+	StoreUnalignedSIMD( &pPlanesOut[0].m_Normal.x, p0 );
+	StoreUnalignedSIMD( &pPlanesOut[1].m_Normal.x, p1 );
+}
+
+
+Frustum_t::Frustum_t()
+{
+	memset(this, 0, sizeof(*this));
+}
+
+void Frustum_t::SetPlane( int i, const Vector &vecNormal, float dist )
+{
+	if ( i < 4 )
+	{
+		planes[0].SetPlane( i, vecNormal, dist );
+	}
+	else
+	{
+		planes[1].SetPlane( i-4, vecNormal, dist );
+	}
+}
+
+void Frustum_t::GetPlane( int i, Vector *pNormalOut, float *pDistOut ) const
+{
+	if ( i < 4 )
+	{
+		planes[0].GetPlane( i, pNormalOut, pDistOut );
+	}
+	else
+	{
+		planes[1].GetPlane( i-4, pNormalOut, pDistOut );
+	}
+}
+
+void Frustum_t::SetPlanes( const VPlane *pPlanes )
+{
+	planes[0].Set4Planes(pPlanes);
+	planes[1].Set2Planes(pPlanes+4);
+}
+
+void Frustum_t::GetPlanes( VPlane *pPlanesOut ) const
+{
+	planes[0].Get4Planes(pPlanesOut);
+	planes[1].Get2Planes(pPlanesOut+4);
+}
+
+
+bool Frustum_t::CullBox( const Vector &mins, const Vector &maxs ) const
+{
+	fltx4 mins4 = LoadUnalignedSIMD( &mins.x );
+	fltx4 minx = SplatXSIMD(mins4);
+	fltx4 miny = SplatYSIMD(mins4);
+	fltx4 minz = SplatZSIMD(mins4);
+	fltx4 maxs4 = LoadUnalignedSIMD( &maxs.x );
+	fltx4 maxx = SplatXSIMD(maxs4);
+	fltx4 maxy = SplatYSIMD(maxs4);
+	fltx4 maxz = SplatZSIMD(maxs4);
+
+	// compute the dot product of the normal and the farthest corner
+	// dotBack0 = DotProduct( normal, normals.x < 0 ? mins.x : maxs.x );
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = MulSIMD( planes[i].nX, MaskedAssign( planes[i].xSign, minx, maxx ) );
+		fltx4 yTotalBack = MulSIMD( planes[i].nY, MaskedAssign( planes[i].ySign, miny, maxy ) );
+		fltx4 zTotalBack = MulSIMD( planes[i].nZ, MaskedAssign( planes[i].zSign, minz, maxz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+		if  ( IsVector4LessThan( dotBack, planes[i].dist ) )
+			return true;
+	}
+	return false;
+}
+
+bool Frustum_t::CullBox( const fltx4 &mins4, const fltx4 &maxs4 ) const
+{
+	fltx4 minx = SplatXSIMD(mins4);
+	fltx4 miny = SplatYSIMD(mins4);
+	fltx4 minz = SplatZSIMD(mins4);
+	fltx4 maxx = SplatXSIMD(maxs4);
+	fltx4 maxy = SplatYSIMD(maxs4);
+	fltx4 maxz = SplatZSIMD(maxs4);
+
+	// compute the dot product of the normal and the farthest corner
+	// dotBack0 = DotProduct( normal, normals.x < 0 ? mins.x : maxs.x );
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = MulSIMD( planes[i].nX, MaskedAssign( planes[i].xSign, minx, maxx ) );
+		fltx4 yTotalBack = MulSIMD( planes[i].nY, MaskedAssign( planes[i].ySign, miny, maxy ) );
+		fltx4 zTotalBack = MulSIMD( planes[i].nZ, MaskedAssign( planes[i].zSign, minz, maxz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+		if  ( IsVector4LessThan( dotBack, planes[i].dist ) )
+			return true;
+	}
+	return false;
+}
+
+bool Frustum_t::CullBoxCenterExtents( const Vector &center, const Vector &extents ) const
+{
+	fltx4 center4 = LoadUnalignedSIMD( &center.x );
+	fltx4 centerx = SplatXSIMD(center4);
+	fltx4 centery = SplatYSIMD(center4);
+	fltx4 centerz = SplatZSIMD(center4);
+	fltx4 extents4 = LoadUnalignedSIMD( &extents.x );
+	fltx4 extx = SplatXSIMD(extents4);
+	fltx4 exty = SplatYSIMD(extents4);
+	fltx4 extz = SplatZSIMD(extents4);
+
+	// compute the dot product of the normal and the farthest corner
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = AddSIMD( MulSIMD( planes[i].nX, centerx ), MulSIMD(planes[i].nXAbs, extx ) );
+		fltx4 yTotalBack = AddSIMD( MulSIMD( planes[i].nY, centery ), MulSIMD(planes[i].nYAbs, exty ) );
+		fltx4 zTotalBack = AddSIMD( MulSIMD( planes[i].nZ, centerz ), MulSIMD(planes[i].nZAbs, extz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+		if  ( IsVector4LessThan( dotBack, planes[i].dist ) )
+			return true;
+	}
+	return false;
+}
+
+
+bool Frustum_t::CullBoxCenterExtents( const fltx4 &fl4Center, const fltx4 &fl4Extents ) const
+{
+	fltx4 centerx = SplatXSIMD(fl4Center);
+	fltx4 centery = SplatYSIMD(fl4Center);
+	fltx4 centerz = SplatZSIMD(fl4Center);
+	fltx4 extx = SplatXSIMD(fl4Extents);
+	fltx4 exty = SplatYSIMD(fl4Extents);
+	fltx4 extz = SplatZSIMD(fl4Extents);
+
+	// compute the dot product of the normal and the farthest corner
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = AddSIMD( MulSIMD( planes[i].nX, centerx ), MulSIMD(planes[i].nXAbs, extx ) );
+		fltx4 yTotalBack = AddSIMD( MulSIMD( planes[i].nY, centery ), MulSIMD(planes[i].nYAbs, exty ) );
+		fltx4 zTotalBack = AddSIMD( MulSIMD( planes[i].nZ, centerz ), MulSIMD(planes[i].nZAbs, extz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+		if  ( IsVector4LessThan( dotBack, planes[i].dist ) )
+			return true;
+	}
+	return false;
+}
+
+// Return true if this bounding volume is contained in the frustum, false if it is not
+// TODO SIMDIFY
+bool Frustum_t::Contains( const Vector &mins, const Vector &maxs ) const
+{
+	// Get box corners 
+	Vector vCorners[8];
+	vCorners[0] = mins;
+	vCorners[1] = Vector( mins.x, mins.y, maxs.z );
+	vCorners[2] = Vector( mins.x, maxs.y, mins.z );
+	vCorners[3] = Vector( mins.x, maxs.y, maxs.z );
+
+	vCorners[4] = Vector( maxs.x, mins.y, mins.z );
+	vCorners[5] = Vector( maxs.x, mins.y, maxs.z );
+	vCorners[6] = Vector( maxs.x, maxs.y, mins.z );
+	vCorners[7] = maxs;
+
+
+	// if we are in with all points, then we are fully in
+	for ( int j = 0; j < FRUSTUM_NUMPLANES; ++j ) 
+	{
+		for( int i = 0; i < 8; ++i ) 
+		{		
+			// compute the dot product of the normal and the corner
+			Vector vNormal;
+			float dist;
+			GetPlane( i, &vNormal, &dist );
+			if ( DotProduct( vCorners[j], vNormal ) <= 0 ) 
+			{
+				return false;
+			}
+		}		
+	}	
+
+	return true;	// all pts were inside
+}
+
+// Brute force SAT frustum intersection between two frustums
+bool Frustum_t::Intersects( Frustum_t &otherFrustum ) const
+{
+	Vector pPointsA[8];
+	bool bResult = false;
+	bResult = GetCorners( pPointsA );
+	Assert( bResult );
+	VPlane pPlanesA[FRUSTUM_NUMPLANES];
+	GetPlanes( pPlanesA );
+
+	Vector pPointsB[8];
+	bResult = otherFrustum.GetCorners( pPointsB );
+	Assert( bResult );
+	VPlane pPlanesB[FRUSTUM_NUMPLANES];
+	otherFrustum.GetPlanes( pPlanesB );
+
+	// See if all points in B are on one side of any plane in A
+	for ( int p=0; p<6; ++p )
+	{
+		bool bPointsOnOutside = true;
+		for ( int i=0; i<8; ++i )
+		{
+			float flDist = pPlanesA[ p ].DistTo( pPointsB[ i ] );
+
+			// If dist is pos, we are not on the outside
+			if ( flDist > 0 )
+			{
+				bPointsOnOutside = false;
+				break;
+			}
+		}
+
+		// We never hit a negative case, we have a separating axis
+		if ( bPointsOnOutside )
+		{
+			return false;
+		}
+	}
+
+	// See if all points in A are on one side of any plane in B
+	for ( int p=0; p<6; ++p )
+	{
+		bool bPointsOnOutside = true;
+		for ( int i=0; i<8; ++i )
+		{
+			float flDist = pPlanesB[ p ].DistTo( pPointsA[ i ] );
+
+			// If dist is pos, we are not on the outside
+			if ( flDist > 0 )
+			{
+				bPointsOnOutside = false;
+				break;
+			}
+		}
+
+		// We never hit a negative case, we have a separating axis
+		if ( bPointsOnOutside )
+		{
+			return false;
+		}
+	}
+
+	// They intersect
+	return true;
+}
+
+// Return true if this bounding volume intersects the frustum, false if it is outside
+bool Frustum_t::Intersects( const Vector &mins, const Vector &maxs ) const
+{
+	fltx4 mins4 = LoadUnalignedSIMD( &mins.x );
+	fltx4 minx = SplatXSIMD(mins4);
+	fltx4 miny = SplatYSIMD(mins4);
+	fltx4 minz = SplatZSIMD(mins4);
+	fltx4 maxs4 = LoadUnalignedSIMD( &maxs.x );
+	fltx4 maxx = SplatXSIMD(maxs4);
+	fltx4 maxy = SplatYSIMD(maxs4);
+	fltx4 maxz = SplatZSIMD(maxs4);
+
+	// compute the dot product of the normal and the farthest corner
+	// dotBack0 = DotProduct( normal, normals.x < 0 ? mins.x : maxs.x );
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = MulSIMD( planes[i].nX, MaskedAssign( planes[i].xSign, minx, maxx ) );
+		fltx4 yTotalBack = MulSIMD( planes[i].nY, MaskedAssign( planes[i].ySign, miny, maxy ) );
+		fltx4 zTotalBack = MulSIMD( planes[i].nZ, MaskedAssign( planes[i].zSign, minz, maxz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+#if _X360
+		if  ( !XMVector3GreaterOrEqual( dotBack, planes[i].dist ) )
+			return false;
+#elif defined( _PS3 )
+		bi32x4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#else
+		fltx4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#endif
+	}
+	return true;
+}
+
+bool Frustum_t::Intersects( const fltx4 &mins4, const fltx4 &maxs4 ) const
+{
+	fltx4 minx = SplatXSIMD(mins4);
+	fltx4 miny = SplatYSIMD(mins4);
+	fltx4 minz = SplatZSIMD(mins4);
+	fltx4 maxx = SplatXSIMD(maxs4);
+	fltx4 maxy = SplatYSIMD(maxs4);
+	fltx4 maxz = SplatZSIMD(maxs4);
+
+	// compute the dot product of the normal and the farthest corner
+	// dotBack0 = DotProduct( normal, normals.x < 0 ? mins.x : maxs.x );
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = MulSIMD( planes[i].nX, MaskedAssign( planes[i].xSign, minx, maxx ) );
+		fltx4 yTotalBack = MulSIMD( planes[i].nY, MaskedAssign( planes[i].ySign, miny, maxy ) );
+		fltx4 zTotalBack = MulSIMD( planes[i].nZ, MaskedAssign( planes[i].zSign, minz, maxz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+#if _X360
+		if  ( !XMVector4GreaterOrEqual( dotBack, planes[i].dist ) )
+			return false;
+#elif defined( _PS3 )
+		bi32x4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#else
+		fltx4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#endif
+	}
+	return true;
+}
+
+bool Frustum_t::IntersectsCenterExtents( const Vector &center, const Vector &extents ) const
+{
+	fltx4 center4 = LoadUnalignedSIMD( &center.x );
+	fltx4 centerx = SplatXSIMD(center4);
+	fltx4 centery = SplatYSIMD(center4);
+	fltx4 centerz = SplatZSIMD(center4);
+	fltx4 extents4 = LoadUnalignedSIMD( &extents.x );
+	fltx4 extx = SplatXSIMD(extents4);
+	fltx4 exty = SplatYSIMD(extents4);
+	fltx4 extz = SplatZSIMD(extents4);
+
+	// compute the dot product of the normal and the farthest corner
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = AddSIMD( MulSIMD( planes[i].nX, centerx ), MulSIMD(planes[i].nXAbs, extx ) );
+		fltx4 yTotalBack = AddSIMD( MulSIMD( planes[i].nY, centery ), MulSIMD(planes[i].nYAbs, exty ) );
+		fltx4 zTotalBack = AddSIMD( MulSIMD( planes[i].nZ, centerz ), MulSIMD(planes[i].nZAbs, extz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+#if _X360
+		if  ( !XMVector4GreaterOrEqual( dotBack, planes[i].dist ) )
+			return false;
+#elif defined( _PS3 )
+		bi32x4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#else
+		fltx4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#endif
+	}
+	return true;
+}
+
+
+bool Frustum_t::IntersectsCenterExtents( const fltx4 &fl4Center, const fltx4 &fl4Extents ) const
+{
+	fltx4 centerx = SplatXSIMD(fl4Center);
+	fltx4 centery = SplatYSIMD(fl4Center);
+	fltx4 centerz = SplatZSIMD(fl4Center);
+	fltx4 extx = SplatXSIMD(fl4Extents);
+	fltx4 exty = SplatYSIMD(fl4Extents);
+	fltx4 extz = SplatZSIMD(fl4Extents);
+
+	// compute the dot product of the normal and the farthest corner
+	for ( int i = 0; i < 2; i++ )
+	{
+		fltx4 xTotalBack = AddSIMD( MulSIMD( planes[i].nX, centerx ), MulSIMD(planes[i].nXAbs, extx ) );
+		fltx4 yTotalBack = AddSIMD( MulSIMD( planes[i].nY, centery ), MulSIMD(planes[i].nYAbs, exty ) );
+		fltx4 zTotalBack = AddSIMD( MulSIMD( planes[i].nZ, centerz ), MulSIMD(planes[i].nZAbs, extz ) );
+		fltx4 dotBack = AddSIMD( xTotalBack, AddSIMD(yTotalBack, zTotalBack) );
+		// if plane of the farthest corner is behind the plane, then the box is completely outside this plane
+#if _X360
+		if  ( !XMVector3GreaterOrEqual( dotBack, planes[i].dist ) )
+			return false;
+#elif defined( _PS3 )
+		bi32x4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#else
+		fltx4 isOut = CmpLtSIMD( dotBack, planes[i].dist );
+		if ( IsAnyNegative(isOut) )
+			return false;
+#endif
+	}
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Generate a frustum based on orthographic parameters
+//-----------------------------------------------------------------------------
+void GenerateOrthoFrustumFLU( const Vector &origin, const Vector &forward, const Vector &vLeft, const Vector &up, float flLeft, float flRight, float flBottom, float flTop, float flZNear, float flZFar, VPlane *pPlanesOut )
+{
+	// YUP_ACTIVE: FIXME : This is actually producing incorrect planes (see the VectorMA below)
+	Vector vRight = vLeft;
+	vRight *= -1.0f;
+
+	float flIntercept = DotProduct( origin, forward );
+
+	pPlanesOut[FRUSTUM_NEARZ].Init( forward, flZNear + flIntercept );
+	pPlanesOut[FRUSTUM_FARZ].Init( -forward, -flZFar - flIntercept );
+
+	flIntercept = DotProduct( origin, vRight );
+
+	pPlanesOut[FRUSTUM_RIGHT].Init( -vRight, -flRight - flIntercept );
+	pPlanesOut[FRUSTUM_LEFT].Init( vRight, flLeft + flIntercept );
+
+	flIntercept = DotProduct( origin, up );
+
+	pPlanesOut[FRUSTUM_BOTTOM].Init( up, flBottom + flIntercept );
+	pPlanesOut[FRUSTUM_TOP].Init( -up, -flTop - flIntercept );
+}
+
+//-----------------------------------------------------------------------------
+// Generate a frustum based on perspective view parameters
+//-----------------------------------------------------------------------------
+void GeneratePerspectiveFrustumFLU( const Vector& origin, const Vector &forward, 
+	const Vector &vLeft, const Vector &up, float flZNear, float flZFar, 
+	float flFovX, float flAspect, VPlane *pPlanesOut )
+{
+	// YUP_ACTIVE: FIXME : This is actually producing incorrect planes (see the VectorMA below)
+	Vector vRight = vLeft;
+	vRight *= -1.0f;
+
+	float flIntercept = DotProduct( origin, forward );
+
+	// Setup the near and far planes.
+	pPlanesOut[FRUSTUM_FARZ].Init( -forward, -flZFar - flIntercept );
+	pPlanesOut[FRUSTUM_NEARZ].Init( forward, flZNear + flIntercept );
+
+	flFovX *= 0.5f;
+
+	float flTanX = tan( DEG2RAD( flFovX ) );
+	float flTanY = flTanX / flAspect;
+
+	// OPTIMIZE: Normalizing these planes is not necessary for culling
+	Vector normalPos, normalNeg;
+
+	// NOTE: This should be using left and not right to produce correct planes, not changing it quite yet
+	// because I'm not able to test whether fixing this breaks anything.
+	VectorMA( vRight, flTanX, forward, normalPos );
+	VectorMA( normalPos, -2.0f, vRight, normalNeg );
+
+	VectorNormalize( normalPos );
+	VectorNormalize( normalNeg );
+
+	pPlanesOut[FRUSTUM_LEFT].Init( normalPos, normalPos.Dot( origin ) );
+	pPlanesOut[FRUSTUM_RIGHT].Init( normalNeg, normalNeg.Dot( origin ) );
+
+	VectorMA( up, flTanY, forward, normalPos );
+	VectorMA( normalPos, -2.0f, up, normalNeg );
+
+	VectorNormalize( normalPos );
+	VectorNormalize( normalNeg );
+
+	pPlanesOut[FRUSTUM_BOTTOM].Init( normalPos, normalPos.Dot( origin ) );
+	pPlanesOut[FRUSTUM_TOP].Init( normalNeg, normalNeg.Dot( origin ) );
+}
+
+// Generate a frustum based on perspective view parameters
+void Frustum_t::CreatePerspectiveFrustumFLU( const Vector &vOrigin, const Vector &vForward, 
+	const Vector &vLeft, const Vector &vUp, float flZNear, float flZFar, 
+	float flFovX, float flAspect )
+{
+	VPlane localPlanes[FRUSTUM_NUMPLANES];
+	GeneratePerspectiveFrustumFLU( vOrigin, vForward, vLeft, vUp, flZNear, flZFar, flFovX, flAspect, localPlanes );
+	SetPlanes( localPlanes );
+}
+
+//#ifndef YUP_ACTIVE
+void Frustum_t::CreatePerspectiveFrustum( const Vector& origin, const Vector &forward, 
+	const Vector &right, const Vector &up, float flZNear, float flZFar, 
+	float flFovX, float flAspect )
+{
+	Vector vLeft = right;
+	vLeft *= -1.0f;
+	CreatePerspectiveFrustumFLU( origin, forward, vLeft, up, flZNear, flZFar, flFovX, flAspect );
+}
+//#endif
+
+// Version that accepts angles instead of vectors
+void Frustum_t::CreatePerspectiveFrustum( const Vector& origin, const QAngle &angles, float flZNear, float flZFar, float flFovX, float flAspectRatio )
+{
+	VPlane localPlanes[FRUSTUM_NUMPLANES];
+	Vector vecForward, vecLeft, vecUp;
+	AngleVectorsFLU( angles, &vecForward, &vecLeft, &vecUp );
+	GeneratePerspectiveFrustumFLU( origin, vecForward, vecLeft, vecUp, flZNear, flZFar, flFovX, flAspectRatio, localPlanes );
+	SetPlanes( localPlanes );
+}
+
+// Generate a frustum based on orthographic parameters
+void Frustum_t::CreateOrthoFrustumFLU( const Vector &origin, const Vector &forward, const Vector &vLeft, const Vector &up, float flLeft, float flRight, float flBottom, float flTop, float flZNear, float flZFar )
+{
+	VPlane localPlanes[FRUSTUM_NUMPLANES];
+	GenerateOrthoFrustumFLU( origin, forward, vLeft, up, flLeft, flRight, flBottom, flTop, flZNear, flZFar, localPlanes );
+	SetPlanes( localPlanes );
+}
+
+//#ifndef YUP_ACTIVE
+void Frustum_t::CreateOrthoFrustum( const Vector &origin, const Vector &forward, const Vector &right, const Vector &up, float flLeft, float flRight, float flBottom, float flTop, float flZNear, float flZFar )
+{
+	Vector vLeft = right;
+	vLeft *= -1.0f;
+	CreateOrthoFrustumFLU( origin, forward, vLeft, up, flLeft, flRight, flBottom, flTop, flZNear, flZFar );
+}
+
+// The points returned correspond to the corners of the frustum faces 
+// Points 0 to 3 correspond to the near face 
+// Points 4 to 7 correspond to the far face 
+// Returns points in a face in this order:
+//  2--3
+//	|  |
+//	0--1
+bool Frustum_t::GetCorners( Vector *pPoints ) const
+{
+	VPlane localPlanes[FRUSTUM_NUMPLANES];
+	GetPlanes( localPlanes );
+
+	// Near face
+	// Bottom Left
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_NEARZ], localPlanes[FRUSTUM_LEFT], localPlanes[FRUSTUM_BOTTOM], pPoints[0] ) )
+		return false;
+
+	// Bottom right
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_NEARZ], localPlanes[FRUSTUM_RIGHT], localPlanes[FRUSTUM_BOTTOM], pPoints[1] ) )
+		return false;
+
+	// Upper Left
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_NEARZ], localPlanes[FRUSTUM_LEFT], localPlanes[FRUSTUM_TOP], pPoints[2] ) )
+		return false;
+
+	// Upper right
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_NEARZ], localPlanes[FRUSTUM_RIGHT], localPlanes[FRUSTUM_TOP], pPoints[3] ) )
+		return false;
+
+	// Far face
+	// Bottom Left
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_FARZ], localPlanes[FRUSTUM_LEFT], localPlanes[FRUSTUM_BOTTOM], pPoints[4] ) )
+		return false;
+
+	// Bottom right
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_FARZ], localPlanes[FRUSTUM_RIGHT], localPlanes[FRUSTUM_BOTTOM], pPoints[5] ) )
+		return false;
+
+	// Upper Left
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_FARZ], localPlanes[FRUSTUM_LEFT], localPlanes[FRUSTUM_TOP], pPoints[6] ) )
+		return false;
+
+	// Upper right
+	if ( !PlaneIntersection( localPlanes[FRUSTUM_FARZ], localPlanes[FRUSTUM_RIGHT], localPlanes[FRUSTUM_TOP], pPoints[7] ) )
+		return false;
+
+
+	return true;
+}
 
 // NOTE: This routine was taken (and modified) from NVidia's BlinnReflection demo
 // Creates basis vectors, based on a vertex and index list.
@@ -4049,10 +5501,10 @@ void CalcTriangleTangentSpace( const Vector &p0, const Vector &p1, const Vector 
 //-----------------------------------------------------------------------------
 void RGBtoHSV( const Vector &rgb, Vector &hsv )
 {
-	float flMax = vmax( rgb.x, rgb.y );
-	flMax = vmax( flMax, rgb.z );
-	float flMin = vmin( rgb.x, rgb.y );
-	flMin = vmin( flMin, rgb.z );
+	float flMax = MAX( rgb.x, rgb.y );
+	flMax = MAX( flMax, rgb.z );
+	float flMin = MIN( rgb.x, rgb.y );
+	flMin = MIN( flMin, rgb.z );
 
 	// hsv.z is the value
 	hsv.z = flMax;
@@ -4113,7 +5565,7 @@ void HSVtoRGB( const Vector &hsv, Vector &rgb )
 		hue = 0.0F;
 	}
 	hue /= 60.0F;
-	int     i = hue;        // integer part
+	int     i = Float2Int( hue );        // integer part
 	float32 f = hue - i;    // fractional part
 	float32 p = hsv.z * (1.0F - hsv.y);
 	float32 q = hsv.z * (1.0F - hsv.y * f);
@@ -4200,6 +5652,36 @@ void GetInterpolationData( float const *pKnotPositions,
 	return;
 }
 
+
+static Vector RandomVectorOnUnitSphere( float u, float v )
+{
+	float flPhi = acos( 1 - 2 * u );
+	float flTheta = 2 * M_PI * v;
+
+	float flSinPhi, flCosPhi;
+	float flSinTheta, flCosTheta;
+	SinCos( flPhi, &flSinPhi, &flCosPhi );
+	SinCos( flTheta, &flSinTheta, &flCosTheta );
+
+	return Vector( flSinPhi * flCosTheta, flSinPhi * flSinTheta, flCosPhi );
+}
+
+
+Vector RandomVectorOnUnitSphere()
+{
+	// Guarantee uniform random distribution on a sphere
+	// Graphics gems III contains this algorithm ("Nonuniform random point sets via warping")
+	float u = RandomFloat( 0., 1. );
+	float v = RandomFloat( 0., 1. );
+	return RandomVectorOnUnitSphere( u, v );
+}
+
+
+Vector RandomVectorOnUnitSphere( IUniformRandomStream *pRnd )
+{
+	return RandomVectorOnUnitSphere( pRnd->RandomFloat(), pRnd->RandomFloat() );
+}
+
 float RandomVectorInUnitSphere( Vector *pVector )
 {
 	// Guarantee uniform random distribution within a sphere
@@ -4223,6 +5705,27 @@ float RandomVectorInUnitSphere( Vector *pVector )
 	return flRadius;
 }
 
+
+Vector RandomVectorInUnitSphere()
+{
+	Vector vOut;
+	RandomVectorInUnitSphere( &vOut );
+	return vOut;
+}
+
+Vector RandomVectorInUnitSphere( IUniformRandomStream *pRnd )
+{
+	float w = pRnd->RandomFloat();
+	float flRadius = powf( w, 1.0f / 3.0f );
+
+	Vector v = RandomVectorOnUnitSphere( pRnd ) * flRadius;
+
+	return v;
+}
+
+
+
+
 float RandomVectorInUnitCircle( Vector2D *pVector )
 {
 	// Guarantee uniform random distribution within a sphere
@@ -4240,64 +5743,92 @@ float RandomVectorInUnitCircle( Vector2D *pVector )
 	pVector->y = flRadius * flSinTheta;
 	return flRadius;
 }
-#ifdef FP_EXCEPTIONS_ENABLED
-#include <float.h> // For _clearfp and _controlfp_s
-#endif
 
-// FPExceptionDisable and FPExceptionEnabler taken from my blog post
-// at http://www.altdevblogaday.com/2012/04/20/exceptional-floating-point/
 
-#ifdef FP_EXCEPTIONS_ENABLED
-// These functions are all inlined NOPs if FP_EXCEPTIONS_ENABLED is not defined.
-FPExceptionDisabler::FPExceptionDisabler()
+const Quaternion RandomQuaternion()
 {
-	// Retrieve the current state of the exception flags. This
-	// must be done before changing them. _MCW_EM is a bit
-	// mask representing all available exception masks.
-	_controlfp_s(&mOldValues, 0, 0);
-	// Set all of the exception flags, which suppresses FP
-	// exceptions on the x87 and SSE units.
-	_controlfp_s(0, _MCW_EM, _MCW_EM);
+	// Guarantee uniform distribution within S^3. Found on the internet, looked through the proof very briefly, looks sound enough to tentatively trust it before testing or checking the proof for real.
+	// http://mathproofs.blogspot.com/2005/05/uniformly-distributed-random-unit.html
+	float u = RandomFloat( 0, 2 * M_PI ), flSinU = sinf( u );
+	float v = acosf( RandomFloat( -1, 1 ) ), flSinV = sinf( v );
+	float w = 0.5f * ( RandomFloat( 0, M_PI ) + acosf( RandomFloat( 0, 1 ) ) + M_PI / 2 ), flSinW = sinf( w );
+	return Quaternion( cosf( u ), flSinU * cosf( v ), flSinU * flSinV * cosf( w ), flSinU * flSinV * flSinW );
 }
 
-FPExceptionDisabler::~FPExceptionDisabler()
+const Quaternion RandomQuaternion( IUniformRandomStream *pRnd )
 {
-	// Clear any pending FP exceptions. This must be done
-	// prior to enabling FP exceptions since otherwise there
-	// may be a 'deferred crash' as soon the exceptions are
-	// enabled.
-	_clearfp();
-
-	// Reset (possibly enabling) the exception status.
-	_controlfp_s(0, mOldValues, _MCW_EM);
+	// Guarantee uniform distribution within S^3. Found on the internet, looked through the proof very briefly, looks sound enough to tentatively trust it before testing or checking the proof for real.
+	// http://mathproofs.blogspot.com/2005/05/uniformly-distributed-random-unit.html
+	float u = pRnd->RandomFloat( 0, 2 * M_PI ), flSinU = sinf( u );
+	float v = acosf( pRnd->RandomFloat( -1, 1 ) ), flSinV = sinf( v );
+	float w = 0.5f * ( pRnd->RandomFloat( 0, M_PI ) + acosf( pRnd->RandomFloat( 0, 1 ) ) + M_PI / 2 ), flSinW = sinf( w );
+	return Quaternion( cosf( u ), flSinU * cosf( v ), flSinU * flSinV * cosf( w ), flSinU * flSinV * flSinW );
 }
 
-// Overflow, divide-by-zero, and invalid-operation are the FP
-// exceptions most frequently associated with bugs.
-FPExceptionEnabler::FPExceptionEnabler(unsigned int enableBits /*= _EM_OVERFLOW | _EM_ZERODIVIDE | _EM_INVALID*/)
+// Originally from hammer_mathlib.cpp
+//
+// Generate the corner points of a box:
+// +y       _+z
+// ^        /|
+// |       /
+// |  3---7   
+//   /|  /|
+//  / | / |
+// 2---6  |
+// |  1|--5
+// | / | /
+// |/  |/
+// 0---4   --> +x
+//
+void PointsFromBox( const Vector &mins, const Vector &maxs, Vector *points )
 {
-	// Retrieve the current state of the exception flags. This
-	// must be done before changing them. _MCW_EM is a bit
-	// mask representing all available exception masks.
-	_controlfp_s(&mOldValues, 0, 0);
+	points[ 0 ][ 0 ] = mins[ 0 ];
+	points[ 0 ][ 1 ] = mins[ 1 ];
+	points[ 0 ][ 2 ] = mins[ 2 ];
 
-	// Make sure no non-exception flags have been specified,
-	// to avoid accidental changing of rounding modes, etc.
-	enableBits &= _MCW_EM;
+	points[ 1 ][ 0 ] = mins[ 0 ];
+	points[ 1 ][ 1 ] = mins[ 1 ];
+	points[ 1 ][ 2 ] = maxs[ 2 ];
 
-	// Clear any pending FP exceptions. This must be done
-	// prior to enabling FP exceptions since otherwise there
-	// may be a 'deferred crash' as soon the exceptions are
-	// enabled.
-	_clearfp();
+	points[ 2 ][ 0 ] = mins[ 0 ];
+	points[ 2 ][ 1 ] = maxs[ 1 ];
+	points[ 2 ][ 2 ] = mins[ 2 ];
 
-	// Zero out the specified bits, leaving other bits alone.
-	_controlfp_s(0, ~enableBits, enableBits);
+	points[ 3 ][ 0 ] = mins[ 0 ];
+	points[ 3 ][ 1 ] = maxs[ 1 ];
+	points[ 3 ][ 2 ] = maxs[ 2 ];
+
+	points[ 4 ][ 0 ] = maxs[ 0 ];
+	points[ 4 ][ 1 ] = mins[ 1 ];
+	points[ 4 ][ 2 ] = mins[ 2 ];
+
+	points[ 5 ][ 0 ] = maxs[ 0 ];
+	points[ 5 ][ 1 ] = mins[ 1 ];
+	points[ 5 ][ 2 ] = maxs[ 2 ];
+
+	points[ 6 ][ 0 ] = maxs[ 0 ];
+	points[ 6 ][ 1 ] = maxs[ 1 ];
+	points[ 6 ][ 2 ] = mins[ 2 ];
+
+	points[ 7 ][ 0 ] = maxs[ 0 ];
+	points[ 7 ][ 1 ] = maxs[ 1 ];
+	points[ 7 ][ 2 ] = maxs[ 2 ];
 }
 
-FPExceptionEnabler::~FPExceptionEnabler()
+void BuildTransformedBox( Vector *v2, Vector const &bbmin, Vector const &bbmax, const matrix3x4_t& m )
 {
-	// Reset the exception state.
-	_controlfp_s(0, mOldValues, _MCW_EM);
+	Vector v[ 8 ];
+	PointsFromBox( bbmin, bbmax, v );
+
+	VectorTransform( v[ 0 ], m, v2[ 0 ] );
+	VectorTransform( v[ 1 ], m, v2[ 1 ] );
+	VectorTransform( v[ 2 ], m, v2[ 2 ] );
+	VectorTransform( v[ 3 ], m, v2[ 3 ] );
+	VectorTransform( v[ 4 ], m, v2[ 4 ] );
+	VectorTransform( v[ 5 ], m, v2[ 5 ] );
+	VectorTransform( v[ 6 ], m, v2[ 6 ] );
+	VectorTransform( v[ 7 ], m, v2[ 7 ] );
 }
-#endif
+
+
+#endif // !defined(__SPU__)

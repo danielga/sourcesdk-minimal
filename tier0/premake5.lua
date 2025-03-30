@@ -10,8 +10,11 @@ function IncludeSDKTier0()
 	filter("system:windows or macosx")
 		links("tier0")
 
-	filter("system:linux")
-		links(_project.serverside and "tier0_srv" or "tier0")
+	filter({"system:linux", "architecture:x86"})
+		links("tier0")
+
+	filter({"system:linux", "architecture:x86_64"})
+		links(_project.serverside and "tier0" or "tier0_client")
 
 	filter({})
 end

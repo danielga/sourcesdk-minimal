@@ -1,7 +1,11 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
 // $Id$
+
 #include "raytrace.h"
 #include <mathlib/halton.h>
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 static uint32 MapDistanceToPixel(float t)
 {
@@ -163,7 +167,7 @@ void RayTracingEnvironment::RenderScene(
 							myrays.direction=ldir;
 							RayTracingResult shadowtest;
 							Trace4Rays(myrays,Four_Zeros,MaxT, &shadowtest);
-							fltx4 unshadowed=CmpGtSIMD(shadowtest.HitDistance,MaxT);
+							bi32x4 unshadowed=CmpGtSIMD(shadowtest.HitDistance,MaxT);
 							if (! (IsAllZeros(unshadowed)))
 							{
 								FourVectors tmp;
@@ -180,13 +184,13 @@ void RayTracingEnvironment::RenderScene(
 				}
 				// now, mask off non-hitting pixels
 				intens.VProduct(surf_colors);
-				fltx4 no_hit_mask=CmpGtSIMD(rslt.HitDistance,TraceLimit);
+				bi32x4 no_hit_mask=CmpGtSIMD(rslt.HitDistance,TraceLimit);
 				
 				intens.x=OrSIMD(AndSIMD(BackgroundColor.x,no_hit_mask),
 								   AndNotSIMD(no_hit_mask,intens.x));
 				intens.y=OrSIMD(AndSIMD(BackgroundColor.y,no_hit_mask),
 								   AndNotSIMD(no_hit_mask,intens.y));
-				intens.z=OrSIMD(AndSIMD(BackgroundColor.z,no_hit_mask),
+				intens.z=OrSIMD(AndSIMD(BackgroundColor.y,no_hit_mask),
 								   AndNotSIMD(no_hit_mask,intens.z));
 
 				MapLinearIntensities(intens,dest,dest+1,dest+stride,dest+stride+1);
@@ -303,7 +307,7 @@ static unsigned int GetSignMask(Vector const &v)
 }
 
 
-inline void RayTracingEnvironment::FlushStreamEntry(RayStream &s,int msk)
+inline void RayTracingEnvironment::FlushStreamEntry(RayStream &s,int msk, RTECullMode_t cullMode )
 {
 	assert(msk>=0);
 	assert(msk<8);
@@ -311,7 +315,7 @@ inline void RayTracingEnvironment::FlushStreamEntry(RayStream &s,int msk)
 	fltx4 scl=ReciprocalSaturateSIMD(tmax);
 	s.PendingRays[msk].direction*=scl;					// normalize
 	RayTracingResult tmpresult;
-	Trace4Rays(s.PendingRays[msk],Four_Zeros,tmax,msk,&tmpresult);
+	Trace4Rays(s.PendingRays[msk],Four_Zeros,tmax,msk,&tmpresult,-1,NULL,cullMode);
 	// now, write out results
 	for(int r=0;r<4;r++)
 	{
@@ -328,7 +332,8 @@ inline void RayTracingEnvironment::FlushStreamEntry(RayStream &s,int msk)
 
 void RayTracingEnvironment::AddToRayStream(RayStream &s,
 										   Vector const &start,Vector const &end,
-										   RayTracingSingleResult *rslt_out)
+										   RayTracingSingleResult *rslt_out, 
+										   RTECullMode_t cullMode )
 {
 	Vector delta=end;
 	delta-=start;
@@ -346,13 +351,13 @@ void RayTracingEnvironment::AddToRayStream(RayStream &s,
 	s.PendingStreamOutputs[msk][pos]=rslt_out;
 	if (pos==3)
 	{
-		FlushStreamEntry(s,msk);
+		FlushStreamEntry(s,msk,cullMode);
 	}
 	else
 		s.n_in_stream[msk]++;
 }
 
-void RayTracingEnvironment::FinishRayStream(RayStream &s)
+void RayTracingEnvironment::FinishRayStream(RayStream &s, RTECullMode_t cullMode )
 {
 	for(int msk=0;msk<8;msk++)
 	{
@@ -370,7 +375,7 @@ void RayTracingEnvironment::FinishRayStream(RayStream &s)
 				s.PendingRays[msk].direction.Z(c) = s.PendingRays[msk].direction.Z(0);
 				s.PendingStreamOutputs[msk][c]=s.PendingStreamOutputs[msk][0];
 			}
-			FlushStreamEntry(s,msk);
+			FlushStreamEntry(s,msk,cullMode);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//=========== (C) Copyright 1999 Valve, L.L.C. All rights reserved. ===========
 //
 // The copyright to the contents herein is the property of Valve, L.L.C.
 // The contents may be used and/or copied only with the written permission of
@@ -19,15 +19,16 @@
 #endif
 
 
-#include "appframework/tier3app.h"
+#include "appframework/matsysapp.h"
 
+FORWARD_DECLARE_HANDLE( InputContextHandle_t );
 
 //-----------------------------------------------------------------------------
 // The application object
 //-----------------------------------------------------------------------------
-class CVguiMatSysApp : public CVguiSteamApp
+class CVguiMatSysApp : public CMatSysApp
 {
-	typedef CVguiSteamApp BaseClass;
+	typedef CMatSysApp BaseClass;
 
 public:
 	CVguiMatSysApp();
@@ -35,36 +36,15 @@ public:
 	// Methods of IApplication
 	virtual bool Create();
 	virtual bool PreInit();
+	virtual bool PostInit();
+	virtual void PreShutdown();
 	virtual void PostShutdown();
 	virtual void Destroy();
 
-	// Returns the window handle (HWND in Win32)
-	void* GetAppWindow();
-
-	// Gets the window size
-	int GetWindowWidth() const;
-	int GetWindowHeight() const;
-
-protected:
-	void AppPumpMessages();
-
-	// Sets the video mode
-	bool SetVideoMode( );
-
-	// Sets up the game path
-	bool SetupSearchPaths( const char *pStartingDir, bool bOnlyUseStartingDir, bool bIsTool );
+	InputContextHandle_t GetAppInputContext();
 
 private:
-	// Returns the app name
-	virtual const char *GetAppName() = 0;
-	virtual bool AppUsesReadPixels() { return false; }
-
-	// Creates the app window
-	virtual void *CreateAppWindow( char const *pTitle, bool bWindowed, int w, int h );
-
-	void *m_HWnd;
-	int m_nWidth;
-	int m_nHeight;
+	InputContextHandle_t m_hAppInputContext;
 };
 
 

@@ -1,16 +1,15 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef PROTECTED_THINGS_H
 #define PROTECTED_THINGS_H
 #ifdef _WIN32
 #pragma once
 #endif
-
 
 // This header tries to prevent people from using potentially dangerous functions
 // (like the notorious non-null-terminating strncpy) and functions that will break
@@ -20,7 +19,7 @@
 
 // Eventually, ALL of these should be protected, but one man can only accomplish so much in
 // one day AND work on features too!
-#if defined( PROTECTED_STRINGS_ENABLE ) && !defined(DISABLE_PROTECTED_STRINGS)
+#if defined( PROTECTED_STRINGS_ENABLE )
 
 	#if defined( printf )
 		#undef printf
@@ -130,30 +129,23 @@
 #endif
 
 
-#if defined( PROTECTED_THINGS_ENABLE ) && !defined( _X360 ) && !defined(DISABLE_PROTECTED_THINGS)
+#if defined( PROTECTED_THINGS_ENABLE ) && !defined( _X360 )
 
 	#if defined( GetTickCount )
 		#undef GetTickCount
 	#endif
-	#define GetTickCount		GetTickCount__USE_VCR_MODE
+	#define GetTickCount		Use__Plat_MSTime__Instead_of_GetTickCount
 	
 	
 	#if defined( timeGetTime )
 		#undef timeGetTime
 	#endif
-	#define timeGetTime			timeGetTime__USE_VCR_MODE
+	#define timeGetTime			Use__Plat_MSTime__Instead_of_timeGetTime
 	#if defined( clock )
 		#undef clock
 	#endif
-	#define time				time__USE_VCR_MODE
 	
 	
-	#if defined( recvfrom )
-		#undef recvfrom
-	#endif
-	#define recvfrom			recvfrom__USE_VCR_MODE
-
-
 	#if defined( GetCursorPos )
 		#undef GetCursorPos
 	#endif
@@ -165,7 +157,9 @@
 	#endif
 	#define ScreenToClient		ScreenToClient__USE_VCR_MODE
 	
-	
+
+// JAY64: Revisit this, but squelch the warnings for now
+#ifndef _WIN64	
 	#if defined( GetCommandLine )
 		#undef GetCommandLine
 	#endif
@@ -248,22 +242,23 @@
 		#undef GetKeyState
 	#endif
 	#define GetKeyState			GetKeyState__USE_VCR_MODE
+#endif
 
 
 	#if defined( CreateThread )
 		#undef CreateThread
 	#endif
-	#define CreateThread		CreateThread__USE_VCR_MODE
+	#define CreateThread		use__ThreadTools__for_thread_functions
 
 	#if defined( WaitForSingleObject )
 		#undef WaitForSingleObject
 	#endif
-	#define WaitForSingleObject	WaitForSingleObject__USE_VCR_MODE
+	#define WaitForSingleObject	use__ThreadTools__for_thread_functions
 
 	#if defined( EnterCriticalSection )
 		#undef EnterCriticalSection
 	#endif
-	#define EnterCriticalSection EnterCriticalSection__USE_VCR_MODE
+	#define EnterCriticalSection use__ThreadTools__for_thread_functions
 
 #endif
 

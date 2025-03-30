@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -36,7 +36,12 @@
 #pragma once
 #endif
 
-#ifdef _LINUX
+// TODO: move interface.cpp into tier0 library.
+// Need to include platform.h in case _PS3 and other tokens are not yet defined
+#include "tier0/platform.h"
+
+#if defined( POSIX ) && !defined( _PS3 )
+
 #include <dlfcn.h> // dlopen,dlclose, et al
 #include <unistd.h>
 
@@ -46,10 +51,7 @@
 #undef _snprintf
 #endif
 #define _snprintf snprintf
-#endif
-
-// TODO: move interface.cpp into tier0 library.
-#include "tier0/platform.h"
+#endif // POSIX && !_PS3
 
 // All interfaces derive from this.
 class IBaseInterface
@@ -79,7 +81,6 @@ public:
 	const char				*m_pName;
 
 	InterfaceReg			*m_pNext; // For the global list.
-	static InterfaceReg		*s_pInterfaceRegs;
 };
 
 // Use this to expose an interface that can have multiple instances.
@@ -120,20 +121,17 @@ public:
 
 // Use this to expose a singleton interface with a global variable you've created.
 #if !defined(_STATIC_LINKED) || !defined(_SUBSYSTEM)
-#define EXPOSE_SINGLE_INTERFACE_GLOBALVAR_WITH_NAMESPACE(className, interfaceNamespace, interfaceName, versionName, globalVarName) \
-	static void* __Create##className##interfaceName##_interface() {return static_cast<interfaceNamespace interfaceName *>( &globalVarName );} \
+#define EXPOSE_SINGLE_INTERFACE_GLOBALVAR(className, interfaceName, versionName, globalVarName) \
+	static void* __Create##className##interfaceName##_interface() {return static_cast<interfaceName *>( &globalVarName );} \
 	static InterfaceReg __g_Create##className##interfaceName##_reg(__Create##className##interfaceName##_interface, versionName);
 #else
-#define EXPOSE_SINGLE_INTERFACE_GLOBALVAR_WITH_NAMESPACE(className, interfaceNamespace, interfaceName, versionName, globalVarName) \
+#define EXPOSE_SINGLE_INTERFACE_GLOBALVAR(className, interfaceName, versionName, globalVarName) \
 	namespace _SUBSYSTEM \
 	{ \
-		static void* __Create##className##interfaceName##_interface() {return static_cast<interfaceNamespace interfaceName *>( &globalVarName );} \
+		static void* __Create##className##interfaceName##_interface() {return static_cast<interfaceName *>( &globalVarName );} \
 		static InterfaceReg __g_Create##className##interfaceName##_reg(__Create##className##interfaceName##_interface, versionName); \
 	}
 #endif
-
-#define EXPOSE_SINGLE_INTERFACE_GLOBALVAR(className, interfaceName, versionName, globalVarName) \
-	EXPOSE_SINGLE_INTERFACE_GLOBALVAR_WITH_NAMESPACE(className, , interfaceName, versionName, globalVarName)
 
 // Use this to expose a singleton interface. This creates the global variable for you automatically.
 #if !defined(_STATIC_LINKED) || !defined(_SUBSYSTEM)
@@ -177,19 +175,16 @@ extern CreateInterfaceFn	Sys_GetFactory( CSysModule *pModule );
 extern CreateInterfaceFn	Sys_GetFactory( const char *pModuleName );
 extern CreateInterfaceFn	Sys_GetFactoryThis( void );
 
-enum Sys_Flags
-{
-    SYS_NOFLAGS = 0x00,
-    SYS_NOLOAD = 0x01   // no loading, no ref-counting, only returns handle if lib is loaded. 
-};
-
 //-----------------------------------------------------------------------------
 // Load & Unload should be called in exactly one place for each module
 // The factory for that module should be passed on to dependent components for
 // proper versioning.
 //-----------------------------------------------------------------------------
-extern CSysModule			*Sys_LoadModule( const char *pModuleName, Sys_Flags flags = SYS_NOFLAGS );
+extern CSysModule			*Sys_LoadModule( const char *pModuleName );
 extern void					Sys_UnloadModule( CSysModule *pModule );
+
+// Determines if current process is running with any debug modules
+extern bool					Sys_RunningWithDebugModules();
 
 // This is a helper function to load a module, get its factory, and get a specific interface.
 // You are expected to free all of these things.
@@ -223,6 +218,7 @@ private:
 	CSysModule	*m_hModule;
 	bool		m_bLoadAttempted;
 };
+
 
 #endif
 

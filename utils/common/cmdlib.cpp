@@ -46,18 +46,18 @@
 int myargc;
 char **myargv;
 
-char		com_token[1024];
+int newdirs = 0;
 
-qboolean		archive;
-char			archivedir[1024];
+char		com_token[ 1024 ];
 
-FileHandle_t g_pLogFile = 0;
+qboolean	archive;
+char		archivedir[ 1024 ];
+
+
 
 CUtlLinkedList<CleanupFn, unsigned short> g_CleanupFunctions;
-CUtlLinkedList<SpewHookFn, unsigned short> g_ExtraSpewHooks;
 
 bool g_bStopOnExit = false;
-void (*g_ExtraSpewHook)(const char*) = NULL;
 
 #if defined( _WIN32 ) || defined( WIN32 )
 
@@ -65,7 +65,9 @@ void CmdLib_FPrintf( FileHandle_t hFile, const char *pFormat, ... )
 {
 	static CUtlVector<char> buf;
 	if ( buf.Count() == 0 )
+	{
 		buf.SetCount( 1024 );
+	}
 
 	va_list marker;
 	va_start( marker, pFormat );
@@ -155,18 +157,26 @@ static void GetInitialColors( )
 	// Get the old background attributes.
 	CONSOLE_SCREEN_BUFFER_INFO oldInfo;
 	GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &oldInfo );
-	g_InitialColor = g_LastColor = oldInfo.wAttributes & (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
-	g_BackgroundFlags = oldInfo.wAttributes & (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE|BACKGROUND_INTENSITY);
+	g_InitialColor = g_LastColor = oldInfo.wAttributes & ( FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY );
+	g_BackgroundFlags = oldInfo.wAttributes & ( BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE|BACKGROUND_INTENSITY );
 
 	g_BadColor = 0;
 	if (g_BackgroundFlags & BACKGROUND_RED)
+	{
 		g_BadColor |= FOREGROUND_RED;
+	}
 	if (g_BackgroundFlags & BACKGROUND_GREEN)
+	{
 		g_BadColor |= FOREGROUND_GREEN;
+	}
 	if (g_BackgroundFlags & BACKGROUND_BLUE)
+	{
 		g_BadColor |= FOREGROUND_BLUE;
+	}
 	if (g_BackgroundFlags & BACKGROUND_INTENSITY)
+	{
 		g_BadColor |= FOREGROUND_INTENSITY;
+	}
 #endif
 }
 
@@ -176,14 +186,28 @@ WORD SetConsoleTextColor( int red, int green, int blue, int intensity )
 #if !defined( _X360 )
 	
 	g_LastColor = 0;
-	if( red )	g_LastColor |= FOREGROUND_RED;
-	if( green ) g_LastColor |= FOREGROUND_GREEN;
-	if( blue )  g_LastColor |= FOREGROUND_BLUE;
-	if( intensity ) g_LastColor |= FOREGROUND_INTENSITY;
+	if( red )
+	{
+		g_LastColor |= FOREGROUND_RED;
+	}
+	if( green )
+	{
+		g_LastColor |= FOREGROUND_GREEN;
+	}
+	if( blue )
+	{
+		g_LastColor |= FOREGROUND_BLUE;
+	}
+	if( intensity )
+	{
+		g_LastColor |= FOREGROUND_INTENSITY;
+	}
 
 	// Just use the initial color if there's a match...
 	if (g_LastColor == g_BadColor)
+	{
 		g_LastColor = g_InitialColor;
+	}
 
 	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), g_LastColor | g_BackgroundFlags );
 #endif
@@ -214,134 +238,139 @@ void Error( char const *pMsg, ... )
 
 #else
 
-CRITICAL_SECTION g_SpewCS;
-bool g_bSpewCSInitted = false;
 bool g_bSuppressPrintfOutput = false;
 
-SpewRetval_t CmdLib_SpewOutputFunc( SpewType_t type, char const *pMsg )
+void CCmdLibStandardLoggingListener::Log( const LoggingContext_t *pContext, const tchar *pMessage )
 {
-	// Hopefully two threads won't call this simultaneously right at the start!
-	if ( !g_bSpewCSInitted )
+	if ( ( pContext->m_Flags & LCF_DO_NOT_ECHO ) != 0 )
 	{
-		InitializeCriticalSection( &g_SpewCS );
-		g_bSpewCSInitted = true;
+		return;
 	}
 
-	WORD old;
-	SpewRetval_t retVal;
-	
-	EnterCriticalSection( &g_SpewCS );
+	WORD oldColor;
+	Color spewColor = pContext->m_Color;
+	if ( spewColor == UNSPECIFIED_LOGGING_COLOR )
 	{
-		if (( type == SPEW_MESSAGE ) || (type == SPEW_LOG ))
+		switch ( pContext->m_Severity )
 		{
-			Color c = *GetSpewOutputColor();
-			if ( c.r() != 255 || c.g() != 255 || c.b() != 255 )
-			{
-				// custom color
-				old = SetConsoleTextColor( c.r(), c.g(), c.b(), c.a() );
-			}
-			else
-			{
-				old = SetConsoleTextColor( 1, 1, 1, 0 );
-			}
-			retVal = SPEW_CONTINUE;
-		}
-		else if( type == SPEW_WARNING )
-		{
-			old = SetConsoleTextColor( 1, 1, 0, 1 );
-			retVal = SPEW_CONTINUE;
-		}
-		else if( type == SPEW_ASSERT )
-		{
-			old = SetConsoleTextColor( 1, 0, 0, 1 );
-			retVal = SPEW_DEBUGGER;
+		case LS_MESSAGE:
+			spewColor = Color( 255, 255, 255, 0 );
+			break;
 
+		case LS_WARNING:
+			spewColor = Color( 255, 255, 0, 255	);
+			break;
+
+		case LS_ERROR:
+		case LS_ASSERT:
+			spewColor = Color( 255, 0, 0, 255	);
+			break;
+		}
+	}
+	oldColor = SetConsoleTextColor( spewColor.r(), spewColor.g(), spewColor.b(), spewColor.a() );
+	
 #ifdef MPI
-			// VMPI workers don't want to bring up dialogs and suchlike.
-			// They need to have a special function installed to handle
-			// the exceptions and write the minidumps.
-			// Install the function after VMPI_Init with a call:
-			// SetupToolsMinidumpHandler( VMPI_ExceptionFilter );
-			if ( g_bUseMPI && !g_bMPIMaster && !Plat_IsInDebugSession() )
-			{
-				// Generating an exception and letting the
-				// installed handler handle it
-				::RaiseException
-					(
-					0,							// dwExceptionCode
-					EXCEPTION_NONCONTINUABLE,	// dwExceptionFlags
-					0,							// nNumberOfArguments,
-					NULL						// const ULONG_PTR* lpArguments
-					);
+	if ( pContext->m_Severity == LS_ASSERT )
+	{
+		// VMPI workers don't want to bring up dialogs and suchlike.
+		// They need to have a special function installed to handle
+		// the exceptions and write the minidumps.
+		// Install the function after VMPI_Init with a call:
+		// SetupToolsMinidumpHandler( VMPI_ExceptionFilter );
+		if ( g_bUseMPI && !g_bMPIMaster && !Plat_IsInDebugSession() )
+		{
+			// Generating an exception and letting the
+			// installed handler handle it
+			::RaiseException
+				(
+				0,							// dwExceptionCode
+				EXCEPTION_NONCONTINUABLE,	// dwExceptionFlags
+				0,							// nNumberOfArguments,
+				NULL						// const ULONG_PTR* lpArguments
+				);
 
-					// Never get here (non-continuable exception)
-				
-				VMPI_HandleCrash( pMsg, NULL, true );
-				exit( 0 );
-			}
+			// Never get here (non-continuable exception)
+
+			VMPI_HandleCrash( pMessage, 0, NULL, true );
+			exit( 0 );
+		}
+	}
 #endif
-		}
-		else if( type == SPEW_ERROR )
-		{
-			old = SetConsoleTextColor( 1, 0, 0, 1 );
-			retVal = SPEW_ABORT; // doesn't matter.. we exit below so we can return an errorlevel (which dbg.dll doesn't do).
-		}
-		else
-		{
-			old = SetConsoleTextColor( 1, 1, 1, 1 );
-			retVal = SPEW_CONTINUE;
-		}
 
-		if ( !g_bSuppressPrintfOutput || type == SPEW_ERROR )
-			printf( "%s", pMsg );
+	if ( !g_bSuppressPrintfOutput || pContext->m_Severity == LS_ERROR )
+	{
+		printf( "%s", pMessage );
+	}
 
-		OutputDebugString( pMsg );
-		
-		if ( type == SPEW_ERROR )
+	OutputDebugString( pMessage );
+
+	if ( pContext->m_Severity == LS_ERROR )
+	{
+		if ( !g_bSuppressPrintfOutput )
 		{
 			printf( "\n" );
-			OutputDebugString( "\n" );
 		}
-
-		if( g_pLogFile )
-		{
-			CmdLib_FPrintf( g_pLogFile, "%s", pMsg );
-			g_pFileSystem->Flush( g_pLogFile );
-		}
-
-		// Dispatch to other spew hooks.
-		FOR_EACH_LL( g_ExtraSpewHooks, i )
-			g_ExtraSpewHooks[i]( pMsg );
-
-		RestoreConsoleTextColor( old );
-	}
-	LeaveCriticalSection( &g_SpewCS );
-
-	if ( type == SPEW_ERROR )
-	{
-		CmdLib_Exit( 1 );
+		OutputDebugString( "\n" );
 	}
 
-	return retVal;
+	RestoreConsoleTextColor( oldColor );
 }
 
+CCmdLibFileLoggingListener::CCmdLibFileLoggingListener() : m_pLogFile( FILESYSTEM_INVALID_HANDLE ) { }
+
+void CCmdLibFileLoggingListener::Log( const LoggingContext_t *pContext, const tchar *pMessage )
+{
+	if( m_pLogFile != FILESYSTEM_INVALID_HANDLE && ( pContext->m_Flags & LCF_CONSOLE_ONLY ) == 0 )
+	{
+		CmdLib_FPrintf( m_pLogFile, "%s", pMessage );
+		g_pFileSystem->Flush( m_pLogFile );
+	}
+}
+
+void CCmdLibFileLoggingListener::Open( char const *pFilename )
+{
+	Assert( m_pLogFile == FILESYSTEM_INVALID_HANDLE );
+	m_pLogFile = g_pFileSystem->Open( pFilename, "a" );
+
+	Assert( m_pLogFile != FILESYSTEM_INVALID_HANDLE );
+	if ( !m_pLogFile )
+	{
+		Error( "Can't create LogFile:\"%s\"\n", pFilename );
+	}
+
+	CmdLib_FPrintf( m_pLogFile, "\n\n\n" );
+}
+
+
+void CCmdLibFileLoggingListener::Close()
+{
+	if ( g_pFileSystem && m_pLogFile != FILESYSTEM_INVALID_HANDLE )
+	{
+		g_pFileSystem->Close( m_pLogFile );
+		m_pLogFile = FILESYSTEM_INVALID_HANDLE;
+	}
+}
+
+CCmdLibStandardLoggingListener g_CmdLibOutputLoggingListener;
+CCmdLibFileLoggingListener g_CmdLibFileLoggingListener;
+bool g_bInstalledSpewFunction = false;
 
 void InstallSpewFunction()
 {
-	setvbuf( stdout, NULL, _IONBF, 0 );
-	setvbuf( stderr, NULL, _IONBF, 0 );
+	Assert( !g_bInstalledSpewFunction );
+	if ( !g_bInstalledSpewFunction )
+	{
+		g_bInstalledSpewFunction = true;
+		setvbuf( stdout, NULL, _IONBF, 0 );
+		setvbuf( stderr, NULL, _IONBF, 0 );
 
-	SpewOutputFunc( CmdLib_SpewOutputFunc );
-	GetInitialColors();
+		LoggingSystem_PushLoggingState();
+		LoggingSystem_RegisterLoggingListener( &g_CmdLibOutputLoggingListener );
+		LoggingSystem_RegisterLoggingListener( &g_CmdLibFileLoggingListener );
+		GetInitialColors();
+	}
 }
 
-
-void InstallExtraSpewHook( SpewHookFn pFn )
-{
-	g_ExtraSpewHooks.AddToTail( pFn );
-}
-
-#if 0
 void CmdLib_AllocError( unsigned long size )
 {
 	Error( "Error trying to allocate %d bytes.\n", size );
@@ -353,36 +382,13 @@ int CmdLib_NewHandler( size_t size )
 	CmdLib_AllocError( size );
 	return 0;
 }
-#endif
 
 void InstallAllocationFunctions()
 {
-//	_set_new_mode( 1 ); // so if malloc() fails, we exit.
-//	_set_new_handler( CmdLib_NewHandler );
+	_set_new_mode( 1 ); // so if malloc() fails, we exit.
+	_set_new_handler( CmdLib_NewHandler );
 }
-
-void SetSpewFunctionLogFile( char const *pFilename )
-{
-	Assert( (!g_pLogFile) );
-	g_pLogFile = g_pFileSystem->Open( pFilename, "a" );
-
-	Assert( g_pLogFile );
-	if (!g_pLogFile)
-		Error("Can't create LogFile:\"%s\"\n", pFilename );
-
-	CmdLib_FPrintf( g_pLogFile, "\n\n\n" );
-}
-
-
-void CloseSpewFunctionLogFile()
-{
-	if ( g_pFileSystem && g_pLogFile )
-	{
-		g_pFileSystem->Close( g_pLogFile );
-		g_pLogFile = FILESYSTEM_INVALID_HANDLE;
-	}
-}
-
+#endif
 
 void CmdLib_AtCleanup( CleanupFn pFn )
 {
@@ -392,12 +398,19 @@ void CmdLib_AtCleanup( CleanupFn pFn )
 
 void CmdLib_Cleanup()
 {
-	CloseSpewFunctionLogFile();
+	if ( g_bInstalledSpewFunction )
+	{
+		LoggingSystem_PopLoggingState();
+	}
+
+	g_CmdLibFileLoggingListener.Close();
 
 	CmdLib_TermFileSystem();
 
 	FOR_EACH_LL( g_CleanupFunctions, i )
-		g_CleanupFunctions[i]();
+	{
+		g_CleanupFunctions[ i ]();
+	}
 
 #if defined( MPI )
 	// Unfortunately, when you call exit(), even if you have things registered with atexit(),
@@ -409,14 +422,6 @@ void CmdLib_Cleanup()
 }
 
 
-void CmdLib_Exit( int exitCode )
-{
-	TerminateProcess( GetCurrentProcess(), 1 );
-}	
-
-
-
-#endif
 
 #endif
 
@@ -432,40 +437,40 @@ Mimic unix command line expansion
 */
 #define	MAX_EX_ARGC	1024
 int		ex_argc;
-char	*ex_argv[MAX_EX_ARGC];
+char	*ex_argv[ MAX_EX_ARGC ];
 #if defined( _WIN32 ) && !defined( _X360 )
 #include "io.h"
-void ExpandWildcards (int *argc, char ***argv)
+void ExpandWildcards( int *argc, char ***argv )
 {
 	struct _finddata_t fileinfo;
 	int		handle;
 	int		i;
-	char	filename[1024];
-	char	filebase[1024];
+	char	filename[ 1024 ];
+	char	filebase[ 1024 ];
 	char	*path;
 
 	ex_argc = 0;
-	for (i=0 ; i<*argc ; i++)
+	for ( i = 0; i < *argc; i++ )
 	{
 		path = (*argv)[i];
 		if ( path[0] == '-'
-			|| ( !strstr(path, "*") && !strstr(path, "?") ) )
+			|| ( !strstr( path, "*" ) && !strstr( path, "?" ) ) )
 		{
-			ex_argv[ex_argc++] = path;
+			ex_argv[ ex_argc++ ] = path;
 			continue;
 		}
 
-		handle = _findfirst (path, &fileinfo);
-		if (handle == -1)
+		handle = _findfirst( path, &fileinfo );
+		if ( handle == -1 )
 			return;
 
-		Q_ExtractFilePath (path, filebase, sizeof( filebase ));
+		Q_ExtractFilePath( path, filebase, sizeof( filebase ) );
 
 		do
 		{
-			sprintf (filename, "%s%s", filebase, fileinfo.name);
-			ex_argv[ex_argc++] = copystring (filename);
-		} while (_findnext( handle, &fileinfo ) != -1);
+			V_sprintf_safe( filename, "%s%s", filebase, fileinfo.name );
+			ex_argv[ ex_argc++ ] = copystring( filename );
+		} while ( _findnext( handle, &fileinfo ) != -1 );
 
 		_findclose (handle);
 	}
@@ -474,7 +479,7 @@ void ExpandWildcards (int *argc, char ***argv)
 	*argv = ex_argv;
 }
 #else
-void ExpandWildcards (int *argc, char ***argv)
+void ExpandWildcards( int *argc, char ***argv )
 {
 }
 #endif
@@ -482,16 +487,16 @@ void ExpandWildcards (int *argc, char ***argv)
 
 // only printf if in verbose mode
 qboolean verbose = false;
-void qprintf (const char *format, ...)
+void qprintf( char *format, ... )
 {
-	if (!verbose)
+	if ( !verbose )
 		return;
 
 	va_list argptr;
-	va_start (argptr,format);
+	va_start( argptr, format );
 
-	char str[2048];
-	Q_vsnprintf( str, sizeof(str), format, argptr );
+	char str[ 2048 ];
+	V_vsprintf_safe( str, format, argptr );
 
 #if defined( CMDLIB_NODBGLIB )
 	printf( "%s", str );
@@ -499,7 +504,7 @@ void qprintf (const char *format, ...)
 	Msg( "%s", str );
 #endif
 
-	va_end (argptr);
+	va_end( argptr );
 }
 
 
@@ -513,33 +518,35 @@ static void CmdLib_getwd( char *out, int outSize )
 	_getcwd( out, outSize );
 	Q_strncat( out, "\\", outSize, COPY_ALL_CHARACTERS );
 #else
-	getcwd(out, outSize);
-	strcat(out, "/");
+	getwd( out );
+	strcat( out, "/" );
 #endif
 	Q_FixSlashes( out );
 }
 
-char *ExpandArg (char *path)
+char *ExpandArg( char *path )
 {
-	static char full[1024];
+	static char full[ 1024 ];
 
-	if (path[0] != '/' && path[0] != '\\' && path[1] != ':')
+	if ( path[ 0 ] != '/' && path[ 0 ] != '\\' && path[ 1 ] != ':' )
 	{
-		CmdLib_getwd (full, sizeof( full ));
-		Q_strncat (full, path, sizeof( full ), COPY_ALL_CHARACTERS);
+		CmdLib_getwd ( full, sizeof( full ) );
+		V_strcat_safe( full, path, COPY_ALL_CHARACTERS );
 	}
 	else
-		Q_strncpy (full, path, sizeof( full ));
+	{
+		V_strcpy_safe( full, path );
+	}
 	return full;
 }
 
 
 char *ExpandPath (char *path)
 {
-	static char full[1024];
-	if (path[0] == '/' || path[0] == '\\' || path[1] == ':')
+	static char full[ 1024 ];
+	if ( path[ 0 ] == '/' || path[ 0 ] == '\\' || path[ 1 ] == ':')
 		return path;
-	sprintf (full, "%s%s", qdir, path);
+	V_sprintf_safe( full, "%s%s", qdir, path );
 	return full;
 }
 
@@ -548,8 +555,8 @@ char *ExpandPath (char *path)
 char *copystring(const char *s)
 {
 	char	*b;
-	b = (char *)malloc(strlen(s)+1);
-	strcpy (b, s);
+	b = ( char * )malloc( strlen( s ) + 1 );
+	V_strcpy( b, s );
 	return b;
 }
 
@@ -566,35 +573,43 @@ void GetHourMinuteSecondsString( int nInputSeconds, char *pOut, int outLen )
 	int nHours = nMinutes / 60;
 	nMinutes -= nHours * 60;
 
-	const char *extra[2] = { "", "s" };
+	char *extra[ 2 ] = { "", "s" };
 	
 	if ( nHours > 0 )
-		Q_snprintf( pOut, outLen, "%d hour%s, %d minute%s, %d second%s", nHours, extra[nHours != 1], nMinutes, extra[nMinutes != 1], nSeconds, extra[nSeconds != 1] );
+	{
+		Q_snprintf( pOut, outLen, "%d hour%s, %d minute%s, %d second%s", nHours, extra[ nHours != 1 ], nMinutes, extra[ nMinutes != 1 ], nSeconds, extra[ nSeconds != 1 ] );
+	}
 	else if ( nMinutes > 0 )
-		Q_snprintf( pOut, outLen, "%d minute%s, %d second%s", nMinutes, extra[nMinutes != 1], nSeconds, extra[nSeconds != 1] );
+	{
+		Q_snprintf( pOut, outLen, "%d minute%s, %d second%s", nMinutes, extra[ nMinutes != 1 ], nSeconds, extra[ nSeconds != 1 ] );
+	}
 	else
-		Q_snprintf( pOut, outLen, "%d second%s", nSeconds, extra[nSeconds != 1] );
+	{
+		Q_snprintf( pOut, outLen, "%d second%s", nSeconds, extra[ nSeconds != 1 ] );
+	}
 }
 
 
-void Q_mkdir (char *path)
+void Q_mkdir( char *path )
 {
 #if defined( _WIN32 ) || defined( WIN32 )
-	if (_mkdir (path) != -1)
+	if ( _mkdir( path ) != -1)
 		return;
 #else
-	if (mkdir (path, 0777) != -1)
+	if ( mkdir( path, 0777 ) != -1)
 		return;
 #endif
 //	if (errno != EEXIST)
-	Error ("mkdir failed %s\n", path );
+	Error( "mkdir failed %s\n", path );
 }
 
 void CmdLib_InitFileSystem( const char *pFilename, int maxMemoryUsage )
 {
 	FileSystem_Init( pFilename, maxMemoryUsage );
 	if ( !g_pFileSystem )
+	{
 		Error( "CmdLib_InitFileSystem failed." );
+	}
 }
 
 void CmdLib_TermFileSystem()
@@ -615,11 +630,11 @@ FileTime
 returns -1 if not present
 ============
 */
-int	FileTime (char *path)
+int	FileTime( char *path )
 {
 	struct	stat	buf;
 	
-	if (stat (path,&buf) == -1)
+	if ( stat( path, &buf ) == -1 )
 		return -1;
 	
 	return buf.st_mtime;
@@ -634,9 +649,9 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char *COM_Parse (char *data)
+char *COM_Parse( char *data )
 {
-	return (char*)ParseFile( data, com_token, NULL );
+	return ( char* )ParseFile( data, com_token, sizeof( com_token ), NULL );
 }
 
 
@@ -657,13 +672,13 @@ Checks for the given parameter in the program's command line arguments
 Returns the argument number (1 to argc-1) or 0 if not present
 =================
 */
-int CheckParm (char *check)
+int CheckParm( char *check )
 {
-	int             i;
+	int i;
 
-	for (i = 1;i<myargc;i++)
+	for ( i = 1; i < myargc; i++ )
 	{
-		if ( !Q_strcasecmp(check, myargv[i]) )
+		if ( !Q_strcasecmp( check, myargv[ i ] ) )
 			return i;
 	}
 
@@ -677,37 +692,37 @@ int CheckParm (char *check)
 Q_filelength
 ================
 */
-int Q_filelength (FileHandle_t f)
+int Q_filelength( FileHandle_t f )
 {
 	return g_pFileSystem->Size( f );
 }
 
 
-FileHandle_t SafeOpenWrite ( const char *filename )
+FileHandle_t SafeOpenWrite( const char *filename )
 {
-	FileHandle_t f = g_pFileSystem->Open(filename, "wb");
+	FileHandle_t f = g_pFileSystem->Open( filename, "wb" );
 
-	if (!f)
+	if ( !f )
 	{
-		//Error ("Error opening %s: %s",filename,strerror(errno));
+		//Error( "Error opening %s: %s", filename, strerror( errno ) );
 		// BUGBUG: No way to get equivalent of errno from IFileSystem!
-		Error ("Error opening %s! (Check for write enable)\n",filename);
+		Error( "Error opening %s! (Check for write enable)\n", filename );
 	}
 
 	return f;
 }
 
-#define MAX_CMDLIB_BASE_PATHS 10
-static char g_pBasePaths[MAX_CMDLIB_BASE_PATHS][MAX_PATH];
+#define MAX_CMDLIB_BASE_PATHS 20
+static char g_pBasePaths[ MAX_CMDLIB_BASE_PATHS ][ MAX_PATH ];
 static int g_NumBasePaths = 0;
 
-void CmdLib_AddBasePath( const char *pPath )
+void CmdLib_AddBasePath( const char *pPath )			 
 {
-//	printf( "CmdLib_AddBasePath( \"%s\" )\n", pPath );
+	//printf( "CmdLib_AddBasePath( \"%s\" )\n", pPath );
 	if( g_NumBasePaths < MAX_CMDLIB_BASE_PATHS )
 	{
-		Q_strncpy( g_pBasePaths[g_NumBasePaths], pPath, MAX_PATH );
-		Q_FixSlashes( g_pBasePaths[g_NumBasePaths] );
+		V_strcpy_safe( g_pBasePaths[ g_NumBasePaths ], pPath );
+		Q_FixSlashes( g_pBasePaths[ g_NumBasePaths ] );
 		g_NumBasePaths++;
 	}
 	else
@@ -716,19 +731,73 @@ void CmdLib_AddBasePath( const char *pPath )
 	}
 }
 
+
+void CmdLib_AddNewSearchPath( const char *pPath )
+{
+	static int g_nAdditionalDirectoryCount = 0;
+	static char s_addedRelativeDirs[ MAX_CMDLIB_BASE_PATHS ][ MAX_PATH ];
+   	static int s_originalNumBasePaths = 0;
+    static char s_originalBasePaths[ MAX_CMDLIB_BASE_PATHS ][ MAX_PATH ];
+
+	if ( g_nAdditionalDirectoryCount == 0 ) // first call: 
+	{
+		// remember all original paths
+	   s_originalNumBasePaths = g_NumBasePaths;
+	   for ( int nOriginalBasePath = 0; nOriginalBasePath < s_originalNumBasePaths; nOriginalBasePath++ )
+	   {
+			V_strcpy_safe( s_originalBasePaths[nOriginalBasePath], g_pBasePaths[nOriginalBasePath] );
+	   }
+	}
+    
+	if( g_nAdditionalDirectoryCount < MAX_CMDLIB_BASE_PATHS )
+	{
+		V_strcpy_safe( s_addedRelativeDirs[g_nAdditionalDirectoryCount], pPath );
+		Q_FixSlashes( s_addedRelativeDirs[g_nAdditionalDirectoryCount] );
+		g_nAdditionalDirectoryCount++;
+	}
+	else
+	{
+		Assert( 0 );
+	}
+	
+	//update the original base paths with the new number
+	// we'll produce a cross-product of the set of original paths and the new relative paths
+	g_NumBasePaths = s_originalNumBasePaths + ( s_originalNumBasePaths * g_nAdditionalDirectoryCount );
+	if ( g_NumBasePaths > MAX_CMDLIB_BASE_PATHS )
+	{
+		Error( "You have too many search paths, let SteveK know about this\n");
+	}
+
+	//make an array of all the new search directories and copy it back into g_pBasePaths
+	int nGeneratedPaths = 0;
+	for ( int nOriginalBasePath = 0; nOriginalBasePath <  s_originalNumBasePaths; nOriginalBasePath++ )
+	{
+		for ( int nAdditionalDir = 0; nAdditionalDir < g_nAdditionalDirectoryCount; nAdditionalDir++ )
+		{
+			//add in the new search dirs here
+			V_strcpy_safe( g_pBasePaths[ nGeneratedPaths ], s_originalBasePaths[ nOriginalBasePath ] ); 
+			V_strcat_safe( g_pBasePaths[ nGeneratedPaths ], s_addedRelativeDirs[ nAdditionalDir ], sizeof( s_addedRelativeDirs[ nAdditionalDir ] ) );
+			nGeneratedPaths++;
+		}
+		//we still need the original base path, but insert it after the newly added ones
+		V_strcpy_safe( g_pBasePaths[ nGeneratedPaths ], s_originalBasePaths[ nOriginalBasePath ] );
+		nGeneratedPaths++;
+	}
+}
+
+
 bool CmdLib_HasBasePath( const char *pFileName_, int &pathLength )
 {
-	char *pFileName = ( char * )_alloca( strlen( pFileName_ ) + 1 );
-	strcpy( pFileName, pFileName_ );
+	char *pFileName = ( char * )stackalloc( strlen( pFileName_ ) + 1 );
+	V_strcpy( pFileName, pFileName_ );
 	Q_FixSlashes( pFileName );
 	pathLength = 0;
-	int i;
-	for( i = 0; i < g_NumBasePaths; i++ )
+	for( int i = 0; i < g_NumBasePaths; i++ )
 	{
 		// see if we can rip the base off of the filename.
-		if( Q_strncasecmp( g_pBasePaths[i], pFileName, strlen( g_pBasePaths[i] ) ) == 0 )
+		if( Q_strncasecmp( g_pBasePaths[ i ], pFileName, Q_strlen( g_pBasePaths[ i ] ) ) == 0 )
 		{
-			pathLength = strlen( g_pBasePaths[i] );
+			pathLength = strlen( g_pBasePaths[ i ] );
 			return true;
 		}
 	}
@@ -743,36 +812,8 @@ int CmdLib_GetNumBasePaths( void )
 const char *CmdLib_GetBasePath( int i )
 {
 	Assert( i >= 0 && i < g_NumBasePaths );
-	return g_pBasePaths[i];
+	return g_pBasePaths[ i ];
 }
-
-
-//-----------------------------------------------------------------------------
-// Like ExpandPath but expands the path for each base path like SafeOpenRead
-//-----------------------------------------------------------------------------
-int CmdLib_ExpandWithBasePaths( CUtlVector< CUtlString > &expandedPathList, const char *pszPath )
-{
-	int nPathLength = 0;
-
-	pszPath = ExpandPath( const_cast< char * >( pszPath ) );	// Kind of redundant but it's how CmdLib_HasBasePath needs things
-
-	if ( CmdLib_HasBasePath( pszPath, nPathLength ) )
-	{
-		pszPath = pszPath + nPathLength;
-		for ( int i = 0; i < CmdLib_GetNumBasePaths(); ++i )
-		{
-			CUtlString &expandedPath = expandedPathList[ expandedPathList.AddToTail( CmdLib_GetBasePath( i ) ) ];
-			expandedPath += pszPath;
-		}
-	}
-	else
-	{
-		expandedPathList.AddToTail( pszPath );
-	}
-
-	return expandedPathList.Count();
-}
-
 
 FileHandle_t SafeOpenRead( const char *filename )
 {
@@ -781,26 +822,28 @@ FileHandle_t SafeOpenRead( const char *filename )
 	if( CmdLib_HasBasePath( filename, pathLength ) )
 	{
 		filename = filename + pathLength;
-		int i;
-		for( i = 0; i < g_NumBasePaths; i++ )
+		char tmp[ MAX_PATH ];
+		for( int i = 0; i < g_NumBasePaths; i++ )
 		{
-			char tmp[MAX_PATH];
-			strcpy( tmp, g_pBasePaths[i] );
-			strcat( tmp, filename );
+			V_strcpy_safe( tmp, g_pBasePaths[ i ] );
+			V_strcat_safe( tmp, filename );
 			f = g_pFileSystem->Open( tmp, "rb" );
 			if( f )
 			{
 				return f;
 			}
 		}
-		Error ("Error opening %s\n",filename );
+	
+		Error( "Error opening %s\n",filename );
 		return f;
 	}
 	else
 	{
 		f = g_pFileSystem->Open( filename, "rb" );
 		if ( !f )
-			Error ("Error opening %s",filename );
+		{
+			Error( "Error opening %s",filename );
+		}
 
 		return f;
 	}
@@ -808,15 +851,19 @@ FileHandle_t SafeOpenRead( const char *filename )
 
 void SafeRead( FileHandle_t f, void *buffer, int count)
 {
-	if ( g_pFileSystem->Read (buffer, count, f) != (size_t)count)
-		Error ("File read failure");
+	if ( g_pFileSystem->Read( buffer, count, f ) != ( size_t )count )
+	{
+		Error( "File read failure" );
+	}
 }
 
 
 void SafeWrite ( FileHandle_t f, void *buffer, int count)
 {
-	if (g_pFileSystem->Write (buffer, count, f) != (size_t)count)
-		Error ("File write failure");
+	if ( g_pFileSystem->Write( buffer, count, f ) != ( size_t )count )
+	{
+		Error( "File write failure" );
+	}
 }
 
 
@@ -825,7 +872,7 @@ void SafeWrite ( FileHandle_t f, void *buffer, int count)
 FileExists
 ==============
 */
-qboolean	FileExists ( const char *filename )
+qboolean	FileExists( const char *filename )
 {
 	FileHandle_t hFile = g_pFileSystem->Open( filename, "rb" );
 	if ( hFile == FILESYSTEM_INVALID_HANDLE )
@@ -844,19 +891,19 @@ qboolean	FileExists ( const char *filename )
 LoadFile
 ==============
 */
-int    LoadFile ( const char *filename, void **bufferptr )
+int    LoadFile( const char *filename, void **bufferptr )
 {
 	int    length = 0;
 	void    *buffer;
 
-	FileHandle_t f = SafeOpenRead (filename);
+	FileHandle_t f = SafeOpenRead( filename );
 	if ( FILESYSTEM_INVALID_HANDLE != f )
 	{
-		length = Q_filelength (f);
-		buffer = malloc (length+1);
-		((char *)buffer)[length] = 0;
-		SafeRead (f, buffer, length);
-		g_pFileSystem->Close (f);
+		length = Q_filelength( f );
+		buffer = malloc( length + 1 );
+		( ( char * )buffer )[ length ] = 0;
+		SafeRead( f, buffer, length );
+		g_pFileSystem->Close( f );
 		*bufferptr = buffer;
 	}
 	else
@@ -873,11 +920,11 @@ int    LoadFile ( const char *filename, void **bufferptr )
 SaveFile
 ==============
 */
-void    SaveFile ( const char *filename, void *buffer, int count )
+void    SaveFile( const char *filename, void *buffer, int count )
 {
-	FileHandle_t f = SafeOpenWrite (filename);
-	SafeWrite (f, buffer, count);
-	g_pFileSystem->Close (f);
+	FileHandle_t f = SafeOpenWrite( filename );
+	SafeWrite( f, buffer, count );
+	g_pFileSystem->Close( f );
 }
 
 /*
@@ -895,7 +942,7 @@ Extract file parts
 ParseNum / ParseHex
 ==============
 */
-int ParseHex (char *hex)
+int ParseHex( char *hex )
 {
 	char    *str;
 	int    num;
@@ -903,17 +950,25 @@ int ParseHex (char *hex)
 	num = 0;
 	str = hex;
 
-	while (*str)
+	while ( *str )
 	{
 		num <<= 4;
-		if (*str >= '0' && *str <= '9')
-			num += *str-'0';
-		else if (*str >= 'a' && *str <= 'f')
-			num += 10 + *str-'a';
-		else if (*str >= 'A' && *str <= 'F')
-			num += 10 + *str-'A';
+		if ( *str >= '0' && *str <= '9' )
+		{
+			num += *str - '0';
+		}
+		else if ( *str >= 'a' && *str <= 'f' )
+		{
+			num += 10 + *str - 'a';
+		}
+		else if ( *str >= 'A' && *str <= 'F' )
+		{
+			num += 10 + *str - 'A';
+		}
 		else
-			Error ("Bad hex number: %s",hex);
+		{
+			Error( "Bad hex number: %s", hex );
+		}
 		str++;
 	}
 
@@ -921,13 +976,13 @@ int ParseHex (char *hex)
 }
 
 
-int ParseNum (char *str)
+int ParseNum( char *str )
 {
-	if (str[0] == '$')
-		return ParseHex (str+1);
-	if (str[0] == '0' && str[1] == 'x')
-		return ParseHex (str+2);
-	return atol (str);
+	if ( str[ 0 ] == '$' )
+		return ParseHex( str + 1 );
+	if ( str[ 0 ] == '0' && str[ 1 ] == 'x' )
+		return ParseHex( str + 2 );
+	return atol( str );
 }
 
 /*
@@ -935,21 +990,21 @@ int ParseNum (char *str)
 CreatePath
 ============
 */
-void CreatePath (char *path)
+void CreatePath( char *path )
 {
 	char	*ofs, c;
 
 	// strip the drive
-	if (path[1] == ':')
+	if ( path[ 1 ] == ':' )
 		path += 2;
 
-	for (ofs = path+1 ; *ofs ; ofs++)
+	for ( ofs = path + 1; *ofs; ofs++)
 	{
 		c = *ofs;
-		if (c == '/' || c == '\\')
+		if ( c == '/' || c == '\\' )
 		{	// create the directory
 			*ofs = 0;
-			Q_mkdir (path);
+			Q_mkdir( path );
 			*ofs = c;
 		}
 	}
@@ -964,7 +1019,7 @@ void SafeCreatePath( char *path )
 	char *ptr;
 
 	// skip past the drive path, but don't strip
-	if ( path[1] == ':' )
+	if ( path[ 1 ] == ':' )
 	{
 		ptr = strchr( path, '\\' );
 	}
@@ -974,7 +1029,7 @@ void SafeCreatePath( char *path )
 	}
 	while ( ptr )
 	{		
-		ptr = strchr( ptr+1, '\\' );
+		ptr = strchr( ptr + 1, '\\' );
 		if ( ptr )
 		{
 			*ptr = '\0';
@@ -992,15 +1047,15 @@ QCopyFile
   Used to archive source files
 ============
 */
-void QCopyFile (char *from, char *to)
+void QCopyFile( char *from, char *to )
 {
 	void	*buffer;
 	int		length;
 
-	length = LoadFile (from, &buffer);
-	CreatePath (to);
-	SaveFile (to, buffer, length);
-	free (buffer);
+	length = LoadFile( from, &buffer );
+	CreatePath( to );
+	SaveFile( to, buffer, length );
+	free( buffer );
 }
 
 

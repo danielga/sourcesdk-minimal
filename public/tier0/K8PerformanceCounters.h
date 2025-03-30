@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #ifndef K8PERFORMANCECOUNTERS_H
 #define K8PERFORMANCECOUNTERS_H
 
@@ -13,6 +13,14 @@
  *
  */
 
+#ifdef COMPILER_MSVC64
+extern "C"
+{
+   unsigned __int64 __readpmc(unsigned long);
+}
+
+#pragma intrinsic(__readpmc)
+#endif
 
 
 typedef union EVENT_MASK(NULL_MASK)
@@ -246,7 +254,7 @@ public:
         }
 #endif
 
-	}
+    }
 
 
 };

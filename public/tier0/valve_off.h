@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:	This turns off all Valve-specific #defines.  Because we sometimes
 //			call external include files from inside .cpp files, we need to
@@ -27,4 +27,7 @@
 #undef _expand
 #undef free
 
-#endif
+#endif // STEAM
+
+// Allow long to be used in 3rd-party headers
+#undef long

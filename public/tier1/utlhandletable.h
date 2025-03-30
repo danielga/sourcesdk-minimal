@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -65,7 +65,7 @@ private:
 			Assert( s < ( 1 << ( 31 - HandleBits ) ) );
 		}
 		unsigned int nIndex  : HandleBits;
-		unsigned int nSerial : 31 - HandleBits;
+		unsigned int nSerial : 32 - HandleBits;
 	};
 
 	struct EntryType_t

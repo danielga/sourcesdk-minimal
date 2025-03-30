@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,14 +13,14 @@
 #endif
 
 #include "tier1/interface.h"
-#include <vgui/VGUI.h>
+#include "tier1/keyvalues.h"
+#include <vgui/vgui.h>
 #include <vgui/KeyCode.h>
 
 #ifdef PlaySound
 #undef PlaySound
 #endif
 
-class KeyValues;
 
 namespace vgui
 {
@@ -127,8 +127,6 @@ public:
 };
 
 }
-
-#define VGUI_SYSTEM_INTERFACE_VERSION "VGUI_System010"
 
 
 #endif // ISYSTEM_H

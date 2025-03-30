@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: noise() primitives.
 //
@@ -6,7 +6,9 @@
 
 #include <math.h>
 #include "basetypes.h"
+#ifndef _PS3
 #include <memory.h>
+#endif
 #include "tier0/dbg.h"
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
@@ -130,11 +132,42 @@ float SparseConvolutionNoise(Vector const &pnt, float (*pNoiseShapeFunction)(flo
 									  pNoiseShapeFunction );
 			}
 #ifdef MEASURE_RANGE
-	fmin1=vmin(sum_out,fmin1);
-	fmax1=vmax(sum_out,fmax1);
+	fmin1=min(sum_out,fmin1);
+	fmax1=max(sum_out,fmax1);
 #endif
 	return RemapValClamped( sum_out, .544487f, 9.219176f, 0.0f, 1.0f );
 }
+
+
+float TileableSparseConvolutionNoise(Vector const &pnt, float (*pNoiseShapeFunction)(float) )
+{
+	// computer integer lattice point
+	int ix=LatticeCoord(pnt.x);
+	int iy=LatticeCoord(pnt.y);
+	int iz=LatticeCoord(pnt.z);
+
+	// compute offsets within unit cube
+	float xfrac=pnt.x-floor(pnt.x);
+	float yfrac=pnt.y-floor(pnt.y);
+	float zfrac=pnt.z-floor(pnt.z);
+
+	float sum_out=0.;
+
+	for(int ox=-1; ox<=1; ox++)
+		for(int oy=-1; oy<=1; oy++)
+			for(int oz=-1; oz<=1; oz++)
+			{
+				sum_out += CellNoise( ix+ox, iy+oy, iz+oz,
+									  xfrac-ox, yfrac-oy, zfrac-oz,
+									  pNoiseShapeFunction );
+			}
+#ifdef MEASURE_RANGE
+	fmin1=min(sum_out,fmin1);
+	fmax1=max(sum_out,fmax1);
+#endif
+	return RemapValClamped( sum_out, .544487, 9.219176, 0.0, 1.0 );
+}
+
 
 
 // Improved Perlin Noise

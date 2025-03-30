@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,6 +44,7 @@ fltx4 Pow_FixedPoint_Exponent_SIMD( const fltx4 & x, int exponent)
 
 
 
+#ifndef _PS3 // these aren't fast (or correct) on the PS3
 /*
  * (c) Ian Stephenson
  *
@@ -93,4 +94,7 @@ float FastPow10( float i )
 {
 	return FastPow2( i * 3.321928f );
 }
+#else
+#pragma message("TODO: revisit fast logs on all PPC hardware")
+#endif
 

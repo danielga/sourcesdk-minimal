@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,9 +10,9 @@
 #pragma once
 #endif
 
-#include "HelperInfo.h"
-#include "GameData.h"
-#include "GDClass.h"
-#include "InputOutput.h"
+#include "helperinfo.h"
+#include "gamedata.h"
+#include "gdclass.h"
+#include "inputoutput.h"
 
 #endif // FGDLIB_H

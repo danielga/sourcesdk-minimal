@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright � 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -13,22 +13,23 @@
 #pragma warning(disable: 4244)
 #endif
 
+
 #include "tier1/utldict.h"
-#include "vstdlib/random.h"
 #include "soundflags.h"
 #include "mathlib/compressed_vector.h"
 #include "appframework/iappsystem.h"
+#include "tier3/tier3.h"
 
 
-#define SOUNDEMITTERSYSTEM_INTERFACE_VERSION	"VSoundEmitter002"
+DECLARE_LOGGING_CHANNEL( LOG_SND_EMITTERSYSTEM );
 
 #define SOUNDGENDER_MACRO "$gender"
 #define SOUNDGENDER_MACRO_LENGTH 7		// Length of above including $
 
-typedef short HSOUNDSCRIPTHANDLE;
-#define SOUNDEMITTER_INVALID_HANDLE	(HSOUNDSCRIPTHANDLE)-1
+class KeyValues;
+typedef unsigned int HSOUNDSCRIPTHASH;
+#define SOUNDEMITTER_INVALID_HASH	(HSOUNDSCRIPTHASH)-1
 
-class IFileList;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -50,6 +51,19 @@ struct CSoundParameters
 		count		= 0;
 
 		delay_msec	= 0;
+
+		m_nSoundEntryVersion = 1;
+		m_hSoundScriptHash = SOUNDEMITTER_INVALID_HASH;
+		m_pOperatorsKV = NULL;
+		m_nRandomSeed = -1;
+
+		m_bHRTFFollowEntity = false;
+		m_bHRTFBilinear = false;
+
+		m_bIgnoreOcclusion = false;
+		m_bAlertSound = false;
+
+		m_bUISound = false;
 	}
 
 	int				channel;
@@ -62,6 +76,18 @@ struct CSoundParameters
 	int				count;
 	char 			soundname[ 128 ];
 	int				delay_msec;
+	HSOUNDSCRIPTHASH m_hSoundScriptHash;
+	int			    m_nSoundEntryVersion;
+	KeyValues		*m_pOperatorsKV;
+	int				m_nRandomSeed;
+
+	bool			m_bHRTFFollowEntity;
+	bool			m_bHRTFBilinear;
+	bool			m_bIgnoreOcclusion;
+	bool			m_bAlertSound;
+
+	//A UI sound will play reliably regardless of recipient filter
+	bool			m_bUISound;
 };
 
 // A bit of a hack, but these are just utility function which are implemented in the SouneParametersInternal.cpp file which all users of this lib also compile
@@ -108,7 +134,7 @@ struct sound_interval_t
 
 	interval_t &ToInterval( interval_t &dest ) const	{ dest.start = start; dest.range = range; return dest; }
 	void FromInterval( const interval_t &from )			{ start = from.start; range = from.range; }
-	float Random() const								{ return RandomFloat( start, start + range ); }
+	float Random() const								{ return RandomFloat( start, start+range ); }
 };
 
 
@@ -143,20 +169,35 @@ struct CSoundParametersInternal
 	const pitch_interval_t &GetPitch() const				{ return pitch; }
 	const soundlevel_interval_t &GetSoundLevel() const		{ return soundlevel; }
 	int			GetDelayMsec() const						{ return delay_msec; }
+	int			GetSoundEntryVersion() const				{ return m_nSoundEntryVersion; }
 	bool		OnlyPlayToOwner() const						{ return play_to_owner_only; }
 	bool		HadMissingWaveFiles() const					{ return had_missing_wave_files; }
 	bool		UsesGenderToken() const						{ return uses_gender_token; }
 	bool		ShouldPreload() const						{ return m_bShouldPreload; }
+	bool		ShouldAutoCache() const						{ return m_bShouldAutoCache; }
+	bool        HasCached() const	                        { return m_bHasCached; }
+	bool		HasHRTFFollowEntity() const					{ return m_bHRTFFollowEntity; }
+	bool		HasHRTFBilinear() const						{ return m_bHRTFBilinear; }
+	bool		HasIgnoreOcclusion() const					{ return m_bIgnoreOcclusion; }
+	bool		IsAlert() const								{ return m_bAlertSound; }
+
 
 	void		SetChannel( int newChannel )				{ channel = newChannel; }
-	void		SetVolume( float start, float range = 0.0 )	{ volume.start = start; volume.range = range; }
-	void		SetPitch( float start, float range = 0.0 )	{ pitch.start = start; pitch.range = range; }
-	void		SetSoundLevel( float start, float range = 0.0 )	{ soundlevel.start = start; soundlevel.range = range; }
+	void		SetVolume( float start, float range = 0.0 )	{ volume.start = ( uint8 )start; volume.range = ( uint8 )range; }
+	void		SetPitch( float start, float range = 0.0 )	{ pitch.start = ( uint8 )start; pitch.range = ( uint8 )range; }
+	void		SetSoundLevel( float start, float range = 0.0 )	{ soundlevel.start = ( uint16 )start; soundlevel.range = ( uint16 )range; }
 	void		SetDelayMsec( int delay )					{ delay_msec = delay; }
-	void		SetShouldPreload( bool bShouldPreload )		{ m_bShouldPreload = bShouldPreload;	}
+	void		SetSoundEntryVersion( int gameSoundVersion )	{ m_nSoundEntryVersion = gameSoundVersion; }
+	void		SetShouldPreload( bool bShouldPreload )		{ m_bShouldPreload = bShouldPreload; }
+	void		SetShouldAutoCache( bool bShouldAutoCache )	{ m_bShouldAutoCache = bShouldAutoCache; }
 	void		SetOnlyPlayToOwner( bool b )				{ play_to_owner_only = b; }
 	void		SetHadMissingWaveFiles( bool b )			{ had_missing_wave_files = b; }
 	void		SetUsesGenderToken( bool b )				{ uses_gender_token = b; }
+	void		SetCached( bool b )							{ m_bHasCached = b; }
+	void		SetHRTFFollowEntity( bool b )				{ m_bHRTFFollowEntity = b;  }
+	void		SetHRTFBilinear( bool b )					{ m_bHRTFBilinear = b; }
+	void		SetIgnoreOcclusion( bool b )				{ m_bIgnoreOcclusion = b; }
+	void		SetAlert( bool b )							{ m_bAlertSound = b; }
 
 	void		AddSoundName( const SoundFile &soundFile )	{ AddToTail( &m_pSoundNames, &m_nSoundNames, soundFile ); }
 	int			NumSoundNames() const						{ return m_nSoundNames; }
@@ -167,6 +208,10 @@ struct CSoundParametersInternal
 	int			NumConvertedNames() const					{ return m_nConvertedNames; }
 	SoundFile * GetConvertedNames()							{ return ( m_nConvertedNames == 1 ) ? (SoundFile *)&m_pConvertedNames : m_pConvertedNames; }
 	const SoundFile *GetConvertedNames() const				{ return ( m_nConvertedNames == 1 ) ? (SoundFile *)&m_pConvertedNames : m_pConvertedNames; }
+
+	// Sound Operator System: this should be optimized into something less heavy
+	KeyValues *GetOperatorsKV( void ) const					{ return m_pOperatorsKV; }
+	void SetOperatorsKV( KeyValues *src );
 
 private:
 	void operator=( const CSoundParametersInternal& src ); // disallow implicit copies
@@ -184,15 +229,24 @@ private:
 	pitch_interval_t		pitch;					// 22
 	uint16					channel;				// 24
 	uint16					delay_msec;				// 26
+	uint16					m_nSoundEntryVersion;     // 28
 	
-	bool			play_to_owner_only:1; // For weapon sounds...	// 27
+	bool			play_to_owner_only:1; // For weapon sounds...	// 29
 	// Internal use, for warning about missing .wav files
 	bool			had_missing_wave_files:1;
 	bool			uses_gender_token:1;
 	bool			m_bShouldPreload:1;
+	bool			m_bHasCached:1;
+	bool			m_bShouldAutoCache:1;
+	bool			m_bHRTFFollowEntity : 1;
+	bool			m_bHRTFBilinear : 1;
 
-	byte			reserved;						// 28
+	bool			m_bIgnoreOcclusion : 1;
+	bool			m_bAlertSound : 1;
 
+
+	KeyValues *				m_pGameData;			// 34
+	KeyValues *				m_pOperatorsKV;			// 38
 
 };
 #pragma pack()
@@ -204,9 +258,9 @@ private:
 abstract_class ISoundEmitterSystemBase : public IAppSystem
 {
 public:
-	// Init, shutdown called after we know what mod is running
-	virtual bool			ModInit() = 0;
-	virtual void			ModShutdown() = 0;
+	// Unused, left in the interface so I don't have to rebuild all
+	virtual void			Unused1() {}
+	virtual void			Unused2() {}
 
 	virtual int				GetSoundIndex( const char *pName ) const = 0;
 	virtual bool			IsValidIndex( int index ) = 0;
@@ -255,20 +309,21 @@ public:
 	//  .txt files that are read into the sound emitter system
 	virtual unsigned int	GetManifestFileTimeChecksum() = 0;
 
-	// Called from both client and server (single player) or just one (server only in dedicated server and client only if connected to a remote server)
-	// Called by LevelInitPreEntity to override sound scripts for the mod with level specific overrides based on custom mapnames, etc.
-	virtual void			AddSoundOverrides( char const *scriptfile, bool bPreload = false ) = 0;
+	virtual bool			GetParametersForSoundEx( const char *soundname, HSOUNDSCRIPTHASH& handle, CSoundParameters& params, gender_t gender, bool isbeingemitted = false ) = 0;
+	virtual soundlevel_t	LookupSoundLevelByHandle( char const *soundname, HSOUNDSCRIPTHASH& handle ) = 0;
+	virtual KeyValues		*GetOperatorKVByHandle( HSOUNDSCRIPTHASH& handle ) = 0;
 
-	// Called by either client or server in LevelShutdown to clear out custom overrides
-	virtual void			ClearSoundOverrides() = 0;
+	virtual char const		*GetSoundNameForHash( HSOUNDSCRIPTHASH hash ) const = 0; // Returns NULL if hash not found!!!
+	virtual int 			GetSoundIndexForHash( HSOUNDSCRIPTHASH hash ) const = 0;
+	virtual HSOUNDSCRIPTHASH HashSoundName( char const *pchSndName ) const = 0;
+	virtual bool			IsValidHash( HSOUNDSCRIPTHASH hash ) const = 0;
 
-	virtual bool			GetParametersForSoundEx( const char *soundname, HSOUNDSCRIPTHANDLE& handle, CSoundParameters& params, gender_t gender, bool isbeingemitted = false ) = 0;
-	virtual soundlevel_t	LookupSoundLevelByHandle( char const *soundname, HSOUNDSCRIPTHANDLE& handle ) = 0;
-
-	virtual void			ReloadSoundEntriesInList( IFileList *pFilesToReload ) = 0;
-
-	// Called by either client or server to force ModShutdown and ModInit
+	virtual void			DescribeSound( char const *soundname ) = 0;
+	// Flush and reload
 	virtual void			Flush() = 0;
+
+	virtual void			AddSoundsFromFile( const char *filename, bool bPreload, bool bAutoCache, bool bIsOverride = false ) = 0;
+
 };
 
 #ifdef _WIN32

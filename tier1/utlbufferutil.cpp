@@ -20,10 +20,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "tier1/utlbinaryblock.h"
 #include "tier1/utlstring.h"
 #include "tier1/strtools.h"
 #include "tier1/characterset.h"
+#include "tier1/utlsymbollarge.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -309,6 +309,7 @@ bool Unserialize( CUtlBuffer &buf, Quaternion &dest )
 	{
 		// FIXME: Print this in a way that we never lose precision
 		int nRetVal = buf.Scanf( "%f %f %f %f", &dest.x, &dest.y, &dest.z, &dest.w );
+		QuaternionNormalize( dest );
 		return (nRetVal == 4) && buf.IsValid();
 	}
 
@@ -316,6 +317,7 @@ bool Unserialize( CUtlBuffer &buf, Quaternion &dest )
 	dest.y = buf.GetFloat( );
 	dest.z = buf.GetFloat( );
 	dest.w = buf.GetFloat( );
+	QuaternionNormalize( dest );
 	return buf.IsValid();
 }
 
@@ -512,7 +514,7 @@ bool Unserialize( CUtlBuffer &buf, CUtlBinaryBlock &dest )
 		return buf.IsValid();
 	}
 
-	int nEndGet;
+	int nEndGet = 0;
 	int nByteCount = CountBinaryBytes( buf, &nEndGet );
 	if ( nByteCount < 0 )
 		return false;
@@ -551,10 +553,19 @@ bool Unserialize( CUtlBuffer &buf, CUtlString &dest )
 {
 	int nLen = buf.PeekDelimitedStringLength( s_pConv );
 	dest.SetLength( nLen - 1 );	// -1 because the length returned includes space for \0
-	buf.GetDelimitedString( s_pConv, dest.GetForModify(), nLen );
+	buf.GetDelimitedString( s_pConv, dest.Get(), nLen );
 	return buf.IsValid();
 }
 
 
+bool Serialize( CUtlBuffer &buf, const CUtlSymbolLarge &src )
+{
+	// Serialization of symbols is allowed, but it writes that string of the symbol,
+	// not the symbol index. This is done so that text serialization of symbols will write
+	// the actual string and so that functions which rely on text serialization to convert
+	// an attribute value to text will get the proper string for the symbol.
+	buf.PutDelimitedString( s_pConv, src.String() );
+	return buf.IsValid();
+}
 
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 #pragma once
 #endif
 
-#include <vgui/VGUI.h>
+#include <vgui/vgui.h>
 #include "tier1/interface.h"
 #include "tier1/utlvector.h"
 
@@ -20,7 +20,12 @@
 #undef SendMessage
 #endif
 
+//-----------------------------------------------------------------------------
+// Forward declarations
+//-----------------------------------------------------------------------------
 class KeyValues;
+struct DmxElementUnpackStructure_t;
+class CDmxElement;
 
 namespace vgui
 {
@@ -126,12 +131,16 @@ public:
 	virtual bool IsTopmostPopup( VPANEL vguiPanel) = 0;
 	virtual void SetTopmostPopup( VPANEL vguiPanel, bool state ) = 0;
 
-	// sibling pins
-	virtual void SetSiblingPin(VPANEL vguiPanel, VPANEL newSibling, byte iMyCornerToPin = 0, byte iSiblingCornerToPinTo = 0 ) = 0;
+	virtual void SetMessageContextId( VPANEL vguiPanel, int nContextId ) = 0;
+	virtual int GetMessageContextId( VPANEL vguiPanel ) = 0;
 
+	virtual const DmxElementUnpackStructure_t *GetUnpackStructure( VPANEL vguiPanel ) const = 0;
+	virtual void OnUnserialized( VPANEL vguiPanel, CDmxElement *pElement ) = 0;
+
+// sibling pins
+	virtual void SetSiblingPin(VPANEL vguiPanel, VPANEL newSibling, byte iMyCornerToPin = 0, byte iSiblingCornerToPinTo = 0 ) = 0;
 };
 
-#define VGUI_PANEL_INTERFACE_VERSION "VGUI_Panel009"
 
 } // namespace vgui
 

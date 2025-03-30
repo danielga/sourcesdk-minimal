@@ -1,49 +1,63 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright � 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
-//=====================================================================================//
+//===========================================================================//
 
 #include <ssemath.h>
 #include <lightdesc.h>
 #include "mathlib.h"
 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
+void LightDesc_t::RecalculateOneOverThetaDotMinusPhiDot()
+{
+	float flSpread = m_ThetaDot - m_PhiDot;
+	if ( flSpread > 1.0e-10f )
+	{
+		// note - this quantity is very sensitive to round off error. the sse
+		// reciprocal approximation won't cut it here.
+		m_OneOverThetaDotMinusPhiDot = 1.0f / flSpread;
+	}
+	else
+	{
+		// hard falloff instead of divide by zero
+		m_OneOverThetaDotMinusPhiDot = 1.0f;
+	}				
+}
+
 void LightDesc_t::RecalculateDerivedValues(void)
 {
 	m_Flags = LIGHTTYPE_OPTIMIZATIONFLAGS_DERIVED_VALUES_CALCED;
-	if (m_Attenuation0)
-		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION0;
-	if (m_Attenuation1)
-		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION1;
-	if (m_Attenuation2)
-		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION2;
-	
-	if (m_Type==MATERIAL_LIGHT_SPOT)
+	if ( m_Attenuation0 )
 	{
-		m_ThetaDot=(float)cos(m_Theta);
-		m_PhiDot=(float)cos(m_Phi);
-		float spread=m_ThetaDot-m_PhiDot;
-		if (spread>1.0e-10)
-		{
-			// note - this quantity is very sensitive to round off error. the sse
-			// reciprocal approximation won't cut it here.
-			OneOver_ThetaDot_Minus_PhiDot=1.0f/spread;
-		}
-		else
-		{
-			// hard falloff instead of divide by zero
-			OneOver_ThetaDot_Minus_PhiDot=1.0;
-		}				
+		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION0;
+	}
+	if ( m_Attenuation1 )
+	{
+		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION1;
+	}
+	if ( m_Attenuation2 )
+	{
+		m_Flags|=LIGHTTYPE_OPTIMIZATIONFLAGS_HAS_ATTENUATION2;
+	}
+	
+	if ( m_Type == MATERIAL_LIGHT_SPOT )
+	{
+		m_ThetaDot = cos( m_Theta );
+		m_PhiDot = cos( m_Phi );
+		RecalculateOneOverThetaDotMinusPhiDot();
 	}	
-	if (m_Type==MATERIAL_LIGHT_DIRECTIONAL)
+	if ( m_Type == MATERIAL_LIGHT_DIRECTIONAL )
 	{
 		// set position to be real far away in the right direction
-		m_Position=m_Direction;
+		m_Position = m_Direction;
 		m_Position *= 2.0e6;
 	}
 	
-	m_RangeSquared=m_Range*m_Range;
-
+	m_RangeSquared = m_Range*m_Range;
 }
 
 void LightDesc_t::ComputeLightAtPointsForDirectional(
@@ -66,6 +80,35 @@ void LightDesc_t::ComputeLightAtPointsForDirectional(
 	color.z=AddSIMD(color.z,MulSIMD(strength,ReplicateX4(m_Color.z)));
 }
 
+
+float LightDesc_t::DistanceAtWhichBrightnessIsLessThan( float flAmount ) const
+{
+	float bright = m_Color.Length();
+	if ( bright > 0.0 )
+	{
+		flAmount /= m_Color.Length();
+		
+		// calculate terms for quadratic equation
+		float a = flAmount * m_Attenuation2;
+		float b = flAmount * m_Attenuation1;
+		float c = flAmount * m_Attenuation0 - 1;
+		
+		float r0, r1;
+		if ( SolveQuadratic( a, b, c, r0, r1 ) )
+		{
+			float rslt = MAX( 0, MAX( r0, r1 ) );
+#ifdef _DEBUG
+			if ( rslt > 0.0 )
+			{
+				float fltest = 1.0 / ( m_Attenuation0 + rslt * m_Attenuation1 + rslt * rslt * m_Attenuation2 );
+				Assert( fabs( fltest - flAmount ) < 0.1 );
+			}
+#endif
+			return rslt;
+		}
+	}
+	return 0;
+}
 
 void LightDesc_t::ComputeLightAtPoints( const FourVectors &pos, const FourVectors &normal,
 										FourVectors &color, bool DoHalfLambert ) const
@@ -137,7 +180,7 @@ void LightDesc_t::ComputeLightAtPoints( const FourVectors &pos, const FourVector
 			fltx4 dot2=SubSIMD(Four_Zeros,delta*m_Direction); // dot position with spot light dir for cone falloff
 
 
-			fltx4 cone_falloff_scale=MulSIMD(ReplicateX4(OneOver_ThetaDot_Minus_PhiDot),
+			fltx4 cone_falloff_scale=MulSIMD(ReplicateX4(m_OneOverThetaDotMinusPhiDot),
 												 SubSIMD(dot2,ReplicateX4(m_PhiDot)));
 			cone_falloff_scale=MinSIMD(cone_falloff_scale,Four_Ones);
 			
@@ -150,7 +193,7 @@ void LightDesc_t::ComputeLightAtPoints( const FourVectors &pos, const FourVector
 
 			// now, zero out lighting where dot2<phidot. This will mask out any invalid results
 			// from pow function, etc
-			fltx4 OutsideMask=CmpGtSIMD(dot2,ReplicateX4(m_PhiDot)); // outside light cone?
+			bi32x4 OutsideMask=CmpGtSIMD(dot2,ReplicateX4(m_PhiDot)); // outside light cone?
 			strength=AndSIMD(OutsideMask,strength);
 		}
 		break;
@@ -229,7 +272,7 @@ void LightDesc_t::ComputeNonincidenceLightAtPoints( const FourVectors &pos, Four
 			fltx4 dot2=SubSIMD(Four_Zeros,delta*m_Direction); // dot position with spot light dir for cone falloff
 
 
-			fltx4 cone_falloff_scale=MulSIMD(ReplicateX4(OneOver_ThetaDot_Minus_PhiDot),
+			fltx4 cone_falloff_scale=MulSIMD(ReplicateX4(m_OneOverThetaDotMinusPhiDot),
 												 SubSIMD(dot2,ReplicateX4(m_PhiDot)));
 			cone_falloff_scale=MinSIMD(cone_falloff_scale,Four_Ones);
 			
@@ -242,7 +285,7 @@ void LightDesc_t::ComputeNonincidenceLightAtPoints( const FourVectors &pos, Four
 
 			// now, zero out lighting where dot2<phidot. This will mask out any invalid results
 			// from pow function, etc
-			fltx4 OutsideMask=CmpGtSIMD(dot2,ReplicateX4(m_PhiDot)); // outside light cone?
+			bi32x4 OutsideMask=CmpGtSIMD(dot2,ReplicateX4(m_PhiDot)); // outside light cone?
 			strength=AndSIMD(OutsideMask,strength);
 		}
 		break;

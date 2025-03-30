@@ -135,10 +135,12 @@ public:
 	bool		 IsEntityPtr( void *pTest );
 	CBaseEntity *FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName );
 	CBaseEntity *FindEntityByName( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL, IEntityFindFilter *pFilter = NULL );
+#ifndef NO_STRING_T
 	CBaseEntity *FindEntityByName( CBaseEntity *pStartEntity, string_t iszName, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL, IEntityFindFilter *pFilter = NULL )
 	{
 		return FindEntityByName( pStartEntity, STRING(iszName), pSearchingEntity, pActivator, pCaller, pFilter );
 	}
+#endif
 	CBaseEntity *FindEntityInSphere( CBaseEntity *pStartEntity, const Vector &vecCenter, float flRadius );
 	CBaseEntity *FindEntityByTarget( CBaseEntity *pStartEntity, const char *szName );
 	CBaseEntity *FindEntityByModel( CBaseEntity *pStartEntity, const char *szModelName );

@@ -18,18 +18,21 @@
 #include "tier1/convar_serverbounded.h"
 #include "icvar.h"
 #include "tier0/dbg.h"
-#include "color.h"
 #if defined( _X360 )
 #include "xbox/xbox_console.h"
 #endif
 #include "tier0/memdbgon.h"
 
-#ifndef NDEBUG
+
 // Comment this out when we release.
-#define ALLOW_DEVELOPMENT_CVARS
+#if defined ( CSTRIKE15 )
+	#if !defined ( _CERT )
+// 		#define ALLOW_DEVELOPMENT_CVARS
+	#endif
 #endif
 
-
+// This enables the l4d style of culling all cvars that are not marked FCVAR_RELEASE :
+#define CULL_ALL_CVARS_NOT_FCVAR_RELEASE
 
 //-----------------------------------------------------------------------------
 // Statically constructed list of ConCommandBases, 
@@ -79,7 +82,9 @@ void ConVar_Register( int nCVarFlag, IConCommandBaseAccessor *pAccessor )
 		pCur = pNext;
 	}
 
+	g_pCVar->AddSplitScreenConVars();
 	g_pCVar->ProcessQueuedMaterialThreadConVarSets();
+
 	ConCommandBase::s_pConCommandBases = NULL;
 }
 
@@ -89,6 +94,9 @@ void ConVar_Unregister( )
 		return;
 
 	Assert( s_nDLLIdentifier >= 0 );
+
+	// Do this after unregister!!!
+	g_pCVar->RemoveSplitScreenConVars( s_nDLLIdentifier );
 	g_pCVar->UnregisterConCommands( s_nDLLIdentifier );
 	s_nDLLIdentifier = -1;
 	s_bRegistered = false;
@@ -116,7 +124,7 @@ ConCommandBase::ConCommandBase( void )
 //-----------------------------------------------------------------------------
 ConCommandBase::ConCommandBase( const char *pName, const char *pHelpString /*=0*/, int flags /*= 0*/ )
 {
-	CreateBase( pName, pHelpString, flags );
+	Create( pName, pHelpString, flags );
 }
 
 //-----------------------------------------------------------------------------
@@ -153,14 +161,16 @@ CVarDLLIdentifier_t ConCommandBase::GetDLLIdentifier() const
 //			*pHelpString - 
 //			flags - 
 //-----------------------------------------------------------------------------
-void ConCommandBase::CreateBase( const char *pName, const char *pHelpString /*= 0*/, int flags /*= 0*/ )
+void ConCommandBase::Create( const char *pName, const char *pHelpString /*= 0*/, int flags /*= 0*/ )
 {
+	static const char *empty_string = "";
+
 	m_bRegistered = false;
 
 	// Name should be static data
 	Assert( pName );
 	m_pszName = pName;
-	m_pszHelpString = pHelpString ? pHelpString : "";
+	m_pszHelpString = pHelpString ? pHelpString : empty_string;
 
 	m_nFlags = flags;
 
@@ -241,6 +251,19 @@ void ConCommandBase::AddFlags( int flags )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: removes specified flags
+//-----------------------------------------------------------------------------
+void ConCommandBase::RemoveFlags( int flags )
+{
+	m_nFlags &= ~flags;
+}
+
+// Returns current flags
+int ConCommandBase::GetFlags() const
+{
+	return m_nFlags;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -267,7 +290,7 @@ char *ConCommandBase::CopyString( const char *from )
 	int		len;
 	char	*to;
 
-	len = V_strlen( from );
+	len = (int)strlen( from );
 	if ( len <= 0 )
 	{
 		to = new char[1];
@@ -328,7 +351,7 @@ CCommand::CCommand()
 	Reset();
 }
 
-CCommand::CCommand( int nArgC, const char **ppArgV )
+CCommand::CCommand( int nArgC, const char **ppArgV, cmd_source_t source )
 {
 	Assert( nArgC > 0 );
 
@@ -371,6 +394,8 @@ CCommand::CCommand( int nArgC, const char **ppArgV )
 			*pSBuf++ = ' ';
 		}
 	}
+
+	m_source = source;
 }
 
 void CCommand::Reset()
@@ -378,6 +403,7 @@ void CCommand::Reset()
 	m_nArgc = 0;
 	m_nArgv0Size = 0;
 	m_pArgSBuffer[0] = 0;
+	m_source = kCommandSrcInvalid;
 }
 
 characterset_t* CCommand::DefaultBreakSet()
@@ -385,9 +411,11 @@ characterset_t* CCommand::DefaultBreakSet()
 	return &s_BreakSet;
 }
 
-bool CCommand::Tokenize( const char *pCommand, characterset_t *pBreakSet )
+bool CCommand::Tokenize( const char *pCommand, cmd_source_t source, characterset_t *pBreakSet )
 {
 	Reset();
+	m_source = source;
+
 	if ( !pCommand )
 		return false;
 
@@ -505,7 +533,7 @@ int DefaultCompletionFunc( const char *partial, char commands[ COMMAND_COMPLETIO
 //	m_bIsNewConCommand = true;
 //}
 
-ConCommand::ConCommand( const char *pName, FnCommandCallbackVoid_t callback, const char *pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/ )
+ConCommand::ConCommand( const char *pName, FnCommandCallbackV1_t callback, const char *pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/ )
 {
 	// Set the callback
 	m_fnCommandCallbackV1 = callback;
@@ -515,7 +543,7 @@ ConCommand::ConCommand( const char *pName, FnCommandCallbackVoid_t callback, con
 	m_bHasCompletionCallback = completionFunc != 0 ? true : false;
 
 	// Setup the rest
-	BaseClass::CreateBase( pName, pHelpString, flags );
+	BaseClass::Create( pName, pHelpString, flags );
 }
 
 ConCommand::ConCommand( const char *pName, FnCommandCallback_t callback, const char *pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/ )
@@ -528,7 +556,7 @@ ConCommand::ConCommand( const char *pName, FnCommandCallback_t callback, const c
 	m_bUsingCommandCallbackInterface = false;
 
 	// Setup the rest
-	BaseClass::CreateBase( pName, pHelpString, flags );
+	BaseClass::Create( pName, pHelpString, flags );
 }
 
 ConCommand::ConCommand( const char *pName, ICommandCallback *pCallback, const char *pHelpString /*= 0*/, int flags /*= 0*/, ICommandCompletionCallback *pCompletionCallback /*= 0*/ )
@@ -541,7 +569,7 @@ ConCommand::ConCommand( const char *pName, ICommandCallback *pCallback, const ch
 	m_bUsingCommandCallbackInterface = true;
 
 	// Setup the rest
-	BaseClass::CreateBase( pName, pHelpString, flags );
+	BaseClass::Create( pName, pHelpString, flags );
 }
 
 //-----------------------------------------------------------------------------
@@ -592,7 +620,7 @@ void ConCommand::Dispatch( const CCommand &command )
 	}
 
 	// Command without callback!!!
-	AssertMsg( 0, "Encountered ConCommand '%s' without a callback!\n", GetName() );
+	AssertMsg( 0, ( "Encountered ConCommand '%s' without a callback!\n", GetName() ) );
 }
 
 
@@ -673,10 +701,10 @@ ConVar::ConVar( const char *pName, const char *pDefaultValue, int flags, const c
 //-----------------------------------------------------------------------------
 ConVar::~ConVar( void )
 {
-	if ( m_pszString )
+	if ( m_Value.m_pszString )
 	{
-		delete[] m_pszString;
-		m_pszString = NULL;
+		delete[] m_Value.m_pszString;
+		m_Value.m_pszString = NULL;
 	}
 }
 
@@ -684,21 +712,43 @@ ConVar::~ConVar( void )
 //-----------------------------------------------------------------------------
 // Install a change callback (there shouldn't already be one....)
 //-----------------------------------------------------------------------------
-void ConVar::InstallChangeCallback( FnChangeCallback_t callback )
+void ConVar::InstallChangeCallback( FnChangeCallback_t callback, bool bInvoke /*=true*/ )
 {
-	Assert( !m_pParent->m_fnChangeCallback || !callback );
-	m_pParent->m_fnChangeCallback = callback;
-
-	if ( m_pParent->m_fnChangeCallback )
+	if ( !callback )
 	{
-		// Call it immediately to set the initial value...
-		m_pParent->m_fnChangeCallback( this, m_pszString, m_fValue );
+		Warning( "InstallChangeCallback called with NULL callback, ignoring!!!\n" );
+		return;
 	}
+
+	if ( m_pParent->m_fnChangeCallbacks.Find( callback ) != m_pParent->m_fnChangeCallbacks.InvalidIndex() )
+	{
+		// Same ptr added twice, sigh...
+		Warning( "InstallChangeCallback ignoring duplicate change callback!!!\n" );
+		return;
+	}
+
+	m_pParent->m_fnChangeCallbacks.AddToTail( callback );
+
+	// Call it immediately to set the initial value...
+	if ( bInvoke )
+	{
+		callback( this, m_Value.m_pszString, ObscureConvarValue( m_Value.m_fValue, ( intp ) this ) );
+	}
+}
+
+void ConVar::RemoveChangeCallback( FnChangeCallback_t callback )
+{
+	m_pParent->m_fnChangeCallbacks.FindAndRemove( callback );
 }
 
 bool ConVar::IsFlagSet( int flag ) const
 {
 	return ( flag & m_pParent->m_nFlags ) ? true : false;
+}
+
+int ConVar::GetFlags() const
+{
+	return m_pParent->m_nFlags;
 }
 
 const char *ConVar::GetHelpText( void ) const
@@ -725,6 +775,18 @@ const char *ConVar::GetName( void ) const
 	return m_pParent->m_pszName;
 }
 
+const char *ConVar::GetBaseName( void ) const
+{
+	return m_pParent->m_pszName;
+}
+
+int ConVar::GetSplitScreenPlayerSlot( void ) const
+{
+	// Default implementation (certain FCVAR_USERINFO derive a new type of convar and set this)
+	return 0;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : Returns true on success, false on failure.
@@ -743,6 +805,49 @@ void ConVar::Init()
 	BaseClass::Init();
 }
 
+bool ConVar::InternalSetColorFromString( const char *value )
+{
+	bool bColor = false;
+
+	// Try pulling RGBA color values out of the string
+	int nRGBA[4];
+	int nParamsRead = sscanf( value, "%i %i %i %i", &(nRGBA[0]), &(nRGBA[1]), &(nRGBA[2]), &(nRGBA[3]) );
+
+	if ( nParamsRead >= 3 )
+	{
+		// This is probably a color!
+		if ( nParamsRead == 3 )
+		{
+			// Assume they wanted full alpha
+			nRGBA[3] = 255;
+		}
+
+		if ( nRGBA[0] >= 0 && nRGBA[0] <= 255 && 
+			 nRGBA[1] >= 0 && nRGBA[1] <= 255 && 
+			 nRGBA[2] >= 0 && nRGBA[2] <= 255 && 
+			 nRGBA[3] >= 0 && nRGBA[3] <= 255 )
+		{
+			// This is definitely a color!
+			bColor = true;
+
+			// Stuff all the values into each byte of our int
+			unsigned char *pColorElement = ((unsigned char*)&m_Value.m_nValue);
+			pColorElement[0] = nRGBA[0];
+			pColorElement[1] = nRGBA[1];
+			pColorElement[2] = nRGBA[2];
+			pColorElement[3] = nRGBA[3];
+
+			// Obscure the value.
+			m_Value.m_nValue = ObscureConvarValue( m_Value.m_nValue, ( intp ) this );
+
+			// Copy that value into a float (even though this has little meaning)
+			m_Value.m_fValue = ObscureConvarValue( ( float )( m_Value.m_nValue ), ( intp ) this );
+		}
+	}
+
+	return bColor;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *value - 
@@ -758,29 +863,40 @@ void ConVar::InternalSetValue( const char *value )
 		}
 	}
 
-	float fNewValue;
 	char  tempVal[ 32 ];
-	char  *val;
+	const char  *val;
 
 	Assert(m_pParent == this); // Only valid for root convars.
 
-	float flOldValue = m_fValue;
+	float flOldValue = ObscureConvarValue( m_Value.m_fValue, ( intp ) this );
+	val = value;
+	if ( !val )
+		val = "";
 
-	val = (char *)value;
-	if ( !value )
-		fNewValue = 0.0f;
-	else
-		fNewValue = ( float )atof( value );
-
-	if ( ClampValue( fNewValue ) )
+	if ( !InternalSetColorFromString( value ) )
 	{
-		Q_snprintf( tempVal,sizeof(tempVal), "%f", fNewValue );
-		val = tempVal;
-	}
+		// Not a color, do the standard thing
+		double dblValue = V_atod( value ); // Use double to avoid 24-bit restriction on integers and allow storing timestamps or dates in convars
 
-	// Redetermine value
-	m_fValue		= fNewValue;
-	m_nValue		= ( int )( fNewValue );
+		float fNewValue = ( float ) dblValue;
+		if ( !IsFinite( fNewValue ) )
+		{
+			Warning( "Warning:  %s = '%s' is infinite, clamping value.\n", GetName(), value );
+			fNewValue = FLT_MAX;
+			dblValue = FLT_MAX;
+		}
+
+		if ( ClampValue( fNewValue ) )
+		{
+			dblValue = fNewValue;
+			Q_snprintf( tempVal,sizeof(tempVal), "%f", fNewValue );
+			val = tempVal;
+		}
+
+		// Redetermine value
+		m_Value.m_fValue = ObscureConvarValue( fNewValue, (intp) this );
+		m_Value.m_nValue = ObscureConvarValue( ( int ) dblValue, (intp) this ); // convert double to int to avoid precision loss
+	}
 
 	if ( !( m_nFlags & FCVAR_NEVER_AS_STRING ) )
 	{
@@ -796,40 +912,32 @@ void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 {
 	Assert( !( m_nFlags & FCVAR_NEVER_AS_STRING ) );
 
- 	char* pszOldValue = (char*)stackalloc( m_StringLength );
-	memcpy( pszOldValue, m_pszString, m_StringLength );
+ 	char* pszOldValue = (char*)stackalloc( m_Value.m_StringLength );
+	memcpy( pszOldValue, m_Value.m_pszString, m_Value.m_StringLength );
 	
-	if ( tempVal )
+	int len = Q_strlen(tempVal) + 1;
+
+	if ( len > m_Value.m_StringLength)
 	{
-		int len = Q_strlen(tempVal) + 1;
-
-		if ( len > m_StringLength)
+		if (m_Value.m_pszString)
 		{
-			if (m_pszString)
-			{
-				delete[] m_pszString;
-			}
-
-			m_pszString	= new char[len];
-			m_StringLength = len;
+			delete[] m_Value.m_pszString;
 		}
 
-		memcpy( m_pszString, tempVal, len );
-	}
-	else 
-	{
-		*m_pszString = 0;
+		m_Value.m_pszString	= new char[len];
+		m_Value.m_StringLength = len;
 	}
 
-	// If nothing has changed, don't do the callbacks.
-	if (V_strcmp(pszOldValue, m_pszString) != 0)
-	{
-		// Invoke any necessary callback function
-		if ( m_fnChangeCallback )
-		{
-			m_fnChangeCallback( this, pszOldValue, flOldValue );
-		}
+	memcpy( m_Value.m_pszString, tempVal, len );
 
+	// Invoke any necessary callback function
+	for ( int i = 0; i < m_fnChangeCallbacks.Count(); ++i )
+	{
+		m_fnChangeCallbacks[ i ]( this, pszOldValue, flOldValue );
+	}
+
+	if ( g_pCVar )
+	{
 		g_pCVar->CallGlobalChangeCallbacks( this, pszOldValue, flOldValue );
 	}
 
@@ -864,7 +972,7 @@ bool ConVar::ClampValue( float& value )
 //-----------------------------------------------------------------------------
 void ConVar::InternalSetFloatValue( float fNewValue )
 {
-	if ( fNewValue == m_fValue )
+	if ( fNewValue == ObscureConvarValue( m_Value.m_fValue, ( intp ) this ) )
 		return;
 
 	if ( IsFlagSet( FCVAR_MATERIAL_THREAD_MASK ) )
@@ -882,19 +990,19 @@ void ConVar::InternalSetFloatValue( float fNewValue )
 	ClampValue( fNewValue );
 
 	// Redetermine value
-	float flOldValue = m_fValue;
-	m_fValue		= fNewValue;
-	m_nValue		= ( int )m_fValue;
+	float flOldValue = ObscureConvarValue( m_Value.m_fValue, ( intp ) this );
+	m_Value.m_fValue		= ObscureConvarValue( fNewValue, ( intp) this );
+	m_Value.m_nValue		= ObscureConvarValue( ( int )fNewValue, ( intp) this );
 
 	if ( !( m_nFlags & FCVAR_NEVER_AS_STRING ) )
 	{
 		char tempVal[ 32 ];
-		Q_snprintf( tempVal, sizeof( tempVal), "%f", m_fValue );
+		Q_snprintf( tempVal, sizeof( tempVal), "%f", fNewValue );
 		ChangeStringValue( tempVal, flOldValue );
 	}
 	else
 	{
-		Assert( !m_fnChangeCallback );
+		Assert( m_fnChangeCallbacks.Count() == 0 );
 	}
 }
 
@@ -904,7 +1012,7 @@ void ConVar::InternalSetFloatValue( float fNewValue )
 //-----------------------------------------------------------------------------
 void ConVar::InternalSetIntValue( int nValue )
 {
-	if ( nValue == m_nValue )
+	if ( nValue == ObscureConvarValue( m_Value.m_nValue, (intp) this ) )
 		return;
 
 	if ( IsFlagSet( FCVAR_MATERIAL_THREAD_MASK ) )
@@ -925,20 +1033,39 @@ void ConVar::InternalSetIntValue( int nValue )
 	}
 
 	// Redetermine value
-	float flOldValue = m_fValue;
-	m_fValue		= fValue;
-	m_nValue		= nValue;
+	float flOldValue = ObscureConvarValue( m_Value.m_fValue, ( intp ) this );
+	m_Value.m_fValue		= ObscureConvarValue( fValue, ( intp) this );
+	m_Value.m_nValue		= ObscureConvarValue( nValue, ( intp) this );
 
 	if ( !( m_nFlags & FCVAR_NEVER_AS_STRING ) )
 	{
 		char tempVal[ 32 ];
-		Q_snprintf( tempVal, sizeof( tempVal ), "%d", m_nValue );
+		Q_snprintf( tempVal, sizeof( tempVal ), "%d", nValue );
 		ChangeStringValue( tempVal, flOldValue );
 	}
 	else
 	{
-		Assert( !m_fnChangeCallback );
+		Assert( m_fnChangeCallbacks.Count() == 0 );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *value - 
+//-----------------------------------------------------------------------------
+void ConVar::InternalSetColorValue( Color value )
+{
+	// Stuff color values into an int
+	int nValue;
+
+	unsigned char *pColorElement = ((unsigned char*)&nValue);
+	pColorElement[0] = value[0];
+	pColorElement[1] = value[1];
+	pColorElement[2] = value[2];
+	pColorElement[3] = value[3];
+
+	// Call the int internal set
+	InternalSetIntValue( nValue );
 }
 
 //-----------------------------------------------------------------------------
@@ -948,37 +1075,65 @@ void ConVar::Create( const char *pName, const char *pDefaultValue, int flags /*=
 	const char *pHelpString /*= NULL*/, bool bMin /*= false*/, float fMin /*= 0.0*/,
 	bool bMax /*= false*/, float fMax /*= false*/, FnChangeCallback_t callback /*= NULL*/ )
 {
+	static const char *empty_string = "";
+
 	m_pParent = this;
 
 	// Name should be static data
-	SetDefault( pDefaultValue );
+	m_pszDefaultValue = pDefaultValue ? pDefaultValue : empty_string;
+	Assert( m_pszDefaultValue );
 
-	m_StringLength = V_strlen( m_pszDefaultValue ) + 1;
-	m_pszString = new char[m_StringLength];
-	memcpy( m_pszString, m_pszDefaultValue, m_StringLength );
-	
 	m_bHasMin = bMin;
 	m_fMinVal = fMin;
 	m_bHasMax = bMax;
 	m_fMaxVal = fMax;
-	
-	m_fnChangeCallback = callback;
 
-	m_fValue = ( float )atof( m_pszString );
-	m_nValue = atoi( m_pszString ); // dont convert from float to int and lose bits
-
-	// Bounds Check, should never happen, if it does, no big deal
-	if ( m_bHasMin && ( m_fValue < m_fMinVal ) )
+	if ( callback )
 	{
-		Assert( 0 );
+		m_fnChangeCallbacks.AddToTail( callback );
 	}
 
-	if ( m_bHasMax && ( m_fValue > m_fMaxVal ) )
+	m_Value.m_StringLength = (int)strlen( m_pszDefaultValue ) + 1;
+	m_Value.m_pszString = new char[m_Value.m_StringLength];
+	memcpy( m_Value.m_pszString, m_pszDefaultValue, m_Value.m_StringLength );
+
+	if ( !InternalSetColorFromString( m_Value.m_pszString ) )
 	{
-		Assert( 0 );
+		double dblValue = V_atod( m_Value.m_pszString ); // Use double to avoid 24-bit restriction on integers and allow storing timestamps or dates in convars
+
+		float fValue = ( float ) dblValue;
+		if ( !IsFinite( fValue ) )
+		{
+			Warning( "ConVar(%s) defined with infinite float value (%s)\n", pName, m_Value.m_pszString );
+			fValue = FLT_MAX;
+			Assert( 0 );
+		}
+
+		// Bounds Check, should never happen, if it does, no big deal
+		if ( m_bHasMin && ( fValue < m_fMinVal ) )
+		{
+			Assert( 0 );
+		}
+
+		if ( m_bHasMax && ( fValue > m_fMaxVal ) )
+		{
+			Assert( 0 );
+		}
+
+		m_Value.m_fValue = ObscureConvarValue( fValue, ( intp ) this );
+		m_Value.m_nValue = ObscureConvarValue( ( int ) dblValue, ( intp) this );
 	}
 
-	BaseClass::CreateBase( pName, pHelpString, flags );
+	//If we're not tagged as cheat, archive or release then hide us.
+#if defined( CULL_ALL_CVARS_NOT_FCVAR_RELEASE )
+// FIXMEL4DTOMAINMERGE: will need to assess if this hides too many convars for TF and other projects in main
+	if ( !( flags & ( FCVAR_CHEAT | FCVAR_ARCHIVE | FCVAR_RELEASE | FCVAR_USERINFO ) ) )
+	{
+		flags |= FCVAR_DEVELOPMENTONLY;
+	}
+#endif
+
+	BaseClass::Create( pName, pHelpString, flags );
 }
 
 //-----------------------------------------------------------------------------
@@ -1012,6 +1167,16 @@ void ConVar::SetValue( int value )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : value - 
+//-----------------------------------------------------------------------------
+void ConVar::SetValue( Color value )
+{
+	ConVar *var = ( ConVar * )m_pParent;
+	var->InternalSetColorValue( value );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Reset to default value
 //-----------------------------------------------------------------------------
 void ConVar::Revert( void )
@@ -1042,6 +1207,26 @@ bool ConVar::GetMax( float& maxVal ) const
 	return m_pParent->m_bHasMax;
 }
 
+float ConVar::GetMinValue() const
+{
+	return m_pParent->m_fMinVal;
+}
+
+float ConVar::GetMaxValue() const
+{
+	return m_pParent->m_fMaxVal;;
+}
+
+bool ConVar::HasMin() const 
+{ 
+	return m_pParent->m_bHasMin; 
+}
+
+bool ConVar::HasMax() const 
+{ 
+	return m_pParent->m_bHasMax; 
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : const char
@@ -1053,7 +1238,8 @@ const char *ConVar::GetDefault( void ) const
 
 void ConVar::SetDefault( const char *pszDefault ) 
 { 
-	m_pszDefaultValue = pszDefault ? pszDefault : "";
+	static const char *empty_string = "";
+	m_pszDefaultValue = pszDefault ? pszDefault : empty_string;
 	Assert( m_pszDefaultValue );
 }
 
@@ -1118,79 +1304,143 @@ bool ConVarRef::IsValid() const
 	return m_pConVar != &s_EmptyConVar;
 }
 
+// Helper for splitscreen ConVars
+SplitScreenConVarRef::SplitScreenConVarRef( const char *pName )
+{
+	Init( pName, false );
+}
+
+SplitScreenConVarRef::SplitScreenConVarRef( const char *pName, bool bIgnoreMissing )
+{
+	Init( pName, bIgnoreMissing );
+}
+
+void SplitScreenConVarRef::Init( const char *pName, bool bIgnoreMissing )
+{
+	for ( int i = 0; i < MAX_SPLITSCREEN_CLIENTS; ++i )
+	{
+		cv_t &info = m_Info[ i ];
+		char pchName[ 256 ];
+		if ( i != 0 )
+		{
+			Q_snprintf( pchName, sizeof( pchName ), "%s%d", pName, i + 1 );
+		}
+		else
+		{
+			Q_strncpy( pchName, pName, sizeof( pchName ) );
+		}
+
+		info.m_pConVar = g_pCVar ? g_pCVar->FindVar( pchName ) : &s_EmptyConVar;
+		if ( !info.m_pConVar )
+		{
+			info.m_pConVar = &s_EmptyConVar;
+			if ( i > 0 )
+			{
+				// Point at slot zero instead, in case we got in here with a non FCVAR_SS var...
+				info.m_pConVar = m_Info[ 0 ].m_pConVar;
+			}
+		}
+		info.m_pConVarState = static_cast< ConVar * >( info.m_pConVar );
+	}
+
+	if ( !IsValid() )
+	{
+		static bool bFirst = true;
+		if ( g_pCVar || bFirst )
+		{
+			if ( !bIgnoreMissing )
+			{
+				Warning( "ConVarRef %s doesn't point to an existing ConVar\n", pName );
+			}
+			bFirst = false;
+		}
+	}
+}
+
+SplitScreenConVarRef::SplitScreenConVarRef( IConVar *pConVar )
+{
+	{
+		cv_t &info = m_Info[ 0 ];
+		info.m_pConVar = pConVar ? pConVar : &s_EmptyConVar;
+		info.m_pConVarState = static_cast< ConVar * >( info.m_pConVar );
+	}
+
+	for ( int i = 1; i < MAX_SPLITSCREEN_CLIENTS; ++i )
+	{
+		cv_t &info = m_Info[ i ];
+		char pchName[ 256 ];
+		Q_snprintf( pchName, sizeof( pchName ), "%s%d", pConVar->GetName(), i + 1 );
+
+		info.m_pConVar = g_pCVar ? g_pCVar->FindVar( pchName ) : &s_EmptyConVar;
+		if ( !info.m_pConVar )
+		{
+			info.m_pConVar = &s_EmptyConVar;
+			if ( i > 0 )
+			{
+				// Point at slot zero instead, in case we got in here with a non FCVAR_SS var...
+				info.m_pConVar = m_Info[ 0 ].m_pConVar;
+			}
+		}
+		info.m_pConVarState = static_cast< ConVar * >( info.m_pConVar );
+	}
+}
+
+bool SplitScreenConVarRef::IsValid() const
+{
+	return m_Info[ 0 ].m_pConVar != &s_EmptyConVar;
+}
+
+struct PrintConVarFlags_t
+{
+	int flag;
+	const char *desc;
+};
+
+static PrintConVarFlags_t g_PrintConVarFlags[] =
+{
+	{ FCVAR_GAMEDLL, "game" },
+	{ FCVAR_CLIENTDLL, "client" },
+	{ FCVAR_ARCHIVE, "archive" },
+	{ FCVAR_NOTIFY, "notify" },
+	{ FCVAR_SPONLY, "singleplayer" },
+	{ FCVAR_NOT_CONNECTED, "notconnected" },
+	{ FCVAR_CHEAT, "cheat" },
+	{ FCVAR_REPLICATED, "replicated" },
+	{ FCVAR_SERVER_CAN_EXECUTE, "server_can_execute" },
+	{ FCVAR_CLIENTCMD_CAN_EXECUTE, "clientcmd_can_execute" },
+	{ FCVAR_USERINFO, "user" },
+	{ FCVAR_SS, "ss" },
+	{ FCVAR_SS_ADDED, "ss_added" },
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void ConVar_PrintFlags( const ConCommandBase *var )
+void ConVar_AppendFlags( const ConCommandBase *var, char *buf, size_t bufsize )
 {
-	bool any = false;
-	if ( var->IsFlagSet( FCVAR_GAMEDLL ) )
+	for ( int i = 0; i < ARRAYSIZE( g_PrintConVarFlags ) ; ++i )
 	{
-		ConMsg( " game" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_CLIENTDLL ) )
-	{
-		ConMsg( " client" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_ARCHIVE ) )
-	{
-		ConMsg( " archive" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_NOTIFY ) )
-	{
-		ConMsg( " notify" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_SPONLY ) )
-	{
-		ConMsg( " singleplayer" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_NOT_CONNECTED ) )
-	{
-		ConMsg( " notconnected" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_CHEAT ) )
-	{
-		ConMsg( " cheat" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_REPLICATED ) )
-	{
-		ConMsg( " replicated" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_SERVER_CAN_EXECUTE ) )
-	{
-		ConMsg( " server_can_execute" );
-		any = true;
-	}
-
-	if ( var->IsFlagSet( FCVAR_CLIENTCMD_CAN_EXECUTE ) )
-	{
-		ConMsg( " clientcmd_can_execute" );
-		any = true;
-	}
-
-	if ( any )
-	{
-		ConMsg( "\n" );
+		const PrintConVarFlags_t &info =  g_PrintConVarFlags[ i ];
+		if ( var->IsFlagSet( info.flag ) )
+		{
+			char append[ 128 ];
+			Q_snprintf( append, sizeof( append ), " %s", info.desc );
+			Q_strncat( buf, append, bufsize, COPY_ALL_CHARACTERS );
+		}
 	}
 }
 
+static void AppendPrintf( char *buf, size_t bufsize, char const *fmt, ... )
+{
+	char scratch[ 1024 ];
+	va_list argptr;
+	va_start( argptr, fmt );
+	_vsnprintf( scratch, sizeof( scratch ) - 1, fmt, argptr );
+	va_end( argptr );
+	scratch[ sizeof( scratch ) - 1 ] = 0;
+
+	Q_strncat( buf, scratch, bufsize, COPY_ALL_CHARACTERS );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1201,10 +1451,13 @@ void ConVar_PrintDescription( const ConCommandBase *pVar )
 	float fMin, fMax;
 	const char *pStr;
 
-	assert( pVar );
+	Assert( pVar );
 
 	Color clr;
 	clr.SetColor( 255, 100, 100, 255 );
+
+	char outstr[ 4096 ];
+	outstr[ 0 ] = 0;
 
 	if ( !pVar->IsCommand() )
 	{
@@ -1240,29 +1493,27 @@ void ConVar_PrintDescription( const ConCommandBase *pVar )
 
 		if ( value )
 		{
-			ConColorMsg( clr, "\"%s\" = \"%s\"", var->GetName(), value );
+			AppendPrintf( outstr, sizeof( outstr ), "\"%s\" = \"%s\"", var->GetName(), value );
 
-			if ( stricmp( value, var->GetDefault() ) )
+			if ( V_stricmp( value, var->GetDefault() ) )
 			{
-				ConMsg( " ( def. \"%s\" )", var->GetDefault() );
+				AppendPrintf( outstr, sizeof( outstr ), " ( def. \"%s\" )", var->GetDefault() );
 			}
 		}
 
 		if ( bMin )
 		{
-			ConMsg( " min. %f", fMin );
+			AppendPrintf( outstr, sizeof( outstr ), " min. %f", fMin );
 		}
 		if ( bMax )
 		{
-			ConMsg( " max. %f", fMax );
+			AppendPrintf( outstr, sizeof( outstr ), " max. %f", fMax );
 		}
 
-		ConMsg( "\n" );
-
-		// Handled virtualized cvars.
+		// Handle virtualized cvars.
 		if ( pBounded && fabs( pBounded->GetFloat() - var->GetFloat() ) > 0.0001f )
 		{
-			ConColorMsg( clr, "** NOTE: The real value is %.3f but the server has temporarily restricted it to %.3f **\n",
+			AppendPrintf( outstr, sizeof( outstr ), " [%.3f server clamped to %.3f]",
 				var->GetFloat(), pBounded->GetFloat() );
 		}
 	}
@@ -1270,14 +1521,18 @@ void ConVar_PrintDescription( const ConCommandBase *pVar )
 	{
 		ConCommand *var = ( ConCommand * )pVar;
 
-		ConColorMsg( clr, "\"%s\"\n", var->GetName() );
+		AppendPrintf( outstr, sizeof( outstr ), "\"%s\" ", var->GetName() );
 	}
 
-	ConVar_PrintFlags( pVar );
+	ConVar_AppendFlags( pVar, outstr, sizeof( outstr ) );
 
 	pStr = pVar->GetHelpText();
-	if ( pStr && pStr[0] )
+	if ( pStr && *pStr )
 	{
-		ConMsg( " - %s\n", pStr );
+		ConMsg( "%-80s - %.80s\n", outstr, pStr );
+	}
+	else
+	{
+	 	ConMsg( "%-80s\n", outstr );
 	}
 }

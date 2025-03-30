@@ -265,14 +265,14 @@ void netadr_t::SetPort(unsigned short newport)
 	port = BigShort( newport );
 }
 
-void netadr_t::SetFromString( const char *pch, bool bUseDNS )
+bool netadr_t::SetFromString( const char *pch, bool bUseDNS )
 {
 	Clear();
 	type = NA_IP;
 
 	Assert( pch );		// invalid to call this with NULL pointer; fix your code bug!
 	if ( !pch )			// but let's not crash
-		return;
+		return false;
 
 
 	if ( pch[0] >= '0' && pch[0] <= '9' && strchr( pch, '.' ) )
@@ -304,7 +304,7 @@ void netadr_t::SetFromString( const char *pch, bool bUseDNS )
 		// DNS it
 		struct hostent *h = gethostbyname( szHostName );
 		if ( !h )
-			return;
+			return false;
 
 		SetIP( ntohl( *(int *)h->h_addr_list[0]  ) );
 
@@ -316,6 +316,8 @@ void netadr_t::SetFromString( const char *pch, bool bUseDNS )
 		Assert( 0 );
 #endif
 	}
+
+	return true;
 }
 
 bool netadr_t::operator<(const netadr_t &netadr) const

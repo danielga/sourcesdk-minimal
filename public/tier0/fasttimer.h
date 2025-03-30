@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef FASTTIMER_H
 #define FASTTIMER_H
@@ -11,17 +11,20 @@
 #pragma once
 #endif
 
-#ifdef _WIN32
-#include <intrin.h>
-#endif
-
 #include <assert.h>
 #include "tier0/platform.h"
+#ifdef _PS3
+#include "sys/sys_time.h"
+#else
+inline uint64 sys_time_get_timebase_frequency()
+{
+	DebuggerBreak(); // Error("sys_time_get_timebase_frequency called on non-PS3 platform.");
+	return 1; // this function should never ever be called.
+}
+#endif
 
 PLATFORM_INTERFACE uint64 g_ClockSpeed;
-#if defined( _X360 ) && defined( _CERT )
-PLATFORM_INTERFACE unsigned long g_dwFakeFastCounter;
-#endif
+PLATFORM_INTERFACE unsigned long g_dwClockSpeed;
 
 PLATFORM_INTERFACE double g_ClockSpeedMicrosecondsMultiplier;
 PLATFORM_INTERFACE double g_ClockSpeedMillisecondsMultiplier;
@@ -29,7 +32,7 @@ PLATFORM_INTERFACE double g_ClockSpeedSecondsMultiplier;
 
 class CCycleCount
 {
-friend class CFastTimer;
+	friend class CFastTimer;
 
 public:
 					CCycleCount();
@@ -71,7 +74,7 @@ public:
 	uint64			m_Int64;
 };
 
-class PLATFORM_CLASS CClockSpeedInit
+class CClockSpeedInit
 {
 public:
 	CClockSpeedInit()
@@ -79,7 +82,29 @@ public:
 		Init();
 	}
 
-	static void Init();
+	static void Init()
+	{
+		const CPUInformation& pi = GetCPUInformation();
+
+		if ( IsX360() )
+		{
+			// cycle counter runs as doc'd at 1/64 Xbox 3.2GHz clock speed, thus 50 Mhz
+			g_ClockSpeed = pi.m_Speed / 64L;
+		}
+		else if ( IsPS3() )
+		{
+			g_ClockSpeed = sys_time_get_timebase_frequency(); // CPU clock rate is totally unrelated to time base register frequency on PS3
+		}
+		else
+		{
+			g_ClockSpeed = pi.m_Speed;
+		}
+		g_dwClockSpeed = (unsigned long)g_ClockSpeed;
+
+		g_ClockSpeedMicrosecondsMultiplier = 1000000.0 / (double)g_ClockSpeed;
+		g_ClockSpeedMillisecondsMultiplier = 1000.0 / (double)g_ClockSpeed;
+		g_ClockSpeedSecondsMultiplier = 1.0f / (double)g_ClockSpeed;
+	}
 };
 
 class CFastTimer
@@ -93,7 +118,7 @@ public:
 	CCycleCount 		GetDurationInProgress() const; // Call without ending. Not that cheap.
 
 	// Return number of cycles per second on this processor.
-	static inline int64	GetClockSpeed();
+	static inline unsigned long	GetClockSpeed();
 
 private:
 	CCycleCount	m_Duration;
@@ -222,6 +247,8 @@ private:
 	unsigned	m_nIters;
 	CCycleCount m_Total;
 	CCycleCount	m_Peak;
+	bool		m_fReport;
+	const tchar *m_pszName;
 };
 
 // -------------------------------------------------------------------------- // 
@@ -412,9 +439,9 @@ inline CCycleCount CFastTimer::GetDurationInProgress() const
 }
 
 
-inline int64 CFastTimer::GetClockSpeed()
+inline unsigned long CFastTimer::GetClockSpeed()
 {
-	return g_ClockSpeed;
+	return g_dwClockSpeed;
 }
 
 
@@ -513,10 +540,10 @@ private:
 //-----------------------------------------------------------------------------
 inline void CLimitTimer::SetLimit( uint64 cMicroSecDuration )
 {
-	uint64 dlCycles = ( ( uint64 ) cMicroSecDuration * g_ClockSpeed ) / ( uint64 ) 1000000L;
+	uint64 dlCycles = ( ( uint64 ) cMicroSecDuration * ( uint64 ) g_dwClockSpeed ) / ( uint64 ) 1000000L;
 	CCycleCount cycleCount;
-	cycleCount.Sample( );
-	m_lCycleLimit = cycleCount.GetLongCycles( ) + dlCycles;
+	cycleCount.Sample();
+	m_lCycleLimit = cycleCount.GetLongCycles() + dlCycles;
 }
 
 
@@ -527,8 +554,8 @@ inline void CLimitTimer::SetLimit( uint64 cMicroSecDuration )
 inline bool CLimitTimer::BLimitReached() const
 {
 	CCycleCount cycleCount;
-	cycleCount.Sample( );
-	return ( cycleCount.GetLongCycles( ) >= m_lCycleLimit );
+	cycleCount.Sample();
+	return ( cycleCount.GetLongCycles() >= m_lCycleLimit );
 }
 
 
@@ -545,7 +572,7 @@ inline int CLimitTimer::CMicroSecOverage() const
 	if ( lcCycles < m_lCycleLimit )
 		return 0;
 
-	return( ( int ) ( ( lcCycles - m_lCycleLimit ) * ( uint64 ) 1000000L / g_ClockSpeed ) );
+	return( ( int ) ( ( lcCycles - m_lCycleLimit ) * ( uint64 ) 1000000L / g_dwClockSpeed ) );
 }
 
 
@@ -562,7 +589,7 @@ inline uint64 CLimitTimer::CMicroSecLeft() const
 	if ( lcCycles >= m_lCycleLimit )
 		return 0;
 
-	return( ( uint64 ) ( ( m_lCycleLimit - lcCycles ) * ( uint64 ) 1000000L / g_ClockSpeed ) );
+	return( ( uint64 ) ( ( m_lCycleLimit - lcCycles ) * ( uint64 ) 1000000L / g_dwClockSpeed ) );
 }
 
 

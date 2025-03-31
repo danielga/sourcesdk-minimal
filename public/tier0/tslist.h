@@ -48,12 +48,98 @@ typedef __int128_t int128;
 #define TSLIST_NODE_ALIGNMENT 16
 
 #ifdef POSIX
+inline bool __sync_bool_compare_and_swap_16_sdk(volatile __int128_t* ptr, __int128_t oldval, __int128_t newval)
+{
+	bool result;
+
+	union par128
+	{
+		__int128_t f;
+		struct {
+			uint64_t l;
+			uint64_t h;
+		} s;
+	};
+	union par128 old;
+	union par128 neww;
+	old.f = oldval;
+	neww.f = newval;
+
+	__asm__ __volatile__
+	(
+		"lock cmpxchg16b %1\n\t"
+		"setz %0"
+		: "=q" (result),
+		"+m" (*ptr),
+		"+d" (old.s.h),
+		"+a" (old.s.l)
+		: "c"  (neww.s.h),
+		"b"  (neww.s.l)
+		: "cc"
+	);
+
+#if 0
+	if (!result) {
+		debug_printf("%s: failed (ptr = %p, oldval = [%lx, %lx], "
+			"newval = [%lx, %lx])\n",
+			__FUNCTION__, (void*)ptr,
+			old.s.l, old.s.h, neww.s.l, neww.s.h);
+	}
+#endif
+
+	return result;
+}
+
 inline bool ThreadInterlockedAssignIf128( int128 volatile * pDest, const int128 &value, const int128 &comparand ) 
 {
     // We do not want the original comparand modified by the swap
     // so operate on a local copy.
     int128 local_comparand = comparand;
-	return __sync_bool_compare_and_swap( pDest, local_comparand, value );
+	return __sync_bool_compare_and_swap_16_sdk( pDest, local_comparand, value );
+
+	volatile __int128_t* ptr = pDest;
+	__int128_t oldval = local_comparand;
+	__int128_t newval = value;
+	{
+		bool result;
+
+		union par128
+		{
+			__int128_t f;
+			struct {
+				uint64_t l;
+				uint64_t h;
+			} s;
+		};
+		union par128 old;
+		union par128 neww;
+		old.f = oldval;
+		neww.f = newval;
+
+		__asm__ __volatile__
+		(
+			"lock cmpxchg16b %1\n\t"
+			"setz %0"
+			: "=q" (result),
+			"+m" (*ptr),
+			"+d" (old.s.h),
+			"+a" (old.s.l)
+			: "c"  (neww.s.h),
+			"b"  (neww.s.l)
+			: "cc"
+		);
+
+	#if 0
+		if (!result) {
+			debug_printf("%s: failed (ptr = %p, oldval = [%lx, %lx], "
+				"newval = [%lx, %lx])\n",
+				__FUNCTION__, (void*)ptr,
+				old.s.l, old.s.h, neww.s.l, neww.s.h);
+		}
+	#endif
+
+		return result;
+	}
 }
 #endif
 

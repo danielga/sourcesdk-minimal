@@ -54,7 +54,8 @@
 // network vars use memcmp when fields are set.  To ensure proper behavior your
 // object's memory should be initialized to zero.  This happens for entities automatically
 // use this for other classes.
-class CMemZeroOnNew
+// RaphaelIT7: This class is not even used and caused compile errors.....
+/*class CMemZeroOnNew
 {
 public:
 	void *operator new( size_t nSize )
@@ -86,7 +87,7 @@ public:
 			g_pMemAlloc->Free(pData, pFileName, nLine );
 		}
 	}
-};
+};*/
 
 
 inline int InternalCheckDeclareClass( const char *pClassName, const char *pClassNameMatch, void *pTestPtr, void *pBasePtr )

@@ -667,7 +667,7 @@ public:
 	void HideBudgetGroup( int budgetGroupID, bool bHide = true );
 	void HideBudgetGroup( const tchar *pszName, bool bHide = true ) { HideBudgetGroup( BudgetGroupNameToBudgetGroupID( pszName), bHide ); }
 
-	int64 *FindOrCreateCounter( const tchar *pName, CounterGroup_t eCounterGroup=COUNTER_GROUP_DEFAULT  );
+	int *FindOrCreateCounter( const tchar *pName, CounterGroup_t eCounterGroup=COUNTER_GROUP_DEFAULT  );
 	void ResetCounters( CounterGroup_t eCounterGroup );
 	
 	int GetNumCounters( void ) const;
@@ -1425,7 +1425,7 @@ public:
 		*m_pCounter = val; 
 	}
 private:
-	int64 *m_pCounter;
+	int *m_pCounter;
 };
 
 #endif

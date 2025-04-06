@@ -402,7 +402,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName )
 	HMODULE hDLL = 0;
 
 	char alteredFilename[ MAX_PATH ];
-	if ( IsPS3() )
+	if ( IsPlatformPS3() )
 	{
 		// PS3's load module *must* be fed extensions. If the extension is missing, add it. 
 		if (!( strstr(pModuleName, ".sprx") || strstr(pModuleName, ".prx") ))

@@ -682,7 +682,7 @@ public:
 	virtual void			ClientSpawned( edict_t *pPlayer ) = 0;
 
 	// Handles file requests and Lua errors from the client
-	virtual void 			GMOD_ReceiveClientMessage( int unknown, edict_t* pPlayer, bf_read* msg, int unknown2 ) = 0;
+	virtual void 			GMOD_ReceiveClientMessage( int userID, edict_t* pPlayer, bf_read* msg, int bits ) = 0;
 
 	virtual void 			GMOD_ClientConnected( int userID ) = 0;
 

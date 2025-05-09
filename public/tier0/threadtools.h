@@ -1127,7 +1127,11 @@ private:
 class ALIGN8 PLATFORM_CLASS CThreadSpinRWLock
 {
 public:
-	CThreadSpinRWLock()	{ COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
+#ifdef WIN32
+	CThreadSpinRWLock();
+#else
+	CThreadSpinRWLock() { COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
+#endif
 
 	bool TryLockForWrite();
 	bool TryLockForRead();
@@ -1141,7 +1145,11 @@ public:
 	bool TryLockForRead() const { return const_cast<CThreadSpinRWLock *>(this)->TryLockForRead(); }
 	void LockForRead() const { const_cast<CThreadSpinRWLock *>(this)->LockForRead(); }
 	void UnlockRead() const { const_cast<CThreadSpinRWLock *>(this)->UnlockRead(); }
+#ifdef WIN32
+	void LockForWrite() const; // { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
+#else
 	void LockForWrite() const { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
+#endif
 	void UnlockWrite() const { const_cast<CThreadSpinRWLock *>(this)->UnlockWrite(); }
 
 private:
@@ -1748,6 +1756,7 @@ inline bool CThreadSpinRWLock::TryLockForRead()
 	return bSuccess;
 }
 
+#ifndef WIN32
 inline void CThreadSpinRWLock::LockForWrite()
 {
 	const uint32 threadId = ThreadGetCurrentId();
@@ -1760,6 +1769,7 @@ inline void CThreadSpinRWLock::LockForWrite()
 		SpinLockForWrite( threadId );
 	}
 }
+#endif
 
 // read data from a memory address
 template<class T> FORCEINLINE T ReadVolatileMemory( T const *pPtr )

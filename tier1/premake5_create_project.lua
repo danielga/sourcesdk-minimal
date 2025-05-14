@@ -127,6 +127,10 @@ group("SourceSDK")
 			["Header files/*"] = {"../public/tier1/*.h", "../public/*.h", "../common/xbox/*.h"}
 		})
 
+		if TIER0_PROJECTCALLBACK then
+			TIER0_PROJECTCALLBACK()
+		end
+
 		IncludeSDKCommonInternal()
 		IncludeSDKLZMA()
 

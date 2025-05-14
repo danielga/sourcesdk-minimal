@@ -172,6 +172,11 @@ protected:
 
 	// ConVars in this executable use this 'global' to access values.
 	static IConCommandBaseAccessor	*s_pAccessor;
+
+public:
+	inline ConCommandBase* InternalNext() { return m_pNext; };
+	inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; };
+	inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; };
 };
 
 
@@ -568,6 +573,13 @@ FORCEINLINE_CVAR const char *ConVarRef::GetDefault() const
 void ConVar_Register( int nCVarFlag = 0, IConCommandBaseAccessor *pAccessor = NULL );
 void ConVar_Unregister( );
 
+//-----------------------------------------------------------------------------
+// Utility methods when implementing your custom ConVar_Register function.
+//-----------------------------------------------------------------------------
+int* ConVar_GetConVarFlag();
+int* ConVar_GetDLLIdentifier();
+bool* ConVar_GetIsRegistered();
+IConCommandBaseAccessor* ConVar_GetDefaultAccessor();
 
 //-----------------------------------------------------------------------------
 // Utility methods 

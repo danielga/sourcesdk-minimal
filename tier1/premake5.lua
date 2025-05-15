@@ -6,7 +6,7 @@ function IncludeSDKTier1()
 	local _project = project()
 
 	externalincludedirs(current_dir .. "/../public/tier1")
-	links({"tier1", "LZMA"})
+	links({"tier1", "LZMA", "common"})
 
 	filter("system:windows")
 		links({"vstdlib", "ws2_32", "rpcrt4"})

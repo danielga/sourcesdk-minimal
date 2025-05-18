@@ -14,6 +14,7 @@ function IncludeSDKTier0()
 		links("tier0")
 
 	filter({"system:linux", "architecture:x86_64"})
+		buildoptions("-mcx16")
 		links(_project.serverside and "tier0" or "tier0_client")
 
 	filter({})

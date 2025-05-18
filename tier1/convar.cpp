@@ -78,7 +78,7 @@ IConCommandBaseAccessor* ConVar_GetDefaultAccessor()
 	return &s_DefaultAccessor;
 }
 
-#ifndef TIER0_CUSTOMCONVARREGISTER
+#ifndef TIER1_CUSTOMCONVARREGISTER
 //-----------------------------------------------------------------------------
 // Called by the framework to register ConCommandBases with the ICVar
 //-----------------------------------------------------------------------------
@@ -111,7 +111,7 @@ void ConVar_Register( int nCVarFlag, IConCommandBaseAccessor *pAccessor )
 }
 #endif
 
-#ifndef TIER0_CUSTOMCONVARUNREGISTER
+#ifndef TIER1_CUSTOMCONVARUNREGISTER
 void ConVar_Unregister( )
 {
 	if ( !g_pCVar || !s_bRegistered )

@@ -851,7 +851,10 @@ void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 			m_fnChangeCallback( this, pszOldValue, flOldValue );
 		}
 
-		g_pCVar->CallGlobalChangeCallbacks( this, pszOldValue, flOldValue );
+		if ( g_pCVar )
+		{
+			g_pCVar->CallGlobalChangeCallbacks( this, pszOldValue, flOldValue );
+		}
 	}
 
 	stackfree( pszOldValue );

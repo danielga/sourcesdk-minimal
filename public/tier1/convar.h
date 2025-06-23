@@ -264,8 +264,8 @@ protected:
 
 public:
 	inline ConCommandBase* InternalNext() { return m_pNext; };
-	inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; };
-	inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; };
+	static inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; };
+	static inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; };
 };
 
 

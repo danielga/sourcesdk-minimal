@@ -12,7 +12,7 @@
 
 class IPhysics;
 class IPhysicsEnvironment;
-class IPhysicsSurfaceProps;
+class IPhysicsSurfacePropsInternal;
 class IPhysicsCollision;
 class IPhysicsObject;
 class IPhysicsObjectPairHash;
@@ -26,7 +26,7 @@ extern IPhysicsEnvironment	*physenv;
 #ifdef PORTAL
 extern IPhysicsEnvironment	*physenv_main;
 #endif
-extern IPhysicsSurfaceProps *physprops;
+extern IPhysicsSurfacePropsInternal *physprops;
 extern IPhysicsObjectPairHash *g_EntityCollisionHash;
 
 extern const objectparams_t g_PhysDefaultObjectParams;

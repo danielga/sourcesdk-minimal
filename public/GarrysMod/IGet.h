@@ -69,7 +69,6 @@ public:
 	virtual IGMod_Audio* Audio() = 0;
 	virtual const char* VersionTimeStr() = 0;
 	virtual IAnalytics Analytics() = 0;
-	virtual const char* BuildName() = 0;
 	virtual void UpdateRichPresense( const char* status ) = 0;
 	virtual void ResetRichPresense() = 0;
 	virtual void FilterText(const char*, char*, int, ETextFilteringContext, CSteamID) = 0;

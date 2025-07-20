@@ -1539,7 +1539,8 @@ extern "C"
 
 //---------------------------------------------------------
 
-inline void CThreadMutex::Lock()
+// On Windows, these are already packed inside the tier0.lib so we don't define them here as else we would conflict!
+/*inline void CThreadMutex::Lock()
 {
 #ifdef THREAD_MUTEX_TRACING_ENABLED
 		uint thisThreadID = ThreadGetCurrentId();
@@ -1576,7 +1577,7 @@ inline void CThreadMutex::Unlock()
 		}
 	#endif
 	LeaveCriticalSection((CRITICAL_SECTION *)&m_CriticalSection);
-}
+}*/
 
 //---------------------------------------------------------
 

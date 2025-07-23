@@ -53,6 +53,10 @@ public:
 	virtual void GiveAllItems( void );
 	virtual void SetPlayerColor( Vector color );
 	virtual void SetWeaponColor( Vector color );
+
+public:
+	char offset1[1120];
+	CNetworkHandle( CBaseEntity, m_GMOD_Hands );
 };
 
 inline CGMOD_Player *ToCGMOD_Player( CBaseEntity *pEntity )

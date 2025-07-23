@@ -456,6 +456,8 @@ protected:
 	void SetLastHitGroup( int nHitGroup )	{ m_LastHitGroup = nHitGroup; }
 
 public:
+	void* _offsetply1[13];
+
 	CNetworkVar( float, m_flNextAttack );			// cannot attack again until this time
 
 #ifdef GLOWS_ENABLE

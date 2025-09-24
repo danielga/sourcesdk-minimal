@@ -53,7 +53,7 @@ public:
 	//
 	//   - During prediction, this is based on the client's current tick:
 	//     [client_current_tick * tick_interval]
-	float			curtime;
+	double			curtime;
 	
 	// Time spent on last server or client frame (has nothing to do with think intervals)
 	float			frametime;
@@ -64,7 +64,7 @@ public:
 	int				tickcount;
 
 	// Simulation tick interval
-	float			interval_per_tick;
+	double			interval_per_tick;
 
 	// interpolation amount ( client-only ) based on fraction of next tick which has elapsed
 	float			interpolation_amount;

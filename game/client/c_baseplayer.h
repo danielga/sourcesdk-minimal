@@ -310,7 +310,7 @@ public:
 
 	virtual void			SetAnimation( PLAYER_ANIM playerAnim );
 
-	float					GetTimeBase( void ) const;
+	double					GetTimeBase( void ) const;
 	float					GetFinalPredictedTime() const;
 
 	bool					IsInVGuiInputMode() const;

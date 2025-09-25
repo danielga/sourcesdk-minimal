@@ -722,8 +722,8 @@ public:
 	void	ForceOrigin( const Vector &vecOrigin );
 
 	// Bot accessors...
-	void	SetTimeBase( double flTimeBase );
-	double	GetTimeBase() const;
+	void	SetTimeBase( float flTimeBase );
+	float	GetTimeBase() const;
 	void	SetLastUserCommand( const CUserCmd &cmd );
 	const CUserCmd *GetLastUserCommand( void );
 	
@@ -1307,7 +1307,7 @@ inline CBaseEntity *CBasePlayer::GetUseEntity()
 }
 
 // Bot accessors...
-inline void CBasePlayer::SetTimeBase( double flTimeBase ) 
+inline void CBasePlayer::SetTimeBase( float flTimeBase ) 
 { 
 	m_nTickBase = TIME_TO_TICKS( flTimeBase ); 
 }

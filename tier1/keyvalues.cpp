@@ -34,7 +34,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
-static thread_local const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
+static const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
 
 // Statics for the growable string table
 int (*KeyValues::s_pfGetSymbolForString)( const char *name, bool bCreate ) = &KeyValues::GetSymbolForStringClassic;
@@ -42,7 +42,7 @@ const char *(*KeyValues::s_pfGetStringForSymbol)( int symbol ) = &KeyValues::Get
 CKeyValuesGrowableStringTable *KeyValues::s_pGrowableStringTable = NULL;
 
 #define KEYVALUES_TOKEN_SIZE	4096
-static thread_local char s_pTokenBuf[KEYVALUES_TOKEN_SIZE];
+static char s_pTokenBuf[KEYVALUES_TOKEN_SIZE];
 
 
 #define INTERNALWRITE( pData, len ) InternalWrite( filesystem, f, pBuf, pData, len )
@@ -122,7 +122,7 @@ private:
 	const char *m_pFilename;
 	int		m_errorIndex;
 	int		m_maxErrorIndex;
-} thread_local g_KeyValuesErrorStack;
+} g_KeyValuesErrorStack;
 
 
 // a simple helper that creates stack entries as it goes in & out of scope
@@ -209,7 +209,7 @@ public:
 	CUtlVector< kve > keys;
 };
 
-static thread_local CLeakTrack track; // RaphaelIT7: Would probably be better to use a mutex or something... but it would be slower :sob:
+static CLeakTrack track;
 
 #define TRACK_KV_ADD( ptr, name )	track.AddKv( ptr, name )
 #define TRACK_KV_REMOVE( ptr )		track.RemoveKv( ptr )

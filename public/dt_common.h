@@ -139,7 +139,7 @@ public:
 				
 				const char *ToString()
 				{
-					static char text[128];
+					static thread_local char text[128];
 
 					switch ( m_Type )
 					{

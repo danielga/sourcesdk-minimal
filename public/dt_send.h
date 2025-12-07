@@ -266,7 +266,7 @@ public:
 	const char		*m_pVarName;
 	float			m_fHighLowMul;
 	
-private:
+public: // private? Not with me >:3
 
 	int					m_Flags;				// SPROP_ flags.
 

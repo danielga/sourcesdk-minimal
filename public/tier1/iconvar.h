@@ -89,6 +89,10 @@ class CCommand;
 
 #define FCVAR_MATERIAL_THREAD_MASK ( FCVAR_RELOAD_MATERIALS | FCVAR_RELOAD_TEXTURES | FCVAR_MATERIAL_SYSTEM_THREAD )	
 
+// Compatibility layer with x86-64 branch
+// Does nothing in the main branch
+#define FCVAR_RELEASE			0
+
 //-----------------------------------------------------------------------------
 // Called when a ConVar changes value
 // NOTE: For FCVAR_NEVER_AS_STRING ConVars, pOldValue == NULL

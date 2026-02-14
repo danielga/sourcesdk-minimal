@@ -47,7 +47,7 @@
 #endif
 
 #ifdef DX_TO_GL_ABSTRACTION
-	#ifndef WIN32
+	#ifndef _WIN32
 	#define Debugger DebuggerBreak
 	#endif
 	#undef CurrentTime

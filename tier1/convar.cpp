@@ -44,6 +44,21 @@ static int s_nCVarFlag = 0;
 static int s_nDLLIdentifier = -1;	// A unique identifier indicating which DLL this convar came from
 static bool s_bRegistered = false;
 
+int* ConVar_GetConVarFlag()
+{
+	return &s_nCVarFlag;
+}
+
+int* ConVar_GetDLLIdentifier()
+{
+	return &s_nDLLIdentifier;
+}
+
+bool* ConVar_GetIsRegistered()
+{
+	return &s_bRegistered;
+}
+
 class CDefaultAccessor : public IConCommandBaseAccessor
 {
 public:
@@ -56,6 +71,11 @@ public:
 };
 
 static CDefaultAccessor s_DefaultAccessor;
+
+IConCommandBaseAccessor* ConVar_GetDefaultAccessor()
+{
+	return &s_DefaultAccessor;
+}
 
 //-----------------------------------------------------------------------------
 // Called by the framework to register ConCommandBases with the ICVar

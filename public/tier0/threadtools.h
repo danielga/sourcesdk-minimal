@@ -1681,7 +1681,7 @@ private:
 class ALIGN8 PLATFORM_CLASS CThreadSpinRWLock
 {
 public:
-#ifndef WIN32
+#ifndef _WIN32
 	CThreadSpinRWLock()
 	{ 
 		m_lockInfo.m_i32 = 0;
@@ -2456,7 +2456,7 @@ inline bool CThreadSpinRWLock::TryLockForWrite_UnforcedInline()
 #endif
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 FORCEINLINE void CThreadSpinRWLock::LockForWrite()
 {
 	if ( !TryLockForWrite() )
@@ -2503,7 +2503,7 @@ inline bool CThreadSpinRWLock::TryLockForRead_UnforcedInline()
 	return TryLockForRead();
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 FORCEINLINE void CThreadSpinRWLock::LockForRead()
 {
 	if ( !TryLockForRead() )

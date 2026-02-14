@@ -32,8 +32,7 @@
 #endif
 
 // This enables the l4d style of culling all cvars that are not marked FCVAR_RELEASE :
-// RaphaelIT7: Fk this, why would anyone want this in a SDK.
-// #define CULL_ALL_CVARS_NOT_FCVAR_RELEASE
+#define CULL_ALL_CVARS_NOT_FCVAR_RELEASE
 
 //-----------------------------------------------------------------------------
 // Statically constructed list of ConCommandBases, 
@@ -78,7 +77,6 @@ IConCommandBaseAccessor* ConVar_GetDefaultAccessor()
 	return &s_DefaultAccessor;
 }
 
-#ifndef TIER1_CUSTOMCONVARREGISTER
 //-----------------------------------------------------------------------------
 // Called by the framework to register ConCommandBases with the ICVar
 //-----------------------------------------------------------------------------
@@ -109,9 +107,7 @@ void ConVar_Register( int nCVarFlag, IConCommandBaseAccessor *pAccessor )
 
 	ConCommandBase::s_pConCommandBases = NULL;
 }
-#endif
 
-#ifndef TIER1_CUSTOMCONVARUNREGISTER
 void ConVar_Unregister( )
 {
 	if ( !g_pCVar || !s_bRegistered )
@@ -125,7 +121,7 @@ void ConVar_Unregister( )
 	s_nDLLIdentifier = -1;
 	s_bRegistered = false;
 }
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Default constructor

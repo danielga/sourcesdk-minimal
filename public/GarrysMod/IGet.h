@@ -45,8 +45,8 @@ public:
 	virtual IResources* Resources() = 0;
 	virtual IIntroScreen* IntroScreen() = 0;
 	virtual IMaterialSystem* Materials() = 0;
-	virtual IGMHTML* HTML() = 0;
 	virtual IServerAddons* ServerAddons() = 0;
+	virtual IGMHTML* HTML() = 0;
 	virtual ISteamHTTP* SteamHTTP() = 0;
 	virtual ISteamRemoteStorage* SteamRemoteStorage() = 0;
 	virtual ISteamUtils* SteamUtils() = 0;
@@ -71,5 +71,6 @@ public:
 	virtual IAnalytics Analytics() = 0;
 	virtual void UpdateRichPresense( const char* status ) = 0;
 	virtual void ResetRichPresense() = 0;
+	virtual const char* BaseDir() = 0; // ToDo: Check if this is dedicated server only
 	virtual void FilterText(const char*, char*, int, ETextFilteringContext, CSteamID) = 0;
 };

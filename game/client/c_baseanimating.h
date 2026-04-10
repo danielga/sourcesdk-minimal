@@ -293,8 +293,6 @@ public:
 	bool							InitAsClientRagdoll( const matrix3x4_t *pDeltaBones0, const matrix3x4_t *pDeltaBones1, const matrix3x4_t *pCurrentBonePosition, float boneDt, bool bFixedConstraints=false );
 	void							IgniteRagdoll( C_BaseAnimating *pSource );
 	void							TransferDissolveFrom( C_BaseAnimating *pSource );
-	virtual void					SaveRagdollInfo( int numbones, const matrix3x4_t &cameraTransform, CBoneAccessor &pBoneToWorld );
-	virtual bool					RetrieveRagdollInfo( Vector *pos, Quaternion *q );
 	virtual void					Clear( void );
 	void							ClearRagdoll();
 	void							CreateUnragdollInfo( C_BaseAnimating *pRagdoll );
@@ -503,7 +501,6 @@ protected:
 	float							m_flPlaybackRate;
 
 	// Decomposed ragdoll info
-	bool							m_bStoreRagdollInfo;
 	RagdollInfo_t					*m_pRagdollInfo;
 	Vector							m_vecForce;
 	int								m_nForceBone;
@@ -591,7 +588,6 @@ protected:
 	float							m_flCycle;
 	CInterpolatedVar< float >		m_iv_flCycle;
 	float							m_flOldCycle;
-	bool							m_bNoModelParticles;
 
 private:
 	float							m_flOldModelScale;

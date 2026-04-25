@@ -54,8 +54,8 @@ public:
 	IBoneSetup( const CStudioHdr *pStudioHdr, int boneMask, const float poseParameter[], IPoseDebugger *pPoseDebugger = NULL );
 	~IBoneSetup( void );
 	void InitPose( Vector pos[], Quaternion[] );
-	void AccumulatePose( Vector pos[], Quaternion q[], int sequence, float cycle, float flWeight, float flTime, CIKContext *pIKContext );
-	void CalcAutoplaySequences(	Vector pos[], Quaternion q[], float flRealTime, CIKContext *pIKContext );
+	void AccumulatePose( Vector pos[], Quaternion q[], int sequence, float cycle, float flWeight, double flTime, CIKContext *pIKContext );
+	void CalcAutoplaySequences(	Vector pos[], Quaternion q[], double flRealTime, CIKContext *pIKContext );
 	void CalcBoneAdj( Vector pos[], Quaternion q[], const float controllers[] );
 	CStudioHdr *GetStudioHdr();
 private:
@@ -384,7 +384,7 @@ struct bonecacheparams_t
 {
 	CStudioHdr		*pStudioHdr;
 	matrix3x4_t		*pBoneToWorld;
-	float			curtime;
+	double			curtime;
 	int				boneMask;
 };
 
@@ -408,15 +408,15 @@ public:
 	// was constructor, but placement new is messy wrt memdebug - so cast & init instead
 	void			Init( const bonecacheparams_t &params, unsigned int size, short *pStudioToCached, short *pCachedToStudio, int cachedBoneCount );
 	
-	void			UpdateBones( const matrix3x4_t *pBoneToWorld, int numbones, float curtime );
+	void			UpdateBones( const matrix3x4_t *pBoneToWorld, int numbones, double curtime );
 	matrix3x4_t		*GetCachedBone( int studioIndex );
 	void			ReadCachedBones( matrix3x4_t *pBoneToWorld );
 	void			ReadCachedBonePointers( matrix3x4_t **bones, int numbones );
 
-	bool			IsValid( float curtime, float dt = 0.1f );
+	bool			IsValid( double curtime, float dt = 0.1f );
 
 public:
-	float			m_timeValid;
+	double			m_timeValid;
 	int				m_boneMask;
 
 private:

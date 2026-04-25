@@ -109,7 +109,7 @@ public:
 
 	bool UsesPowerOfTwoFrameBufferTexture( void );
 
-	virtual bool	Interpolate( float currentTime );
+	virtual bool	Interpolate( double currentTime );
 	virtual void	Simulate();	
 	virtual void	Release();	
 
@@ -143,7 +143,7 @@ public:
  	virtual int	VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
 
 	// model specific
-	virtual bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
+	virtual bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, double currentTime );
 	virtual void UpdateIKLocks( float currentTime );
 	virtual void CalculateIKLocks( float currentTime );
 	virtual bool ShouldDraw();
@@ -296,7 +296,7 @@ public:
 	virtual void					Clear( void );
 	void							ClearRagdoll();
 	void							CreateUnragdollInfo( C_BaseAnimating *pRagdoll );
-	bool							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, float flTime );
+	bool							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, double flTime );
 	virtual bool					GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
 
 	// For shadows rendering the correct body + sequence...

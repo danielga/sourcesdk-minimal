@@ -103,7 +103,6 @@ public:
 	void  PickDefaultSpawnTeam( void );
 	void  SetupPlayerSoundsByModel( const char *pModelName );
 	const char *GetPlayerModelSoundPrefix( void );
-	int	  GetPlayerModelType( void ) { return m_iPlayerSoundType;	}
 	
 	void  DetonateTripmines( void );
 
@@ -149,7 +148,6 @@ private:
 	int m_iLastWeaponFireUsercmd;
 	int m_iModelType;
 	CNetworkVar( int, m_iSpawnInterpCounter );
-	CNetworkVar( int, m_iPlayerSoundType );
 
 	float m_flNextModelChangeTime;
 	float m_flNextTeamChangeTime;

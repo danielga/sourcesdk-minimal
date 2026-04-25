@@ -115,7 +115,7 @@ private:
 
 	void			RemoveStalePredictedEntities( int last_command_packet );
 	void			RestoreOriginalEntityState( void );
-	void			RunSimulation( int current_command, float curtime, CUserCmd *cmd, C_BasePlayer *localPlayer );
+	void			RunSimulation( int current_command, double curtime, CUserCmd *cmd, C_BasePlayer *localPlayer );
 	void			Untouch( void );
 	void			StorePredictionResults( int predicted_frame );
 	bool			ShouldDumpEntity( C_BaseEntity *ent );

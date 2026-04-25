@@ -54,7 +54,7 @@ public:
 	bool			IsAnyoneInSquadAttacking( void );
 	void			SpeakSentence( int sentenceType );
 
-	float			m_flNextSecondaryAttack;
+	double			m_flNextSecondaryAttack;
 	bool			m_bLoopClockwise;
 
 	CEnergyWave*	m_pEnergyWave;

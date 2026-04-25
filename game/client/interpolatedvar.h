@@ -97,12 +97,12 @@ public:
 		return s_bAllowExtrapolation;
 	}
 
-	static void SetLastTimeStamp(float timestamp)
+	static void SetLastTimeStamp(double timestamp)
 	{
 		s_flLastTimeStamp = timestamp;
 	}
 	
-	static float GetLastTimeStamp()
+	static double GetLastTimeStamp()
 	{
 		return s_flLastTimeStamp;
 	}
@@ -112,11 +112,11 @@ private:
 
 	CInterpolationContext *m_pNext;
 	bool m_bOldAllowExtrapolation;
-	float m_flOldLastTimeStamp;
+	double m_flOldLastTimeStamp;
 
 	static CInterpolationContext *s_pHead;
 	static bool s_bAllowExtrapolation;
-	static float s_flLastTimeStamp;
+	static double s_flLastTimeStamp;
 };
 
 

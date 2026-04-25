@@ -183,7 +183,7 @@ private:
 	CNetworkHandle( CBaseEntity, m_hOwner );				// Player or AI carrying this weapon
 
 	// soonest time Update will call WeaponIdle
-	float					m_flTimeWeaponIdle;							
+	double					m_flTimeWeaponIdle;							
 
 	Activity				m_Activity;
 

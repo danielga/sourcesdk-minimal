@@ -265,9 +265,6 @@ public:
 	CNetworkVar( bool, m_bUnableToFire );
 	CNetworkVar( bool, m_bHasGun );
 
-	CNetworkVar( bool, m_nScannerDisabledWeapons );
-	CNetworkVar( bool, m_nScannerDisabledVehicle );
-
 	// NPC Driver
 	CHandle<CNPC_VehicleDriver>	 m_hNPCDriver;
 	EHANDLE						 m_hKeepUpright;
@@ -293,7 +290,7 @@ public:
 protected:
 	// Entering / Exiting
 	bool		m_bEngineLocked;	// Mapmaker override on whether the vehicle's allowed to be turned on/off
-	bool		m_bLocked;
+	CNetworkVar( bool, m_bLocked );
 	float		m_flMinimumSpeedToEnterExit;
 	CNetworkVar( bool, m_bEnterAnimOn );
 	CNetworkVar( bool, m_bExitAnimOn );

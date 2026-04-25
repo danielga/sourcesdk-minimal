@@ -120,9 +120,9 @@ public:
 	bool				m_bHasWarnedAI;				// whether or not this grenade has issued its DANGER sound to the world sound list yet.
 	CNetworkVar( bool, m_bIsLive );					// Is this grenade live, or can it be picked up?
 	CNetworkVar( float, m_DmgRadius );				// How far do I do damage?
-	CNetworkVar( float, m_flNextAttack );
-	float				m_flDetonateTime;			// Time at which to detonate.
-	float				m_flWarnAITime;				// Time at which to warn the AI
+	CNetworkVar( double, m_flNextAttack );
+	double				m_flDetonateTime;			// Time at which to detonate.
+	double				m_flWarnAITime;				// Time at which to warn the AI
 
 protected:
 

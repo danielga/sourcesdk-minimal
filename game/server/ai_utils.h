@@ -149,7 +149,7 @@ public:
 	bool ShouldShoot() const;
 
 	// When will I shoot next?
-	float NextShotTime() const;
+	double NextShotTime() const;
 
 	// Am I in the middle of a rest period?
 	bool IsInRestInterval() const;
@@ -162,14 +162,14 @@ public:
 	void OnFiredWeapon();
 
 	// Causes us to potentially delay our shooting time
-	void FireNoEarlierThan( float flTime );
+	void FireNoEarlierThan( double flTime );
 
 	// Prevent/Allow shooting
 	void EnableShooting( void );
 	void DisableShooting( void );
 	
 private:
-	float	m_flNextShotTime;
+	double	m_flNextShotTime;
 	bool	m_bInRestInterval;
 	unsigned short	m_nBurstShotsRemaining;
 	unsigned short	m_nMinBurstShots, m_nMaxBurstShots;

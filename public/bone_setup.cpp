@@ -2307,12 +2307,12 @@ void IBoneSetup::InitPose( Vector pos[], Quaternion q[] )
 	::InitPose( m_pBoneSetup->m_pStudioHdr, pos, q, m_pBoneSetup->m_boneMask );
 }
 
-void IBoneSetup::AccumulatePose( Vector pos[], Quaternion q[], int sequence, float cycle, float flWeight, float flTime, CIKContext *pIKContext )
+void IBoneSetup::AccumulatePose( Vector pos[], Quaternion q[], int sequence, float cycle, float flWeight, double flTime, CIKContext *pIKContext )
 {
 	m_pBoneSetup->AccumulatePose( pos, q, sequence, cycle, flWeight, flTime, pIKContext );
 }
 
-void IBoneSetup::CalcAutoplaySequences(	Vector pos[], Quaternion q[], float flRealTime, CIKContext *pIKContext )
+void IBoneSetup::CalcAutoplaySequences(	Vector pos[], Quaternion q[], double flRealTime, CIKContext *pIKContext )
 {
 	m_pBoneSetup->CalcAutoplaySequences( pos, q, flRealTime, pIKContext );
 }
@@ -2396,7 +2396,7 @@ void CBoneSetup::AccumulatePose(
 	int sequence, 
 	float cycle,
 	float flWeight,
-	float flTime,
+	double flTime,
 	CIKContext *pIKContext
 	)
 {
@@ -4460,7 +4460,7 @@ void CIKContext::SolveLock(
 void CBoneSetup::CalcAutoplaySequences(
    Vector pos[], 
    Quaternion q[], 
-   float flRealTime,
+   double flRealTime,
    CIKContext *pIKContext
    )
 {

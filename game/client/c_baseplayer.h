@@ -310,8 +310,8 @@ public:
 
 	virtual void			SetAnimation( PLAYER_ANIM playerAnim );
 
-	float					GetTimeBase( void ) const;
-	float					GetFinalPredictedTime() const;
+	double					GetTimeBase( void ) const;
+	double					GetFinalPredictedTime() const;
 
 	bool					IsInVGuiInputMode() const;
 	bool					IsInViewModelVGuiInputMode() const;
@@ -379,7 +379,7 @@ public:
 	void					UpdateFogController( void );
 	void					UpdateFogBlend( void );
 
-	float					GetFOVTime( void ){ return m_flFOVTime; }
+	double					GetFOVTime( void ){ return m_flFOVTime; }
 
 	virtual void			OnAchievementAchieved( int iAchievement ) {}
 	
@@ -418,13 +418,10 @@ public:
 	// Player FOV values
 	int						m_iFOV;				// field of view
 	int						m_iFOVStart;		// starting value of the FOV changing over time (client only)
-	float					m_flFOVTime;		// starting time of the FOV zoom
+	double					m_flFOVTime;		// starting time of the FOV zoom
 	int						m_iDefaultFOV;		// default FOV if no other zooms are occurring
 	EHANDLE					m_hZoomOwner;		// This is a pointer to the entity currently controlling the player's zoom
 												// Only this entity can change the zoom state once it has ownership
-
-	// For weapon prediction
-	bool			m_fOnTarget;		//Is the crosshair on a target?
 	
 	char			m_szAnimExtension[32];
 
@@ -585,7 +582,7 @@ protected:
 	virtual bool IsDucked( void ) const { return m_Local.m_bDucked; }
 	virtual bool IsDucking( void ) const { return m_Local.m_bDucking; }
 	virtual float GetFallVelocity( void ) { return m_Local.m_flFallVelocity; }
-	bool ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOut, float curtimeOffset );
+	bool ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOut, double curtimeOffset );
 
 	float m_flLaggedMovementValue;
 
@@ -596,8 +593,6 @@ protected:
 	float m_flPredictionErrorTime;
 	
 	Vector m_vecPreviouslyPredictedOrigin; // Used to determine if non-gamemovement game code has teleported, or tweaked the player's origin
-
-	char m_szLastPlaceName[MAX_PLACE_NAME_LENGTH];	// received from the server
 
 	// Texture names and surface data, used by CGameMovement
 	int				m_surfaceProps;
@@ -630,8 +625,6 @@ private:
 	StepSoundCache_t		m_StepSoundCache[ 2 ];
 
 public:
-
-	const char *GetLastKnownPlaceName( void ) const	{ return m_szLastPlaceName; }	// return the last nav place name the player occupied
 
 	float GetLaggedMovementValue( void ){ return m_flLaggedMovementValue;	}
 	bool  ShouldGoSouth( Vector vNPCForward, Vector vNPCRight ); //Such a bad name.

@@ -25,8 +25,8 @@ public:
 					DECLARE_SERVERCLASS();
 
 	// The client shoots a ray out and starts creating fire where it hits.
-	CNetworkVector( m_vOrigin );
-	CNetworkVector( m_vDirection );
+	Vector m_vOrigin;
+	Vector m_vDirection;
 };
 
 

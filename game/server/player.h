@@ -603,8 +603,6 @@ public:
 
 	virtual void DoMuzzleFlash();
 
-	const char *GetLastKnownPlaceName( void ) const	{ return m_szLastPlaceName; }	// return the last nav place name the player occupied
-
 	virtual void			CheckChatText( char *p, int bufsize ) {}
 
 	virtual void			CreateRagdollEntity( void ) { return; }
@@ -668,7 +666,6 @@ public:
 	inline void SetActivity( Activity eActivity ) { m_Activity = eActivity; }
 	bool	IsPlayerLockedInPlace() const { return m_iPlayerLocked != 0; }
 	bool	IsObserver() const		{ return (m_afPhysicsFlags & PFLAG_OBSERVER) != 0; }
-	bool	IsOnTarget() const		{ return m_fOnTarget; }
 	float	MuzzleFlashTime() const { return m_flFlashTime; }
 	float	PlayerDrownTime() const	{ return m_AirFinished; }
 
@@ -722,8 +719,8 @@ public:
 	void	ForceOrigin( const Vector &vecOrigin );
 
 	// Bot accessors...
-	void	SetTimeBase( float flTimeBase );
-	float	GetTimeBase() const;
+	void	SetTimeBase( double flTimeBase );
+	double	GetTimeBase() const;
 	void	SetLastUserCommand( const CUserCmd &cmd );
 	const CUserCmd *GetLastUserCommand( void );
 	
@@ -870,8 +867,6 @@ public:
 	int						m_afButtonDisabled;	// A mask of input flags that are cleared automatically
 	int						m_afButtonForced;	// These are forced onto the player's inputs
 
-	CNetworkVar( bool, m_fOnTarget );		//Is the crosshair on a target?
-
 	char					_offsetply3[5];
 	char					m_szAnimExtension[32];
 
@@ -886,7 +881,7 @@ public:
 
 	void		SetPreviouslyPredictedOrigin( const Vector &vecAbsOrigin );
 	const Vector &GetPreviouslyPredictedOrigin() const;
-	float		GetFOVTime( void ){ return m_flFOVTime; }
+	double		GetFOVTime( void ){ return m_flFOVTime; }
 
 	void		AdjustDrownDmg( int nAmount );
 
@@ -949,10 +944,13 @@ protected:
 	float					m_flDeathAnimTime;	// the time at which the player finished their death anim (used in PlayerDeathThink() and ShouldTransmit())
 
 	CNetworkVar( int, m_iObserverMode );	// if in spectator mode != 0
+	
+	// RaphaelIT7: GMod uses 16 bits for networking
 	CNetworkVar( int,	m_iFOV );			// field of view
 	CNetworkVar( int,	m_iDefaultFOV );	// default field of view
 	CNetworkVar( int,	m_iFOVStart );		// What our FOV started at
-	CNetworkVar( float,	m_flFOVTime );		// Time our FOV change started
+	
+	CNetworkVar( double,	m_flFOVTime );		// Time our FOV change started
 	
 	int						m_iObserverLastMode; // last used observer mode
 	CNetworkHandle( CBaseEntity, m_hObserverTarget );	// entity handle to m_iObserverTarget
@@ -1168,8 +1166,6 @@ protected:
 	Vector m_vecPreviouslyPredictedOrigin; // Used to determine if non-gamemovement game code has teleported, or tweaked the player's origin
 	int		m_nBodyPitchPoseParam;
 
-	CNetworkString( m_szLastPlaceName, MAX_PLACE_NAME_LENGTH );
-
 	char m_szNetworkIDString[MAX_NETWORKID_LENGTH];
 	CPlayerInfo m_PlayerInfo;
 
@@ -1307,7 +1303,7 @@ inline CBaseEntity *CBasePlayer::GetUseEntity()
 }
 
 // Bot accessors...
-inline void CBasePlayer::SetTimeBase( float flTimeBase ) 
+inline void CBasePlayer::SetTimeBase( double flTimeBase ) 
 { 
 	m_nTickBase = TIME_TO_TICKS( flTimeBase ); 
 }

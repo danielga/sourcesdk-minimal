@@ -125,8 +125,6 @@ public:
 	string_t	m_NoiseArrivedClosed;		//End sound
 	string_t	m_ChainTarget;		///< Entity name to pass Touch and Use events to
 
-	CNetworkVar( float, m_flWaveHeight );
-
 	// Outputs
 	COutputEvent m_OnBlockedClosing;		// Triggered when the door becomes blocked while closing.
 	COutputEvent m_OnBlockedOpening;		// Triggered when the door becomes blocked while opening.

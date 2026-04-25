@@ -140,8 +140,8 @@ protected:
 	virtual Vector WorldBarrelPosition( void );
 	void		UpdateMatrix( void );
 
-	float GetNextAttack() const { return m_flNextAttack; }
-	virtual void SetNextAttack( float flWait ) { m_flNextAttack = flWait; }
+	double GetNextAttack() const { return m_flNextAttack; }
+	virtual void SetNextAttack( double flWait ) { m_flNextAttack = flWait; }
 
 	virtual void Fire( int bulletCount, const Vector &barrelEnd, const Vector &forward, CBaseEntity *pAttacker, bool bIgnoreSpread );
 	void		TankTrace( const Vector &vecStart, const Vector &vecForward, const Vector &vecSpread, trace_t &tr );
@@ -261,7 +261,7 @@ private:
 	// to the man point. If he's en-route, m_bNPCInRoute will be true. 
 	CHandle<CBaseCombatCharacter> m_hController;
 
-	float					m_flNextAttack;
+	double					m_flNextAttack;
 	Vector					m_vecControllerUsePos;
 	
 	float					m_yawCenter;	// "Center" yaw

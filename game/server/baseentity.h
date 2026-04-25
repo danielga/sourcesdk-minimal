@@ -792,7 +792,7 @@ public:
 	CNetworkVar( unsigned char, m_nRenderFX );
 	// was pev->rendermode
 	CNetworkVar( unsigned char, m_nRenderMode );
-	CNetworkVar( short, m_nModelIndex );
+	CNetworkVar( short, m_nModelIndex ); // RaphaelIT7: Only 14 bits are used for networking!
 	
 #ifdef TF_DLL
 	CNetworkArray( int, m_nModelIndexOverrides, MAX_VISION_MODES ); // used to override the base model index on the client if necessary
@@ -1154,7 +1154,7 @@ public:
 	CNetworkVarForDerived( int, m_iMaxHealth ); // CBaseEntity doesn't care about changes to this variable, but there are derived classes that do.
 	CNetworkVarForDerived( int, m_iHealth );
 
-	CNetworkVarForDerived( char, m_lifeState );
+	CNetworkVarForDerived( unsigned char, m_lifeState ); // RaphaelIT7: GMod uses 3 bits for networking
 	CNetworkVarForDerived( char , m_takedamage );
 
 	// Damage filtering

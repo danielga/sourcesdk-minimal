@@ -1,9 +1,14 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose: net_chan.h
 //
-// $NoKeywords: $
-//===========================================================================//
+//=============================================================================//
+
+#ifndef NET_CHAN_H
+#define NET_CHAN_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #include "net.h"
 #include "netadr.h"
@@ -22,9 +27,24 @@
 #define FLOW_INTERVAL 0.25F
 
 
-#define NET_FRAMES_BACKUP	64		// must be power of 2
+#define NET_FRAMES_BACKUP	64	// must be power of 2
 #define NET_FRAMES_MASK		(NET_FRAMES_BACKUP-1)
-#define MAX_SUBCHANNELS		8		// we have 8 alternative send&wait bits
+
+// RaphaelIT7: log function for constexpr numbers - mainly used to figure out how many bits for networking are needed for a limit
+constexpr int RequiredBits(int v)
+{
+    int bits = 0;
+    while ((1 << bits) < v)
+        ++bits;
+
+    return bits;
+}
+
+constexpr int MAX_SUBCHANNELS = 16;	// we have x alternative send&wait channels
+constexpr int SUBCHANNEL_BITS = RequiredBits(MAX_SUBCHANNELS);
+
+constexpr int MAX_FRAGMENTS_BITS = 5;	// How many fragments we can send at once
+constexpr int MAX_FRAGMENTS = (1 << MAX_FRAGMENTS_BITS) - 1;  // Maximum number of fragments we can safely transmit. -1 as else we would go over MAX_FRAGMENTS_BITS
 
 #define SUBCHANNEL_FREE		0	// subchannel is free to use
 #define SUBCHANNEL_TOSEND	1	// subchannel has data, but not send yet
@@ -50,7 +70,7 @@ public: // netchan structurs
 		bool			asTCP;			// send as TCP stream
 		int				numFragments;	// number of total fragments
 		int				ackedFragments; // number of fragments send & acknowledged
-		int				pendingFragments; // number of fragments send, but not acknowledged yet
+		int				pendingFragments; // number of fragments send, but not acknowledged yet. Filled with junk in the m_ReceiveList as it's fully unused there
 	} dataFragments_t;
 
 	struct subChannel_s
@@ -256,7 +276,7 @@ public:
 	int			m_nOutSequenceNr;
 	// last received incoming sequnec number
 	int			m_nInSequenceNr;
-	// last received acknowledge outgoing sequnce number
+	// last received acknowledge outgoing sequence number
 	int			m_nOutSequenceNrAck;
 	
 	// state of outgoing reliable data (0/1) flip flop used for loss detection
@@ -291,7 +311,7 @@ public:
 	// For timeouts.  Time last message was received.
 	float		last_received;		
 	// Time when channel was connected.
-	double      connect_time;       
+	double	  connect_time;	   
 
 	// Bandwidth choke
 	// Bytes per second
@@ -304,7 +324,7 @@ public:
 	subChannel_s					m_SubChannels[MAX_SUBCHANNELS];
 
 	unsigned int	m_FileRequestCounter;	// increasing counter with each file request
-	bool			m_bFileBackgroundTranmission; // if true, only send 1 fragment per packet
+	bool			m_bFileBackgroundTransmission; // if true, only send 1 fragment per packet
 	bool			m_bUseCompression;	// if true, larger reliable data will be bzip compressed
 	
 	// TCP stream state maschine:
@@ -344,3 +364,6 @@ public:
 
 	int							m_nProtocolVersion;		// PROTOCOL_VERSION if we're not playing a demo - otherwise, whatever was in the demo header's networkprotocol if the CNetChan instance was created by a demo player.
 };
+
+
+#endif // NET_CHAN_H

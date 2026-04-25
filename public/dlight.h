@@ -46,7 +46,7 @@ struct dlight_t
 	Vector	origin;
 	float	radius;
 	ColorRGBExp32	color;		// Light color with exponent
-	float	die;				// stop lighting after this time
+	double	die;				// stop lighting after this time
 	float	decay;				// drop this each second
 	float	minlight;			// don't add when contributing less
 	int		key;

@@ -67,7 +67,7 @@ public: // IServer implementation
 	virtual int		GetUDPPort( void ) const { return NET_GetUDPPort( m_Socket );	}
 	virtual IClient	*GetClient( int index ) { return m_Clients[index]; } // returns interface to client 
 	virtual int		GetClientCount() const { return m_Clients.Count(); } // for iteration;
-	virtual float	GetTime( void ) const;
+	virtual double	GetTime( void ) const;
 	virtual int		GetTick( void ) const { return m_nTickCount; }
 	virtual float	GetTickInterval( void ) const { return m_flTickInterval; }
 	virtual const char *GetName( void ) const;

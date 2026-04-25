@@ -251,10 +251,10 @@ public:
 	virtual const model_t		*LoadModel( const char *pName, bool bProp = false ) = 0;
 
 	// Get accurate, sub-frame clock ( profiling use )
-	virtual float				Time( void ) = 0; 
+	virtual double				Time( void ) = 0; 
 
 	// Get the exact server timesstamp ( server time ) from the last message received from the server
-	virtual float				GetLastTimeStamp( void ) = 0; 
+	virtual double				GetLastTimeStamp( void ) = 0; 
 
 	// Given a CAudioSource (opaque pointer), retrieve the underlying CSentence object ( stores the words, phonemes, and close
 	//  captioning data )

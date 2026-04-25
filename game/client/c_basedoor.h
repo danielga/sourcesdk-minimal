@@ -24,9 +24,6 @@ public:
 
 	C_BaseDoor( void );
 	~C_BaseDoor( void );
-
-public:
-	float		m_flWaveHeight;
 };
 
 #endif // C_BASEDOOR_H

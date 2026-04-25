@@ -184,8 +184,8 @@ public:
 	void			CheckFlushNameChange( bool bShowStatusMessage = false );
 	bool			IsNameChangeOnCooldown( bool bShowStatusMessage = false );
 
-	void			SetPlayerNameLocked( bool bValue ) { m_bPlayerNameLocked = bValue; }
-	bool			IsPlayerNameLocked( void ) { return m_bPlayerNameLocked; }
+	// void			SetPlayerNameLocked( bool bValue ) { m_bPlayerNameLocked = bValue; }
+	// bool			IsPlayerNameLocked( void ) { return m_bPlayerNameLocked; }
 
 	void			SetSignOnState( int ); // Why
 
@@ -205,12 +205,12 @@ public:
 	char			m_Name[MAX_PLAYER_NAME_LENGTH];			// for printing to other people
 	char			m_GUID[SIGNED_GUID_LEN + 1]; // the clients CD key
 
-/*#if ARCHITECTURE_IS_X86_64
+#if PLATFORM_64BITS
 	// CNETMsg_PlayerAvatarData_t m_msgAvatarData;	// Client avatar
 	// RaphaelIT7: This are the offsets for the variable above. Why not add it directly? Because it depends on sooo much it would be a pain to do. Maybe if I'm bored I'll do it.
 	int _offset[23];
 	char _offset2;
-#endif*/
+#endif
 
 	CSteamID		m_SteamID;			// This is valid when the client is authenticated
 	
@@ -219,7 +219,9 @@ public:
 
 	KeyValues		*m_ConVars;			// stores all client side convars
 	bool			m_bConVarsChanged;	// true if convars updated and not changes process yet
+#if PLATFORM_64BITS
 	bool			m_bInitialConVarsSet; // Has the client sent their initial set of convars
+#endif
 	bool			m_bSendServerInfo;	// true if we need to send server info packet to start connect
 	CBaseServer		*m_Server;			// pointer to server object
 	bool			m_bIsHLTV;			// if this a HLTV proxy ?
@@ -255,10 +257,10 @@ public:
 	// until we get an ack from them on this packet.
 	// This is for 3 reasons:
 	// 1. A client requesting a nodelta packet means they're screwed so no point in deluging them with data.
-	//    Better to send the uncompressed data at a slow rate until we hear back from them (if at all).
+	//	Better to send the uncompressed data at a slow rate until we hear back from them (if at all).
 	// 2. Since the nodelta packet deletes all client entities, we can't ever delta from a packet previous to it.
 	// 3. It can eat up a lot of CPU on the server to keep building nodelta packets while waiting for
-	//    a client to get back on its feet.
+	//	a client to get back on its feet.
 	int				m_nForceWaitForTick;
 	
 	bool			m_bFakePlayer;		// JAC: This client is a fake player controlled by the game DLL
@@ -269,7 +271,7 @@ public:
 
 	// Time when last name change was applied
 	double			m_fTimeLastNameChange;
-	bool			m_bPlayerNameLocked;
+	// bool			m_bPlayerNameLocked;
 
 	// Does this client have a name change that is pending?
 	// (Their 'name' convar differs from our value for their client name.)
@@ -279,16 +281,13 @@ public:
 	// when it is sent out to the client.  overflow is tolerated.
 
 	// Time when we should send next world state update ( datagram )
-	double         m_fNextMessageTime;   
+	double		 m_fNextMessageTime;   
 	// Default time to wait for next message
-	float          m_fSnapshotInterval;  
+	float		  m_fSnapshotInterval;  
 
-	enum
-	{
-		SNAPSHOT_SCRATCH_BUFFER_SIZE = 160000,
-	};
+	static constexpr uint32_t SNAPSHOT_SCRATCH_BUFFER_SIZE = 1048576;
 
-	unsigned int		m_SnapshotScratchBuffer[ SNAPSHOT_SCRATCH_BUFFER_SIZE / 4 ];
+	CSteamID m_OwnerSteamID; // Verify: Could be owner steamid for Player:OwnerSteamID64()
 
 private:
 	void				StartTrace( bf_write &msg );
@@ -297,8 +296,8 @@ private:
 
 	int					m_iTracing; // 0 = not active, 1 = active for this frame, 2 = forced active
 	CNetworkStatTrace	m_Trace;
+
+	void* __offset2[4];
 };
-
-
 
 #endif // BASECLIENT_H

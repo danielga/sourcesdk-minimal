@@ -1541,12 +1541,12 @@ public:
 	virtual bool		UpdateEnemyMemory( CBaseEntity *pEnemy, const Vector &position, CBaseEntity *pInformer = NULL );
 	virtual float		GetReactionDelay( CBaseEntity *pEnemy );
 	
-	void				SetLastAttackTime( float time)	{ m_flLastAttackTime = time; }
+	void				SetLastAttackTime( double time)	{ m_flLastAttackTime = time; }
 
-	float				GetLastAttackTime() const { return m_flLastAttackTime; }
-	float				GetLastDamageTime() const { return m_flLastDamageTime; }
-	float				GetLastPlayerDamageTime() const { return m_flLastPlayerDamageTime; }
-	float				GetLastEnemyTime() const { return m_flLastEnemyTime; }
+	double				GetLastAttackTime() const { return m_flLastAttackTime; }
+	double				GetLastDamageTime() const { return m_flLastDamageTime; }
+	double				GetLastPlayerDamageTime() const { return m_flLastPlayerDamageTime; }
+	double				GetLastEnemyTime() const { return m_flLastEnemyTime; }
 
 	// Set up the shot regulator based on the equipped weapon
 	virtual void		OnChangeActiveWeapon( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon );
@@ -1576,12 +1576,12 @@ protected:
 	EHANDLE				m_hEnemyOccluder;	// The entity my enemy is hiding behind.
 
 	float				m_flSumDamage;				// How much consecutive damage I've received
-	float				m_flLastDamageTime;			// Last time I received damage
-	float				m_flLastPlayerDamageTime;	// Last time I received damage from the player
-	float				m_flLastSawPlayerTime;		// Last time I saw the player
-	float				m_flLastAttackTime;			// Last time that I attacked my current enemy
-	float				m_flLastEnemyTime;
-	float				m_flNextWeaponSearchTime;	// next time to search for a better weapon
+	double				m_flLastDamageTime;			// Last time I received damage
+	double				m_flLastPlayerDamageTime;	// Last time I received damage from the player
+	double				m_flLastSawPlayerTime;		// Last time I saw the player
+	double				m_flLastAttackTime;			// Last time that I attacked my current enemy
+	double				m_flLastEnemyTime;
+	double				m_flNextWeaponSearchTime;	// next time to search for a better weapon
 	string_t			m_iszPendingWeapon;			// THe NPC should create and equip this weapon.
 	bool				m_bIgnoreUnseenEnemies;
 
@@ -2106,22 +2106,10 @@ public:
 	CNetworkVar( bool,  m_bFadeCorpse );
 	CNetworkVar( bool,  m_bImportanRagdoll );
 
-	CNetworkVar( bool,  m_bSpeedModActive );
-	CNetworkVar( int,   m_iSpeedModRadius );
-	CNetworkVar( int,   m_iSpeedModSpeed );
-	CNetworkVar( float, m_flTimePingEffect );			// Display the pinged effect until this time
-
-	void				InputActivateSpeedModifier( inputdata_t &inputdata ) { m_bSpeedModActive = true; }
-	void				InputDisableSpeedModifier( inputdata_t &inputdata ) { m_bSpeedModActive = false; }
-	void				InputSetSpeedModifierRadius( inputdata_t &inputdata );
-	void				InputSetSpeedModifierSpeed( inputdata_t &inputdata );
-
 	virtual bool		ShouldProbeCollideAgainstEntity( CBaseEntity *pEntity );
 
 	bool				m_bPlayerAvoidState;
 	void				GetPlayerAvoidBounds( Vector *pMins, Vector *pMaxs );
-
-	void				StartPingEffect( void ) { m_flTimePingEffect = gpGlobals->curtime + 2.0f; DispatchUpdateTransmitState(); }
 };
 
 

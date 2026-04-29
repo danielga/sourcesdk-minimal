@@ -30,11 +30,12 @@
 #include "utlqueue.h"
 #include "UtlSortVector.h"
 #include "convar.h"
+#include <memory>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
-static const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
+static thread_local const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
 
 // Statics for the growable string table
 int (*KeyValues::s_pfGetSymbolForString)( const char *name, bool bCreate ) = &KeyValues::GetSymbolForStringClassic;
@@ -42,7 +43,7 @@ const char *(*KeyValues::s_pfGetStringForSymbol)( int symbol ) = &KeyValues::Get
 CKeyValuesGrowableStringTable *KeyValues::s_pGrowableStringTable = NULL;
 
 #define KEYVALUES_TOKEN_SIZE	4096
-static char s_pTokenBuf[KEYVALUES_TOKEN_SIZE];
+static thread_local std::unique_ptr<char[]> s_pTokenBuf(new char[KEYVALUES_TOKEN_SIZE]);
 
 
 #define INTERNALWRITE( pData, len ) InternalWrite( filesystem, f, pBuf, pData, len )
@@ -122,7 +123,7 @@ private:
 	const char *m_pFilename;
 	int		m_errorIndex;
 	int		m_maxErrorIndex;
-} g_KeyValuesErrorStack;
+} thread_local g_KeyValuesErrorStack;
 
 
 // a simple helper that creates stack entries as it goes in & out of scope
@@ -209,7 +210,7 @@ public:
 	CUtlVector< kve > keys;
 };
 
-static CLeakTrack track;
+static thread_local CLeakTrack track; // RaphaelIT7: Would probably be better to use a mutex or something... but it would be slower :sob:
 
 #define TRACK_KV_ADD( ptr, name )	track.AddKv( ptr, name )
 #define TRACK_KV_REMOVE( ptr )		track.RemoveKv( ptr )
@@ -559,22 +560,24 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 	if ( !c )
 		return NULL;
 
+	char* pTokenBuf = s_pTokenBuf.get();
+
 	// read quoted strings specially
 	if ( *c == '\"' )
 	{
 		wasQuoted = true;
 		buf.GetDelimitedString( m_bHasEscapeSequences ? GetCStringCharConversion() : GetNoEscCharConversion(), 
-			s_pTokenBuf, KEYVALUES_TOKEN_SIZE );
-		return s_pTokenBuf;
+			pTokenBuf, KEYVALUES_TOKEN_SIZE );
+		return pTokenBuf;
 	}
 
 	if ( *c == '{' || *c == '}' )
 	{
 		// it's a control char, just add this one char and stop reading
-		s_pTokenBuf[0] = *c;
-		s_pTokenBuf[1] = 0;
+		pTokenBuf[0] = *c;
+		pTokenBuf[1] = 0;
 		buf.SeekGet( CUtlBuffer::SEEK_CURRENT, 1 );
-		return s_pTokenBuf;
+		return pTokenBuf;
 	}
 
 	// read in the token until we hit a whitespace or a control character
@@ -605,7 +608,7 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 
 		if (nCount < (KEYVALUES_TOKEN_SIZE-1) )
 		{
-			s_pTokenBuf[nCount++] = *c;	// add char to buffer
+			pTokenBuf[nCount++] = *c;	// add char to buffer
 		}
 		else if ( !bReportedError )
 		{
@@ -615,8 +618,8 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 
 		buf.SeekGet( CUtlBuffer::SEEK_CURRENT, 1 );
 	}
-	s_pTokenBuf[ nCount ] = 0;
-	return s_pTokenBuf;
+	pTokenBuf[ nCount ] = 0;
+	return pTokenBuf;
 }
 #pragma warning (default:4706)
 

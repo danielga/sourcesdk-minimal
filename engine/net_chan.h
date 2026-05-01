@@ -1,14 +1,11 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: net_chan.h
+// Purpose: 
 //
-//=============================================================================//
+// $NoKeywords: $
+//===========================================================================//
 
-#ifndef NET_CHAN_H
-#define NET_CHAN_H
-#ifdef _WIN32
 #pragma once
-#endif
 
 #include "net.h"
 #include "netadr.h"
@@ -27,24 +24,16 @@
 #define FLOW_INTERVAL 0.25F
 
 
-#define NET_FRAMES_BACKUP	64	// must be power of 2
+#define NET_FRAMES_BACKUP	64		// must be power of 2
 #define NET_FRAMES_MASK		(NET_FRAMES_BACKUP-1)
 
-// RaphaelIT7: log function for constexpr numbers - mainly used to figure out how many bits for networking are needed for a limit
-constexpr int RequiredBits(int v)
-{
-    int bits = 0;
-    while ((1 << bits) < v)
-        ++bits;
 
-    return bits;
-}
+#define MAX_SUBCHANNELS_BITS	4
+#define MAX_SUBCHANNELS			(1 << MAX_SUBCHANNELS_BITS)		// we have N alternative send&wait channels
 
-constexpr int MAX_SUBCHANNELS = 16;	// we have x alternative send&wait channels
-constexpr int SUBCHANNEL_BITS = RequiredBits(MAX_SUBCHANNELS);
+#define MAX_FRAGMENTS_BITS		5								// How many fragments we can send at once
+#define MAX_FRAGMENTS			(1 << MAX_FRAGMENTS_BITS) - 1	// Maximum number of fragments we can safely transmit. -1 as else we would go over MAX_FRAGMENTS_BITS
 
-constexpr int MAX_FRAGMENTS_BITS = 5;	// How many fragments we can send at once
-constexpr int MAX_FRAGMENTS = (1 << MAX_FRAGMENTS_BITS) - 1;  // Maximum number of fragments we can safely transmit. -1 as else we would go over MAX_FRAGMENTS_BITS
 
 #define SUBCHANNEL_FREE		0	// subchannel is free to use
 #define SUBCHANNEL_TOSEND	1	// subchannel has data, but not send yet
@@ -311,7 +300,7 @@ public:
 	// For timeouts.  Time last message was received.
 	float		last_received;		
 	// Time when channel was connected.
-	double	  connect_time;	   
+	double      connect_time;	   
 
 	// Bandwidth choke
 	// Bytes per second
@@ -364,6 +353,3 @@ public:
 
 	int							m_nProtocolVersion;		// PROTOCOL_VERSION if we're not playing a demo - otherwise, whatever was in the demo header's networkprotocol if the CNetChan instance was created by a demo player.
 };
-
-
-#endif // NET_CHAN_H

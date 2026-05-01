@@ -83,7 +83,6 @@ public:
 	virtual void SetFloat( const char *keyName, float value ) = 0;
 	virtual void SetString( const char *keyName, const char *value ) = 0;
 
-	// Gmod custom one
 	virtual KeyValues* GetKeyValues() = 0;
 };
 

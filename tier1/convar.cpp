@@ -29,6 +29,8 @@
 #define ALLOW_DEVELOPMENT_CVARS
 #endif
 
+
+
 //-----------------------------------------------------------------------------
 // Statically constructed list of ConCommandBases, 
 // used for registering them with the ICVar interface
@@ -72,7 +74,6 @@ IConCommandBaseAccessor* ConVar_GetDefaultAccessor()
 	return &s_DefaultAccessor;
 }
 
-#ifndef TIER1_CUSTOMCONVARREGISTER
 //-----------------------------------------------------------------------------
 // Called by the framework to register ConCommandBases with the ICVar
 //-----------------------------------------------------------------------------
@@ -101,9 +102,7 @@ void ConVar_Register( int nCVarFlag, IConCommandBaseAccessor *pAccessor )
 	g_pCVar->ProcessQueuedMaterialThreadConVarSets();
 	ConCommandBase::s_pConCommandBases = NULL;
 }
-#endif
 
-#ifndef TIER1_CUSTOMCONVARUNREGISTER
 void ConVar_Unregister( )
 {
 	if ( !g_pCVar || !s_bRegistered )
@@ -114,7 +113,7 @@ void ConVar_Unregister( )
 	s_nDLLIdentifier = -1;
 	s_bRegistered = false;
 }
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Default constructor

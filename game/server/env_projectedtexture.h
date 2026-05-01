@@ -37,7 +37,6 @@ public:
 	void InputSetLightOnlyTarget( inputdata_t &inputdata );
 	void InputSetLightWorld( inputdata_t &inputdata );
 	void InputSetEnableShadows( inputdata_t &inputdata );
-//	void InputSetLightColor( inputdata_t &inputdata );
 	void InputSetSpotlightTexture( inputdata_t &inputdata );
 	void InputSetAmbient( inputdata_t &inputdata );
 

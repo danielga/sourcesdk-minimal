@@ -1127,7 +1127,7 @@ private:
 class ALIGN8 PLATFORM_CLASS CThreadSpinRWLock
 {
 public:
-#ifdef WIN32
+#ifdef _WIN32
 	CThreadSpinRWLock();
 #else
 	CThreadSpinRWLock() { COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
@@ -1145,7 +1145,7 @@ public:
 	bool TryLockForRead() const { return const_cast<CThreadSpinRWLock *>(this)->TryLockForRead(); }
 	void LockForRead() const { const_cast<CThreadSpinRWLock *>(this)->LockForRead(); }
 	void UnlockRead() const { const_cast<CThreadSpinRWLock *>(this)->UnlockRead(); }
-#ifdef WIN32
+#ifdef _WIN32
 	void LockForWrite() const; // { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
 #else
 	void LockForWrite() const { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
@@ -1540,7 +1540,8 @@ extern "C"
 //---------------------------------------------------------
 
 // On Windows, these are already packed inside the tier0.lib so we don't define them here as else we would conflict!
-/*inline void CThreadMutex::Lock()
+#ifndef _WIN32
+inline void CThreadMutex::Lock()
 {
 #ifdef THREAD_MUTEX_TRACING_ENABLED
 		uint thisThreadID = ThreadGetCurrentId();
@@ -1577,7 +1578,8 @@ inline void CThreadMutex::Unlock()
 		}
 	#endif
 	LeaveCriticalSection((CRITICAL_SECTION *)&m_CriticalSection);
-}*/
+}
+#endif
 
 //---------------------------------------------------------
 
@@ -1757,7 +1759,7 @@ inline bool CThreadSpinRWLock::TryLockForRead()
 	return bSuccess;
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 inline void CThreadSpinRWLock::LockForWrite()
 {
 	const uint32 threadId = ThreadGetCurrentId();

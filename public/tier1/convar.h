@@ -136,6 +136,11 @@ public:
 	// Returns the DLL identifier
 	virtual CVarDLLIdentifier_t	GetDLLIdentifier() const;
 
+	inline ConCommandBase* InternalNext() { return m_pNext; }
+
+	static inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; }
+	static inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; }
+
 protected:
 	virtual void				CreateBase( const char *pName, const char *pHelpString = 0, 
 									int flags = 0 );
@@ -172,11 +177,6 @@ protected:
 
 	// ConVars in this executable use this 'global' to access values.
 	static IConCommandBaseAccessor	*s_pAccessor;
-
-public:
-	inline ConCommandBase* InternalNext() { return m_pNext; };
-	static inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; };
-	static inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; };
 };
 
 

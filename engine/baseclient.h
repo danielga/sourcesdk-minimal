@@ -184,9 +184,6 @@ public:
 	void			CheckFlushNameChange( bool bShowStatusMessage = false );
 	bool			IsNameChangeOnCooldown( bool bShowStatusMessage = false );
 
-	// void			SetPlayerNameLocked( bool bValue ) { m_bPlayerNameLocked = bValue; }
-	// bool			IsPlayerNameLocked( void ) { return m_bPlayerNameLocked; }
-
 	void			SetSignOnState( int ); // Why
 
 private:	
@@ -257,10 +254,10 @@ public:
 	// until we get an ack from them on this packet.
 	// This is for 3 reasons:
 	// 1. A client requesting a nodelta packet means they're screwed so no point in deluging them with data.
-	//	Better to send the uncompressed data at a slow rate until we hear back from them (if at all).
+	//    Better to send the uncompressed data at a slow rate until we hear back from them (if at all).
 	// 2. Since the nodelta packet deletes all client entities, we can't ever delta from a packet previous to it.
 	// 3. It can eat up a lot of CPU on the server to keep building nodelta packets while waiting for
-	//	a client to get back on its feet.
+	//    a client to get back on its feet.
 	int				m_nForceWaitForTick;
 	
 	bool			m_bFakePlayer;		// JAC: This client is a fake player controlled by the game DLL
@@ -271,7 +268,6 @@ public:
 
 	// Time when last name change was applied
 	double			m_fTimeLastNameChange;
-	// bool			m_bPlayerNameLocked;
 
 	// Does this client have a name change that is pending?
 	// (Their 'name' convar differs from our value for their client name.)
@@ -281,11 +277,14 @@ public:
 	// when it is sent out to the client.  overflow is tolerated.
 
 	// Time when we should send next world state update ( datagram )
-	double		 m_fNextMessageTime;   
+	double         m_fNextMessageTime;   
 	// Default time to wait for next message
-	float		  m_fSnapshotInterval;  
+	float          m_fSnapshotInterval;  
 
-	static constexpr uint32_t SNAPSHOT_SCRATCH_BUFFER_SIZE = 1048576;
+	enum
+	{
+		SNAPSHOT_SCRATCH_BUFFER_SIZE = 1048576,
+	};
 
 	CSteamID m_OwnerSteamID; // Verify: Could be owner steamid for Player:OwnerSteamID64()
 
@@ -299,5 +298,7 @@ private:
 
 	void* __offset2[4];
 };
+
+
 
 #endif // BASECLIENT_H

@@ -53,10 +53,6 @@ group("SourceSDK")
 		})
 		vpaths({["Source files/*"] = "*.cpp"})
 
-		if TIER1_PROJECTCALLBACK then
-			TIER1_PROJECTCALLBACK()
-		end
-
 		IncludeSDKLZMA()
 
 		filter("system:windows")

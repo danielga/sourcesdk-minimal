@@ -101,7 +101,6 @@ public:
 	// Recomputes PVS information
 	void RecomputePVSInformation();
 
-public:
 	// Detaches the edict.. should only be called by CBaseNetworkable's destructor.
 	void DetachEdict();
 	CBaseEntity *GetOuter();
@@ -109,7 +108,6 @@ public:
 	// Marks the networkable that it will should transmit
 	void SetTransmit( CCheckTransmitInfo *pInfo );
 
-public:
 	CBaseEntity *m_pOuter;
 	// CBaseTransmitProxy *m_pTransmitProxy;
 	edict_t	*m_pPev;

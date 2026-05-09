@@ -854,6 +854,9 @@ public:
 	// dumps info about the object to Msg()
 	virtual void			OutputDebugInfo() const = 0;
 
+	// Returns the buoyancy of the object.
+	// Newly added by Valve since it was requested by Rubat to solve https://github.com/Facepunch/garrysmod-issues/issues/5696
+	virtual float			GetBuoyancyRatio( void ) const = 0;
 };
 
 

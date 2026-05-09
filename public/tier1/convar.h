@@ -136,6 +136,11 @@ public:
 	// Returns the DLL identifier
 	virtual CVarDLLIdentifier_t	GetDLLIdentifier() const;
 
+	inline ConCommandBase* InternalNext() { return m_pNext; }
+
+	static inline ConCommandBase* InternalConCommandBases() { return s_pConCommandBases; }
+	static inline IConCommandBaseAccessor* InternalBaseAccessor() { return s_pAccessor; }
+
 protected:
 	virtual void				CreateBase( const char *pName, const char *pHelpString = 0, 
 									int flags = 0 );
@@ -568,6 +573,13 @@ FORCEINLINE_CVAR const char *ConVarRef::GetDefault() const
 void ConVar_Register( int nCVarFlag = 0, IConCommandBaseAccessor *pAccessor = NULL );
 void ConVar_Unregister( );
 
+//-----------------------------------------------------------------------------
+// Utility methods when implementing your custom ConVar_Register function.
+//-----------------------------------------------------------------------------
+int* ConVar_GetConVarFlag();
+int* ConVar_GetDLLIdentifier();
+bool* ConVar_GetIsRegistered();
+IConCommandBaseAccessor* ConVar_GetDefaultAccessor();
 
 //-----------------------------------------------------------------------------
 // Utility methods 

@@ -57,15 +57,15 @@ private:
 	CNetworkVar( QAngle, m_vecCameraViewAngles );
 	CNetworkVar( int, m_iBlendMode );
 	CNetworkVar( int, m_iNextBlendMode );
-	CNetworkVar( float, m_flNextBlendTime );
-	CNetworkVar( float, m_flBlendStartTime );
+	CNetworkVar( double, m_flNextBlendTime );
+	CNetworkVar( double, m_flBlendStartTime );
 	CNetworkVar( int, m_iStartFOV );
 	CNetworkVar( bool, m_bActive );
 
 	// Fov & fov blends
 	CNetworkVar( int, m_iNextFOV );
-	CNetworkVar( float, m_flNextFOVBlendTime );
-	CNetworkVar( float, m_flFOVBlendStartTime );
+	CNetworkVar( double, m_flNextFOVBlendTime );
+	CNetworkVar( double, m_flFOVBlendStartTime );
 	CNetworkVar( int, m_iFOV );
 	CNetworkVar( bool, m_bAlternateFOV );
 

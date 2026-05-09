@@ -38,7 +38,7 @@ public:
 	DECLARE_DATADESC();
 
 private:
-	int		m_iStyle;
+	CNetworkVar( int, m_iStyle ); // RaphaelIT7: Only used by CEnvProjectedTexture
 	int		m_iDefaultStyle;
 	string_t m_iszPattern;
 	char	m_iCurrentFade;

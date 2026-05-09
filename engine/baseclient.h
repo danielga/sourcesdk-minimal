@@ -184,9 +184,6 @@ public:
 	void			CheckFlushNameChange( bool bShowStatusMessage = false );
 	bool			IsNameChangeOnCooldown( bool bShowStatusMessage = false );
 
-	void			SetPlayerNameLocked( bool bValue ) { m_bPlayerNameLocked = bValue; }
-	bool			IsPlayerNameLocked( void ) { return m_bPlayerNameLocked; }
-
 	void			SetSignOnState( int ); // Why
 
 private:	
@@ -205,12 +202,12 @@ public:
 	char			m_Name[MAX_PLAYER_NAME_LENGTH];			// for printing to other people
 	char			m_GUID[SIGNED_GUID_LEN + 1]; // the clients CD key
 
-/*#if ARCHITECTURE_IS_X86_64
+#if PLATFORM_64BITS
 	// CNETMsg_PlayerAvatarData_t m_msgAvatarData;	// Client avatar
 	// RaphaelIT7: This are the offsets for the variable above. Why not add it directly? Because it depends on sooo much it would be a pain to do. Maybe if I'm bored I'll do it.
 	int _offset[23];
 	char _offset2;
-#endif*/
+#endif
 
 	CSteamID		m_SteamID;			// This is valid when the client is authenticated
 	
@@ -219,7 +216,9 @@ public:
 
 	KeyValues		*m_ConVars;			// stores all client side convars
 	bool			m_bConVarsChanged;	// true if convars updated and not changes process yet
+#if PLATFORM_64BITS
 	bool			m_bInitialConVarsSet; // Has the client sent their initial set of convars
+#endif
 	bool			m_bSendServerInfo;	// true if we need to send server info packet to start connect
 	CBaseServer		*m_Server;			// pointer to server object
 	bool			m_bIsHLTV;			// if this a HLTV proxy ?
@@ -269,7 +268,6 @@ public:
 
 	// Time when last name change was applied
 	double			m_fTimeLastNameChange;
-	bool			m_bPlayerNameLocked;
 
 	// Does this client have a name change that is pending?
 	// (Their 'name' convar differs from our value for their client name.)
@@ -285,10 +283,10 @@ public:
 
 	enum
 	{
-		SNAPSHOT_SCRATCH_BUFFER_SIZE = 160000,
+		SNAPSHOT_SCRATCH_BUFFER_SIZE = 1048576,
 	};
 
-	unsigned int		m_SnapshotScratchBuffer[ SNAPSHOT_SCRATCH_BUFFER_SIZE / 4 ];
+	CSteamID m_OwnerSteamID; // Verify: Could be owner steamid for Player:OwnerSteamID64()
 
 private:
 	void				StartTrace( bf_write &msg );
@@ -297,6 +295,8 @@ private:
 
 	int					m_iTracing; // 0 = not active, 1 = active for this frame, 2 = forced active
 	CNetworkStatTrace	m_Trace;
+
+	void* __offset2[4];
 };
 
 

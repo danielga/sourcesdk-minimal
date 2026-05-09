@@ -134,12 +134,12 @@ typedef enum
 class DVariant
 {
 public:
-				DVariant()				{m_Type = DPT_Float;}
+				DVariant()				{m_Type = DPT_Float; m_pData = nullptr;}
 				DVariant(float val)		{m_Type = DPT_Float; m_Float = val;}
 				
 				const char *ToString()
 				{
-					static char text[128];
+					static thread_local char text[128];
 
 					switch ( m_Type )
 					{

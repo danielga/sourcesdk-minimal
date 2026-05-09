@@ -109,7 +109,7 @@ public:
 
 	bool UsesPowerOfTwoFrameBufferTexture( void );
 
-	virtual bool	Interpolate( float currentTime );
+	virtual bool	Interpolate( double currentTime );
 	virtual void	Simulate();	
 	virtual void	Release();	
 
@@ -143,7 +143,7 @@ public:
  	virtual int	VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
 
 	// model specific
-	virtual bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
+	virtual bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, double currentTime );
 	virtual void UpdateIKLocks( float currentTime );
 	virtual void CalculateIKLocks( float currentTime );
 	virtual bool ShouldDraw();
@@ -293,12 +293,10 @@ public:
 	bool							InitAsClientRagdoll( const matrix3x4_t *pDeltaBones0, const matrix3x4_t *pDeltaBones1, const matrix3x4_t *pCurrentBonePosition, float boneDt, bool bFixedConstraints=false );
 	void							IgniteRagdoll( C_BaseAnimating *pSource );
 	void							TransferDissolveFrom( C_BaseAnimating *pSource );
-	virtual void					SaveRagdollInfo( int numbones, const matrix3x4_t &cameraTransform, CBoneAccessor &pBoneToWorld );
-	virtual bool					RetrieveRagdollInfo( Vector *pos, Quaternion *q );
 	virtual void					Clear( void );
 	void							ClearRagdoll();
 	void							CreateUnragdollInfo( C_BaseAnimating *pRagdoll );
-	bool							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, float flTime );
+	bool							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, double flTime );
 	virtual bool					GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
 
 	// For shadows rendering the correct body + sequence...
@@ -503,7 +501,6 @@ protected:
 	float							m_flPlaybackRate;
 
 	// Decomposed ragdoll info
-	bool							m_bStoreRagdollInfo;
 	RagdollInfo_t					*m_pRagdollInfo;
 	Vector							m_vecForce;
 	int								m_nForceBone;
@@ -591,7 +588,6 @@ protected:
 	float							m_flCycle;
 	CInterpolatedVar< float >		m_iv_flCycle;
 	float							m_flOldCycle;
-	bool							m_bNoModelParticles;
 
 private:
 	float							m_flOldModelScale;

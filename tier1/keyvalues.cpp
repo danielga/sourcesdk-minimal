@@ -31,10 +31,13 @@
 #include "UtlSortVector.h"
 #include "convar.h"
 
+#include <memory>
+#include <vector>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
-static const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
+static thread_local const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
 
 // Statics for the growable string table
 int (*KeyValues::s_pfGetSymbolForString)( const char *name, bool bCreate ) = &KeyValues::GetSymbolForStringClassic;
@@ -42,7 +45,7 @@ const char *(*KeyValues::s_pfGetStringForSymbol)( int symbol ) = &KeyValues::Get
 CKeyValuesGrowableStringTable *KeyValues::s_pGrowableStringTable = NULL;
 
 #define KEYVALUES_TOKEN_SIZE	4096
-static char s_pTokenBuf[KEYVALUES_TOKEN_SIZE];
+static thread_local std::vector<char> s_pTokenBuf(KEYVALUES_TOKEN_SIZE);
 
 
 #define INTERNALWRITE( pData, len ) InternalWrite( filesystem, f, pBuf, pData, len )
@@ -122,7 +125,9 @@ private:
 	const char *m_pFilename;
 	int		m_errorIndex;
 	int		m_maxErrorIndex;
-} g_KeyValuesErrorStack;
+};
+
+static thread_local auto g_KeyValuesErrorStack = std::make_unique<CKeyValuesErrorStack>();
 
 
 // a simple helper that creates stack entries as it goes in & out of scope
@@ -136,7 +141,7 @@ public:
 
 	~CKeyErrorContext()
 	{
-		g_KeyValuesErrorStack.Pop();
+		g_KeyValuesErrorStack->Pop();
 	}
 	CKeyErrorContext( int symName )
 	{
@@ -144,7 +149,7 @@ public:
 	}
 	void Reset( int symName )
 	{
-		g_KeyValuesErrorStack.Reset( m_stackLevel, symName );
+		g_KeyValuesErrorStack->Reset( m_stackLevel, symName );
 	}
 	int GetStackLevel() const
 	{
@@ -153,7 +158,7 @@ public:
 private:
 	void Init( int symName )
 	{
-		m_stackLevel = g_KeyValuesErrorStack.Push( symName );
+		m_stackLevel = g_KeyValuesErrorStack->Push( symName );
 	}
 
 	int m_stackLevel;
@@ -209,7 +214,7 @@ public:
 	CUtlVector< kve > keys;
 };
 
-static CLeakTrack track;
+static thread_local CLeakTrack track; // RaphaelIT7: Would probably be better to use a mutex or something... but it would be slower :sob:
 
 #define TRACK_KV_ADD( ptr, name )	track.AddKv( ptr, name )
 #define TRACK_KV_REMOVE( ptr )		track.RemoveKv( ptr )
@@ -559,22 +564,24 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 	if ( !c )
 		return NULL;
 
+	char* pTokenBuf = s_pTokenBuf.data();
+
 	// read quoted strings specially
 	if ( *c == '\"' )
 	{
 		wasQuoted = true;
 		buf.GetDelimitedString( m_bHasEscapeSequences ? GetCStringCharConversion() : GetNoEscCharConversion(), 
-			s_pTokenBuf, KEYVALUES_TOKEN_SIZE );
-		return s_pTokenBuf;
+			pTokenBuf, KEYVALUES_TOKEN_SIZE );
+		return pTokenBuf;
 	}
 
 	if ( *c == '{' || *c == '}' )
 	{
 		// it's a control char, just add this one char and stop reading
-		s_pTokenBuf[0] = *c;
-		s_pTokenBuf[1] = 0;
+		pTokenBuf[0] = *c;
+		pTokenBuf[1] = 0;
 		buf.SeekGet( CUtlBuffer::SEEK_CURRENT, 1 );
-		return s_pTokenBuf;
+		return pTokenBuf;
 	}
 
 	// read in the token until we hit a whitespace or a control character
@@ -605,18 +612,18 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 
 		if (nCount < (KEYVALUES_TOKEN_SIZE-1) )
 		{
-			s_pTokenBuf[nCount++] = *c;	// add char to buffer
+			pTokenBuf[nCount++] = *c;	// add char to buffer
 		}
 		else if ( !bReportedError )
 		{
 			bReportedError = true;
-			g_KeyValuesErrorStack.ReportError(" ReadToken overflow" );
+			g_KeyValuesErrorStack->ReportError(" ReadToken overflow" );
 		}
 
 		buf.SeekGet( CUtlBuffer::SEEK_CURRENT, 1 );
 	}
-	s_pTokenBuf[ nCount ] = 0;
-	return s_pTokenBuf;
+	pTokenBuf[ nCount ] = 0;
+	return pTokenBuf;
 }
 #pragma warning (default:4706)
 
@@ -703,7 +710,7 @@ bool KeyValues::LoadFromFile( IBaseFileSystem *filesystem, const char *resourceN
 	s_LastFileLoadingFrom = (char*)resourceName;
 
 	// load file into a null-terminated buffer
-	int fileSize = filesystem->Size( f );
+	unsigned fileSize = filesystem->Size( f );
 	unsigned bufSize = ((IFileSystem *)filesystem)->GetOptimalReadSize( f, fileSize + 2 );
 
 	char *buffer = (char*)((IFileSystem *)filesystem)->AllocOptimalReadBuffer( f, bufSize );
@@ -2239,7 +2246,7 @@ bool KeyValues::LoadFromBuffer( char const *resourceName, CUtlBuffer &buf, IBase
 	CUtlVector< KeyValues * > baseKeys;
 	bool wasQuoted;
 	bool wasConditional;
-	g_KeyValuesErrorStack.SetFilename( resourceName );	
+	g_KeyValuesErrorStack->SetFilename( resourceName );	
 	do 
 	{
 		bool bAccepted = true;
@@ -2256,7 +2263,7 @@ bool KeyValues::LoadFromBuffer( char const *resourceName, CUtlBuffer &buf, IBase
 
 			if ( !s || *s == 0 )
 			{
-				g_KeyValuesErrorStack.ReportError("#include is NULL " );
+				g_KeyValuesErrorStack->ReportError("#include is NULL " );
 			}
 			else
 			{
@@ -2272,7 +2279,7 @@ bool KeyValues::LoadFromBuffer( char const *resourceName, CUtlBuffer &buf, IBase
 
 			if ( !s || *s == 0 )
 			{
-				g_KeyValuesErrorStack.ReportError("#base is NULL " );
+				g_KeyValuesErrorStack->ReportError("#base is NULL " );
 			}
 			else
 			{
@@ -2318,7 +2325,7 @@ bool KeyValues::LoadFromBuffer( char const *resourceName, CUtlBuffer &buf, IBase
 		}
 		else
 		{
-			g_KeyValuesErrorStack.ReportError("LoadFromBuffer: missing {" );
+			g_KeyValuesErrorStack->ReportError("LoadFromBuffer: missing {" );
 		}
 
 		if ( !bAccepted )
@@ -2358,7 +2365,7 @@ bool KeyValues::LoadFromBuffer( char const *resourceName, CUtlBuffer &buf, IBase
 		}
 	}
 
-	g_KeyValuesErrorStack.SetFilename( "" );	
+	g_KeyValuesErrorStack->SetFilename( "" );	
 
 	return true;
 }
@@ -2403,7 +2410,7 @@ void KeyValues::RecursiveLoadFromBuffer( char const *resourceName, CUtlBuffer &b
 	bool wasConditional;
 	if ( errorReport.GetStackLevel() > 100 )
 	{
-		g_KeyValuesErrorStack.ReportError( "RecursiveLoadFromBuffer:  recursion overflow" );
+		g_KeyValuesErrorStack->ReportError( "RecursiveLoadFromBuffer:  recursion overflow" );
 		return;
 	}
 
@@ -2425,13 +2432,13 @@ void KeyValues::RecursiveLoadFromBuffer( char const *resourceName, CUtlBuffer &b
 
 		if ( !name )	// EOF stop reading
 		{
-			g_KeyValuesErrorStack.ReportError("RecursiveLoadFromBuffer:  got EOF instead of keyname" );
+			g_KeyValuesErrorStack->ReportError("RecursiveLoadFromBuffer:  got EOF instead of keyname" );
 			break;
 		}
 
 		if ( !*name ) // empty token, maybe "" or EOF
 		{
-			g_KeyValuesErrorStack.ReportError("RecursiveLoadFromBuffer:  got empty keyname" );
+			g_KeyValuesErrorStack->ReportError("RecursiveLoadFromBuffer:  got empty keyname" );
 			break;
 		}
 
@@ -2457,13 +2464,13 @@ void KeyValues::RecursiveLoadFromBuffer( char const *resourceName, CUtlBuffer &b
 
 		if ( !value )
 		{
-			g_KeyValuesErrorStack.ReportError("RecursiveLoadFromBuffer:  got NULL key" );
+			g_KeyValuesErrorStack->ReportError("RecursiveLoadFromBuffer:  got NULL key" );
 			break;
 		}
 		
 		if ( *value == '}' && !wasQuoted )
 		{
-			g_KeyValuesErrorStack.ReportError("RecursiveLoadFromBuffer:  got } in key" );
+			g_KeyValuesErrorStack->ReportError("RecursiveLoadFromBuffer:  got } in key" );
 			break;
 		}
 
@@ -2478,7 +2485,7 @@ void KeyValues::RecursiveLoadFromBuffer( char const *resourceName, CUtlBuffer &b
 		{
 			if ( wasConditional )
 			{
-				g_KeyValuesErrorStack.ReportError("RecursiveLoadFromBuffer:  got conditional between key and value" );
+				g_KeyValuesErrorStack->ReportError("RecursiveLoadFromBuffer:  got conditional between key and value" );
 				break;
 			}
 			

@@ -50,7 +50,8 @@ private:
 
 protected:
 
-	int	m_nShotsFired;	// Number of consecutive shots fired
+	// RaphaelIT7: Only 16 bits are used for networking!
+	CNetworkVar( int, m_nShotsFired );	// Number of consecutive shots fired
 
 	float	m_flNextSoundTime;	// real-time clock of when to make next sound
 };

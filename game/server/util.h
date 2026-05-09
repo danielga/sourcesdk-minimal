@@ -345,7 +345,6 @@ void		UTIL_ShowMessage		( const char *pString, CBasePlayer *pPlayer );
 void		UTIL_ShowMessageAll		( const char *pString );
 void		UTIL_ScreenFadeAll		( const color32 &color, float fadeTime, float holdTime, int flags );
 void		UTIL_ScreenFade			( CBaseEntity *pEntity, const color32 &color, float fadeTime, float fadeHold, int flags );
-void		UTIL_MuzzleFlash		( const Vector &origin, const QAngle &angles, int scale, int type );
 Vector		UTIL_PointOnLineNearestPoint(const Vector& vStartPos, const Vector& vEndPos, const Vector& vPoint, bool clampEnds = false );
 
 int			UTIL_EntityInSolid( CBaseEntity *ent );

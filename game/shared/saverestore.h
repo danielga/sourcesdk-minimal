@@ -105,6 +105,7 @@ public:
 	//
 	
 	void			WriteTime( const char *pname, const float *value, int count = 1 );	           // Save a float (timevalue)
+	void			WriteTime64( const char *pname, const double *value, int count = 1 );	       // Save a double (timevalue)
 	void			WriteTick( const char *pname, const int *value, int count = 1 );	           // Save a int (timevalue)
 	void			WritePositionVector( const char *pname, const Vector &value );		           // Offset for landmark if necessary
 	void			WritePositionVector( const char *pname, const Vector *value, int count = 1 );  // array of pos vectors
@@ -245,6 +246,7 @@ public:
 	//
 	
 	int				ReadTime( float *pValue, int count = 1, int nBytesAvailable = 0);
+	int				ReadTime64( double *pValue, int count = 1, int nBytesAvailable = 0);
 	int				ReadTick( int *pValue, int count = 1, int nBytesAvailable = 0);
 	int				ReadPositionVector( Vector *pValue );
 	int				ReadPositionVector( Vector *pValue, int count = 1, int nBytesAvailable = 0);

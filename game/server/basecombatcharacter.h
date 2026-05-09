@@ -392,8 +392,8 @@ public:
 	// This is a hack to copy the relationship strings used by monstermaker
 	void SetRelationshipString( string_t theString ) { m_RelationshipString = theString; }
 
-	float				GetNextAttack() const { return m_flNextAttack; }
-	void				SetNextAttack( float flWait ) { m_flNextAttack = flWait; }
+	double				GetNextAttack() const { return m_flNextAttack; }
+	void				SetNextAttack( double flWait ) { m_flNextAttack = flWait; }
 
 	bool				m_bForceServerRagdoll;
 
@@ -456,7 +456,9 @@ protected:
 	void SetLastHitGroup( int nHitGroup )	{ m_LastHitGroup = nHitGroup; }
 
 public:
-	CNetworkVar( float, m_flNextAttack );			// cannot attack again until this time
+	void* _offsetply1[13];
+
+	CNetworkVar( double, m_flNextAttack );			// cannot attack again until this time
 
 #ifdef GLOWS_ENABLE
 protected:
@@ -470,7 +472,7 @@ private:
 	void				DestroyGlowEffect( void );
 
 protected:
-	int			m_bloodColor;			// color of blood particless
+	CNetworkVar( int, m_bloodColor );			// color of blood particless (RaphaelIT7: Only 5 bits are used for networking!)
 
 	// -------------------
 	// combat ability data

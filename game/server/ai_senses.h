@@ -91,7 +91,7 @@ public:
 
 	//---------------------------------
 	
-	float			GetTimeLastUpdate( CBaseEntity *pEntity );
+	double			GetTimeLastUpdate( CBaseEntity *pEntity );
 
 	//---------------------------------
 
@@ -123,7 +123,7 @@ private:
 	
 	float			m_LookDist;				// distance npc sees (Default 2048)
 	float			m_LastLookDist;
-	float			m_TimeLastLook;
+	double			m_TimeLastLook;
 	
 	int				m_iAudibleList;				// first index of a linked list of sounds that the npc can hear.
 	
@@ -133,9 +133,9 @@ private:
 	
 	CUtlVector<EHANDLE> *m_SeenArrays[3];
 	
-	float			m_TimeLastLookHighPriority;
-	float			m_TimeLastLookNPCs;
-	float			m_TimeLastLookMisc;
+	double			m_TimeLastLookHighPriority;
+	double			m_TimeLastLookNPCs;
+	double			m_TimeLastLookMisc;
 
 	int				m_iSensingFlags;
 };

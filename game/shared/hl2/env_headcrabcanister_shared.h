@@ -58,7 +58,7 @@ public:
 
 	CNetworkVar( float,	m_flFlightTime );
 	CNetworkVar( float,	m_flFlightSpeed );
-	CNetworkVar( float,	m_flLaunchTime );
+	CNetworkVar( double,	m_flLaunchTime );
 
 	CNetworkVar( float, m_flInitialZSpeed );
 	CNetworkVar( float, m_flZAcceleration );

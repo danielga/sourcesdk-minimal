@@ -86,7 +86,7 @@ public:
 	bool IsValid() { return m_ragdoll.listCount > 0; }
 
 	void ResetRagdollSleepAfterTime( void );
-	float GetLastVPhysicsUpdateTime() const { return m_lastUpdate; }
+	double GetLastVPhysicsUpdateTime() const { return m_lastUpdate; }
 
 private:
 
@@ -97,7 +97,7 @@ private:
 	Vector		m_mins, m_maxs;
 	Vector		m_origin;
 	float		m_radius;
-	float		m_lastUpdate;
+	double		m_lastUpdate;
 	bool		m_allAsleep;
 	Vector		m_vecLastOrigin;
 	float		m_flLastOriginChangeTime;

@@ -36,6 +36,11 @@ SendProp SendPropTime(
 	int offset,
 	int sizeofVar=SIZEOF_IGNORE );
 
+SendProp SendPropTime64(
+	const char *pVarName,
+	int offset,
+	int sizeofVar=SIZEOF_IGNORE );
+
 #if !defined( NO_ENTITY_PREDICTION )
 SendProp SendPropPredictableId(
 	const char *pVarName,

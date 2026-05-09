@@ -82,6 +82,8 @@ public:
 	virtual void SetInt( const char *keyName, int value ) = 0;
 	virtual void SetFloat( const char *keyName, float value ) = 0;
 	virtual void SetString( const char *keyName, const char *value ) = 0;
+
+	virtual KeyValues* GetKeyValues() = 0;
 };
 
 

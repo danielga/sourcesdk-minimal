@@ -29,7 +29,7 @@ public:
 protected:
 	// derived classes must implement this; it returns the time
 	// that the animation began
-	virtual float  GetAnimationStartTime( void* pBaseEntity ) = 0;
+	virtual double  GetAnimationStartTime( void* pBaseEntity ) = 0;
 
 	// Derived classes may implement this if they choose;
 	// this method is called whenever the animation wraps...

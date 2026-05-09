@@ -72,7 +72,7 @@ public:
 	DECLARE_SIMPLE_DATADESC();
 	
 protected:
-	float m_next;
+	double m_next;
 };
 
 //-----------------------------------------------------------------------------
@@ -340,7 +340,7 @@ public:
 	}
 
 private:
-	float m_lastTime;
+	double m_lastTime;
 };
 
 //-----------------------------------------------------------------------------

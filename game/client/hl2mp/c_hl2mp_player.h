@@ -119,8 +119,6 @@ private:
 	int	  m_iSpawnInterpCounter;
 	int	  m_iSpawnInterpCounterCache;
 
-	int	  m_iPlayerSoundType;
-
 	void ReleaseFlashlight( void );
 	Beam_t	*m_pFlashlightBeam;
 

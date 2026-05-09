@@ -452,7 +452,7 @@ public:
 
 // IClientEntity implementation.
 public:
-	virtual bool					SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
+	virtual bool					SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, double currentTime );
 	virtual void					SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual bool					UsesFlexDelayedWeights() { return false; }
 	virtual void					DoAnimationEvents( void );
@@ -742,7 +742,7 @@ public:
 	virtual void					TextureAnimationWrapped();
 
 	// Set the next think time. Pass in CLIENT_THINK_ALWAYS to have Think() called each frame.
-	virtual void					SetNextClientThink( float nextThinkTime );
+	virtual void					SetNextClientThink( double nextThinkTime );
 
 	// anything that has health can override this...
 	virtual void					SetHealth(int iHealth) {}
@@ -1222,7 +1222,7 @@ protected:
 
 	// Returns INTERPOLATE_STOP or INTERPOLATE_CONTINUE.
 	// bNoMoreChanges is set to 1 if you can call RemoveFromInterpolationList on the entity.
-	int BaseInterpolatePart1( float &currentTime, Vector &oldOrigin, QAngle &oldAngles, Vector &oldVel, int &bNoMoreChanges );
+	int BaseInterpolatePart1( double &currentTime, Vector &oldOrigin, QAngle &oldAngles, Vector &oldVel, int &bNoMoreChanges );
 	void BaseInterpolatePart2( Vector &oldOrigin, QAngle &oldAngles, Vector &oldVel, int nChangeFlags );
 
 
@@ -1341,7 +1341,7 @@ public:
 #endif
 
 	char							m_takedamage;
-	char							m_lifeState;
+	unsigned char					m_lifeState;
 
 	int								m_iHealth;
 

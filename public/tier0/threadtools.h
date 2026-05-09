@@ -1127,7 +1127,11 @@ private:
 class ALIGN8 PLATFORM_CLASS CThreadSpinRWLock
 {
 public:
-	CThreadSpinRWLock()	{ COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
+#ifdef _WIN32
+	CThreadSpinRWLock();
+#else
+	CThreadSpinRWLock() { COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
+#endif
 
 	bool TryLockForWrite();
 	bool TryLockForRead();
@@ -1141,7 +1145,11 @@ public:
 	bool TryLockForRead() const { return const_cast<CThreadSpinRWLock *>(this)->TryLockForRead(); }
 	void LockForRead() const { const_cast<CThreadSpinRWLock *>(this)->LockForRead(); }
 	void UnlockRead() const { const_cast<CThreadSpinRWLock *>(this)->UnlockRead(); }
+#ifdef _WIN32
+	void LockForWrite() const; // { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
+#else
 	void LockForWrite() const { const_cast<CThreadSpinRWLock *>(this)->LockForWrite(); }
+#endif
 	void UnlockWrite() const { const_cast<CThreadSpinRWLock *>(this)->UnlockWrite(); }
 
 private:
@@ -1531,6 +1539,8 @@ extern "C"
 
 //---------------------------------------------------------
 
+// On Windows, these are already packed inside the tier0.lib so we don't define them here as else we would conflict!
+#ifndef _WIN32
 inline void CThreadMutex::Lock()
 {
 #ifdef THREAD_MUTEX_TRACING_ENABLED
@@ -1569,6 +1579,7 @@ inline void CThreadMutex::Unlock()
 	#endif
 	LeaveCriticalSection((CRITICAL_SECTION *)&m_CriticalSection);
 }
+#endif
 
 //---------------------------------------------------------
 
@@ -1748,6 +1759,7 @@ inline bool CThreadSpinRWLock::TryLockForRead()
 	return bSuccess;
 }
 
+#ifndef _WIN32
 inline void CThreadSpinRWLock::LockForWrite()
 {
 	const uint32 threadId = ThreadGetCurrentId();
@@ -1760,6 +1772,7 @@ inline void CThreadSpinRWLock::LockForWrite()
 		SpinLockForWrite( threadId );
 	}
 }
+#endif
 
 // read data from a memory address
 template<class T> FORCEINLINE T ReadVolatileMemory( T const *pPtr )

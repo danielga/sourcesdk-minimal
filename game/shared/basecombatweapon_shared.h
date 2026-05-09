@@ -584,9 +584,9 @@ public:
 	CNetworkVar( int, m_nViewModelIndex );
 
 	// Weapon firing
-	CNetworkVar( float, m_flNextPrimaryAttack );						// soonest time ItemPostFrame will call PrimaryAttack
-	CNetworkVar( float, m_flNextSecondaryAttack );					// soonest time ItemPostFrame will call SecondaryAttack
-	CNetworkVar( float, m_flTimeWeaponIdle );							// soonest time ItemPostFrame will call WeaponIdle
+	CNetworkVar( double, m_flNextPrimaryAttack );						// soonest time ItemPostFrame will call PrimaryAttack
+	CNetworkVar( double, m_flNextSecondaryAttack );					// soonest time ItemPostFrame will call SecondaryAttack
+	CNetworkVar( double, m_flTimeWeaponIdle );							// soonest time ItemPostFrame will call WeaponIdle
 	// Weapon state
 	bool					m_bInReload;			// Are we in the middle of a reload;
 	bool					m_bFireOnEmpty;			// True when the gun is empty and the player is still holding down the attack key(s)
@@ -623,7 +623,7 @@ public:
 	int						WeaponState() const { return m_iState; }
 
 	// Weapon data
-	CNetworkVar( int, m_iState );				// See WEAPON_* definition
+	CNetworkVar( int, m_iState );				// See WEAPON_* definition (RaphaelIT7: Only 4 bits are used for networking!)
 	string_t				m_iszName;				// Classname of this weapon.
 	CNetworkVar( int, m_iPrimaryAmmoType );		// "primary" ammo index into the ammo info array 
 	CNetworkVar( int, m_iSecondaryAmmoType );	// "secondary" ammo index into the ammo info array

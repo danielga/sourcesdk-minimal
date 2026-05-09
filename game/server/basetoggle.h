@@ -36,10 +36,11 @@ public:
 
 	float				m_flHeight;
 	EHANDLE				m_hActivator;
-	Vector				m_vecFinalDest;
+	CNetworkVar( Vector, m_vecFinalDest );
 	QAngle				m_vecFinalAngle;
 
-	int					m_movementType;
+	// RaphaelIT7: GMod uses 4 bits for networking!
+	CNetworkVar( int, m_movementType ) ;
 
 	DECLARE_DATADESC();
 

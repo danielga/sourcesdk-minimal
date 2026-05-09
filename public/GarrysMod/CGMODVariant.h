@@ -25,7 +25,8 @@
 class CBaseHandle;
 struct CGMODVariant // NOTE: It doesn't seem work perfectly with GMOD(I hate m_Ent)
 {
-	unsigned char type = 0; // Used by Push_GMODVariant to determen which function to use to push it.
+	CGMODVariant() { memset(this, 0, sizeof(CGMODVariant)); }
+	unsigned char type = 0; // Used by Push_GMODVariant to determine which function to use to push it.
 	union {
 		struct {
 			int m_Length;

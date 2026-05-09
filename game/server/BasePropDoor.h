@@ -173,12 +173,13 @@ private:
 
 	int		m_nHardwareType;
 	
-	DoorState_t m_eDoorState;	// Holds whether the door is open, closed, opening, or closing.
+	// RaphaelIT7: GMod uses 3 bits for networking!
+	CNetworkVar( DoorState_t, m_eDoorState );	// Holds whether the door is open, closed, opening, or closing.
 
 	locksound_t m_ls;			// The sounds the door plays when being locked, unlocked, etc.
 	EHANDLE		m_hActivator;		
 	
-	bool	m_bLocked;				// True if the door is locked.
+	CNetworkVar( bool, m_bLocked );				// True if the door is locked.
 	EHANDLE	m_hBlocker;				// Entity blocking the door currently
 	bool	m_bFirstBlocked;		// Marker for being the first door (in a group) to be blocked (needed for motion control)
 

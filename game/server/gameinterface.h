@@ -61,6 +61,9 @@ public:
 	virtual void			GMOD_ReceiveClientMessage( int unknown, edict_t* pPlayer, bf_read* msg, int unknown2 ) OVERRIDE;
 	virtual void			GMOD_ClientConnected( int userID ) OVERRIDE;
 	virtual void 			GMOD_SentClientStringTables( int userID ) OVERRIDE;
+
+	// Called when a voice packet is received in SV_BroadcastVoiceData
+	virtual void			GMOD_OnReceivedVoicePacket( edict_t *pPlayer ) OVERRIDE;
 };
 
 

@@ -5,6 +5,8 @@
 // $NoKeywords: $
 //===========================================================================//
 
+#pragma once
+
 #include "net.h"
 #include "netadr.h"
 #include "qlimits.h"
@@ -24,7 +26,14 @@
 
 #define NET_FRAMES_BACKUP	64		// must be power of 2
 #define NET_FRAMES_MASK		(NET_FRAMES_BACKUP-1)
-#define MAX_SUBCHANNELS		8		// we have 8 alternative send&wait bits
+
+
+#define MAX_SUBCHANNELS_BITS	4
+#define MAX_SUBCHANNELS			(1 << MAX_SUBCHANNELS_BITS)		// we have N alternative send&wait channels
+
+#define MAX_FRAGMENTS_BITS		5								// How many fragments we can send at once
+#define MAX_FRAGMENTS			(1 << MAX_FRAGMENTS_BITS) - 1	// Maximum number of fragments we can safely transmit. -1 as else we would go over MAX_FRAGMENTS_BITS
+
 
 #define SUBCHANNEL_FREE		0	// subchannel is free to use
 #define SUBCHANNEL_TOSEND	1	// subchannel has data, but not send yet
@@ -50,7 +59,7 @@ public: // netchan structurs
 		bool			asTCP;			// send as TCP stream
 		int				numFragments;	// number of total fragments
 		int				ackedFragments; // number of fragments send & acknowledged
-		int				pendingFragments; // number of fragments send, but not acknowledged yet
+		int				pendingFragments; // number of fragments send, but not acknowledged yet. Filled with junk in the m_ReceiveList as it's fully unused there
 	} dataFragments_t;
 
 	struct subChannel_s
@@ -256,7 +265,7 @@ public:
 	int			m_nOutSequenceNr;
 	// last received incoming sequnec number
 	int			m_nInSequenceNr;
-	// last received acknowledge outgoing sequnce number
+	// last received acknowledge outgoing sequence number
 	int			m_nOutSequenceNrAck;
 	
 	// state of outgoing reliable data (0/1) flip flop used for loss detection
@@ -291,7 +300,7 @@ public:
 	// For timeouts.  Time last message was received.
 	float		last_received;		
 	// Time when channel was connected.
-	double      connect_time;       
+	double      connect_time;	   
 
 	// Bandwidth choke
 	// Bytes per second
@@ -304,7 +313,7 @@ public:
 	subChannel_s					m_SubChannels[MAX_SUBCHANNELS];
 
 	unsigned int	m_FileRequestCounter;	// increasing counter with each file request
-	bool			m_bFileBackgroundTranmission; // if true, only send 1 fragment per packet
+	bool			m_bFileBackgroundTransmission; // if true, only send 1 fragment per packet
 	bool			m_bUseCompression;	// if true, larger reliable data will be bzip compressed
 	
 	// TCP stream state maschine:

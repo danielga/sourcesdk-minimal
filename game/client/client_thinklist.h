@@ -88,9 +88,9 @@ private:
 
 // Internal stuff.
 private:
-	void			SetNextClientThink( ClientThinkHandle_t hThink, float nextTime );
+	void			SetNextClientThink( ClientThinkHandle_t hThink, double nextTime );
 	void			RemoveThinkable( ClientThinkHandle_t hThink );
-	void			PerformThinkFunction( ThinkEntry_t *pEntry, float curtime );
+	void			PerformThinkFunction( ThinkEntry_t *pEntry, double curtime );
 	ThinkEntry_t*	GetThinkEntry( ClientThinkHandle_t hThink );
 	void			CleanUpDeleteList();
 

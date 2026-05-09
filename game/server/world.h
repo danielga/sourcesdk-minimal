@@ -39,25 +39,17 @@ public:
 		VectorCopy( m_WorldMaxs, vecMaxs );
 	}
 
-	inline float GetWaveHeight() const
-	{
-		return (float)m_flWaveHeight;
-	}
-
 	bool GetDisplayTitle() const;
 	bool GetStartDark() const;
 
 	void SetDisplayTitle( bool display );
 	void SetStartDark( bool startdark );
 
-	bool IsColdWorld( void );
-
 private:
 	DECLARE_DATADESC();
 
 	string_t m_iszChapterTitle;
 
-	CNetworkVar( float, m_flWaveHeight );
 	CNetworkVector( m_WorldMins );
 	CNetworkVector( m_WorldMaxs );
 	CNetworkVar( float, m_flMaxOccludeeArea );
@@ -68,7 +60,6 @@ private:
 
 	// start flags
 	CNetworkVar( bool, m_bStartDark );
-	CNetworkVar( bool, m_bColdWorld );
 	bool m_bDisplayTitle;
 };
 

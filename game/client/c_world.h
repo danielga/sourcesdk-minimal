@@ -47,7 +47,6 @@ public:
 		MAX_DETAIL_SPRITE_MATERIAL_NAME_LENGTH = 256,
 	};
 
-	float	m_flWaveHeight;
 	Vector	m_WorldMins;
 	Vector	m_WorldMaxs;
 	bool	m_bStartDark;
@@ -55,17 +54,11 @@ public:
 	float	m_flMinOccluderArea;
 	float	m_flMinPropScreenSpaceWidth;
 	float	m_flMaxPropScreenSpaceWidth;
-	bool	m_bColdWorld;
 
 private:
 	void	RegisterSharedActivities( void );
 	char	m_iszDetailSpriteMaterial[MAX_DETAIL_SPRITE_MATERIAL_NAME_LENGTH];
 };
-
-inline float C_World::GetWaveHeight() const
-{
-	return m_flWaveHeight;
-}
 
 inline const char *C_World::GetDetailSpriteMaterial() const
 {

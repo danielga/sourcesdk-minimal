@@ -143,8 +143,13 @@ namespace SurfaceV30
 	virtual void PopMakeCurrent(vgui::VPANEL panel) = 0;
 
 	// rendering functions
+#ifdef _WIN32
+	virtual void DrawSetColor(Color col) = 0;
+	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
+#else
 	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetColor(Color col) = 0;
+#endif
 	
 	virtual void DrawFilledRect(int x0, int y0, int x1, int y1) = 0;
 	virtual void DrawFilledRectArray( IntRect *pRects, int numRects ) = 0;
@@ -154,8 +159,13 @@ namespace SurfaceV30
 	virtual void DrawPolyLine(int *px, int *py, int numPoints) = 0;
 
 	virtual void DrawSetTextFont(vgui::HFont font) = 0;
+#ifdef _WIN32
+	virtual void DrawSetTextColor(Color col) = 0;
+	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
+#else
 	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetTextColor(Color col) = 0;
+#endif
 	virtual void DrawSetTextPos(int x, int y) = 0;
 	virtual void DrawGetTextPos(int& x,int& y) = 0;
 	virtual void DrawPrintText(const wchar_t *text, int textLen, FontDrawType_t drawType = FONT_DRAW_DEFAULT ) = 0;
@@ -174,6 +184,7 @@ namespace SurfaceV30
 	virtual void DrawGetTextureSize(int id, int &wide, int &tall) = 0;
 	virtual void DrawTexturedRect(int x0, int y0, int x1, int y1) = 0;
 	virtual bool IsTextureIDValid(int id) = 0;
+	virtual bool DeleteTextureByID(int id) = 0;
 
 	virtual int CreateNewTextureID( bool procedural = false ) = 0;
 #ifdef _XBOX
@@ -199,6 +210,7 @@ namespace SurfaceV30
 	virtual void SwapBuffers(vgui::VPANEL panel) = 0;
 	virtual void Invalidate(vgui::VPANEL panel) = 0;
 	virtual void SetCursor(vgui::HCursor cursor) = 0;
+	virtual void SetCursorAlwaysVisible( bool visible ) = 0;
 	virtual bool IsCursorVisible() = 0;
 	virtual void ApplyChanges() = 0;
 	virtual bool IsWithin(int x, int y) = 0;

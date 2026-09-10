@@ -4,13 +4,13 @@
 
 #define INTERFACEVERSION_INTROSCREEN			"IntroScreen004"
 
-class MatRenderContextPtr;
+class IMatRenderContext;
 
 abstract_class IIntroScreen
 {
 public:
-	virtual void Start() = 0;
-	virtual void End() = 0;
-	virtual void Update( const char*, bool ) = 0;
-	virtual void DoDraw( MatRenderContextPtr&, const char*, int, int, float ) = 0;
+	virtual void Init() = 0;
+	virtual void Shutdown() = 0;
+	virtual void Paint( const char *status, bool increment ) = 0;
+	virtual void Draw( IMatRenderContext *pRenderContext, const char *status, int width, int height, float progress ) = 0;
 };

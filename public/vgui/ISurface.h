@@ -106,8 +106,13 @@ public:
 	virtual void PopMakeCurrent(VPANEL panel) = 0;
 
 	// rendering functions
+#ifdef _WIN32
+	virtual void DrawSetColor(Color col) = 0;
+	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
+#else
 	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetColor(Color col) = 0;
+#endif
 	
 	virtual void DrawFilledRect(int x0, int y0, int x1, int y1) = 0;
 	virtual void DrawFilledRectArray( IntRect *pRects, int numRects ) = 0;
@@ -116,12 +121,14 @@ public:
 	virtual void DrawLine(int x0, int y0, int x1, int y1) = 0;
 	virtual void DrawPolyLine(int *px, int *py, int numPoints) = 0;
 
-	virtual void DrawSetApparentDepth( float depth ) = 0;	
-	virtual void DrawClearApparentDepth() = 0; 
-
 	virtual void DrawSetTextFont(HFont font) = 0;
+#ifdef _WIN32
+	virtual void DrawSetTextColor(Color col) = 0;
+	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
+#else
 	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetTextColor(Color col) = 0;
+#endif
 	virtual void DrawSetTextPos(int x, int y) = 0;
 	virtual void DrawGetTextPos(int& x,int& y) = 0;
 	virtual void DrawPrintText(const wchar_t *text, int textLen, FontDrawType_t drawType = FONT_DRAW_DEFAULT ) = 0;
@@ -144,7 +151,6 @@ public:
 	virtual void DrawSetTextureFile( int id, const char *filename, int hardwareFilter, bool forceReload ) = 0;
 	virtual void DrawSetTextureRGBA( int id, const unsigned char *rgba, int wide, int tall ) = 0 ;
 	virtual void DrawSetTexture(int id) = 0;
-	virtual bool DeleteTextureByID(int id) = 0;
 
 #if defined( _X360 )
 
@@ -181,6 +187,7 @@ public:
 	virtual void DrawGetTextureSize(int id, int &wide, int &tall) = 0;
 	virtual void DrawTexturedRect(int x0, int y0, int x1, int y1) = 0;
 	virtual bool IsTextureIDValid(int id) = 0;
+	virtual bool DeleteTextureByID(int id) = 0;
 
 	virtual int CreateNewTextureID( bool procedural = false ) = 0;
 
@@ -200,6 +207,7 @@ public:
 	virtual void SwapBuffers(VPANEL panel) = 0;
 	virtual void Invalidate(VPANEL panel) = 0;
 	virtual void SetCursor(HCursor cursor) = 0;
+	virtual void SetCursorAlwaysVisible( bool visible ) = 0;
 	virtual bool IsCursorVisible() = 0;
 	virtual void ApplyChanges() = 0;
 	virtual bool IsWithin(int x, int y) = 0;
@@ -242,10 +250,11 @@ public:
 	virtual bool SetFontGlyphSet_Extended(HFont font, const char *windowsFontName, int tall, int weight, int blur, int scanlines, int flags, bool unknown ) = 0;
 
 	// adds a custom font file (only supports true type font files (.ttf) for now)
-	virtual bool AddCustomFontFile(const char *fontFileName) = 0;
+	virtual bool AddCustomFontFile(const char *fontName, const char *fontFileName) = 0;
 
 	// returns the details about the font
 	virtual int GetFontTall(HFont font) = 0;
+	virtual int GetFontTallRequested(HFont font) = 0;
 	virtual int GetFontAscent(HFont font, wchar_t wch) = 0;
 	virtual bool IsFontAdditive(HFont font) = 0;
 	virtual void GetCharABCwide(HFont font, int ch, int &a, int &b, int &c) = 0;
@@ -349,41 +358,47 @@ public:
 	virtual void PrecacheFontCharacters(HFont font, wchar_t *pCharacters) = 0;
 
 	virtual const char *GetFontName( HFont font ) = 0;
+	virtual const char *GetFontFamilyName( HFont font ) = 0;
+	virtual void GetKernedCharWidth( HFont font, wchar_t ch, wchar_t chBefore, wchar_t chAfter, float &wide, float &abcA, float &abcC ) = 0;
 
 	virtual bool ForceScreenSizeOverride( bool bState, int wide, int tall ) = 0;
 	// LocalToScreen, ParentLocalToScreen fixups for explicit PaintTraverse calls on Panels not at 0, 0 position
 	virtual bool ForceScreenPosOffset( bool bState, int x, int y ) = 0;
 	virtual void OffsetAbsPos( int &x, int &y ) = 0;
 
-	virtual void SetAbsPosForContext( int id, int x, int y ) = 0;
-	virtual void GetAbsPosForContext( int id, int &x, int& y ) = 0;
-
 	// Causes fonts to get reloaded, etc.
 	virtual void ResetFontCaches() = 0;
+
+	virtual int GetTextureNumFrames( int id ) = 0;
+	virtual void DrawSetTextureFrame( int id, int nFrame, unsigned int *pFrameCache ) = 0;
 
 	virtual bool IsScreenSizeOverrideActive( void ) = 0;
 	virtual bool IsScreenPosOverrideActive( void ) = 0;
 
 	virtual void DestroyTextureID( int id ) = 0;
 
-	virtual int GetTextureNumFrames( int id ) = 0;
-	virtual void DrawSetTextureFrame( int id, int nFrame, unsigned int *pFrameCache ) = 0;
-
-	virtual void GetClipRect( int &x0, int &y0, int &x1, int &y1 ) = 0;
-	virtual void SetClipRect( int x0, int y0, int x1, int y1 ) = 0;
-
-	virtual void DrawTexturedRectEx( DrawTexturedRectParms_t *pDrawParms ) = 0;
-
-	virtual void GetKernedCharWidth( HFont font, wchar_t ch, wchar_t chBefore, wchar_t chAfter, float &wide, float &abcA, float &abcC ) = 0;
-
 	virtual void DrawUpdateRegionTextureRGBA( int nTextureID, int x, int y, const unsigned char *pchData, int wide, int tall, ImageFormat imageFormat ) = 0;
 	virtual bool BHTMLWindowNeedsPaint(IHTML *htmlwin) = 0 ;
-
-	virtual void DrawSetTextureRGBALinear( int id, const unsigned char *rgba, int wide, int tall ) = 0 ;
 
 	virtual const char *GetWebkitHTMLUserAgentString() = 0;
 
 	virtual void *AccessChromeHTMLController() = 0;
+
+	virtual void SetFullscreenViewport( int x, int y, int w, int h ) = 0;
+	virtual void GetFullscreenViewport( int &x, int &y, int &w, int &h ) = 0;
+	virtual void PushFullscreenViewport() = 0;
+	virtual void PopFullscreenViewport() = 0;
+
+	virtual void SetSoftwareCursor( bool bUseSoftwareCursor ) = 0;
+	virtual void PaintSoftwareCursor() = 0;
+
+	virtual void ClearFontTextureCache() = 0;
+	virtual void DrawGetTextSize( HFont font, const wchar_t *text, int &wide, int &tall ) = 0;
+	virtual void DrawGetColor( Color &col ) = 0;
+	virtual void DrawGetTextColor( Color &col ) = 0;
+	virtual void DestroyFontTextures() = 0;
+	virtual void GetAbsPos( int &x, int &y ) = 0;
+	virtual void GetClippingRect( int &left, int &top, int &right, int &bottom, bool &bClippingDisabled ) = 0;
 
 };
 

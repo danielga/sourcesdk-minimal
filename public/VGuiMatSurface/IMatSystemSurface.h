@@ -24,7 +24,6 @@
 class VMatrix;
 class IMaterial;
 struct InputEvent_t;
-FORWARD_DECLARE_HANDLE( InputContextHandle_t );
 
 
 //-----------------------------------------------------------------------------
@@ -47,10 +46,7 @@ typedef void (*PlaySoundFunc_t)(const char *pFileName);
 class IMatSystemSurface : public vgui::ISurface
 {
 public:
-	// If the app drives the input (like the engine needs to do for VCR mode), 
-	// it can call this, setting bLetAppDriveInput to true and call 
-	// HandleInputEvent for the input events.
-	virtual void SetAppDrivesInput( bool bLetAppDriveInput ) = 0;
+	virtual void AttachToWindow( void *hwnd, bool bLetAppDriveInput = false ) = 0;
 
 	// Tells the surface to ignore windows messages
 	virtual void EnableWindowsMessages( bool bEnable ) = 0;
@@ -70,8 +66,7 @@ public:
 	// of this panel.
 	virtual void DisableClipping( bool bDisable ) = 0;
 
-	// Prevents vgui from changing the cursor
-	virtual bool IsCursorLocked() const = 0;
+	virtual void SetClippingRect( int left, int top, int right, int bottom ) = 0;
 
 	// Sets the mouse get + set callbacks
 	virtual void SetMouseCallbacks( GetMouseCallback_t getFunc, SetMouseCallback_t setFunc ) = 0;
@@ -107,18 +102,6 @@ public:
 
 	// Gets a material bound to a surface texture ID
 	virtual IMaterial *DrawGetTextureMaterial( int id ) = 0;
-
-	// Sets the VGui input context
-	virtual void SetInputContext( InputContextHandle_t hContext ) = 0;
-
-	// uploads a part of a texture, used for font rendering
-	virtual void DrawSetSubTextureRGBA( int textureID, int drawX, int drawY, unsigned const char *rgba, int subTextureWide, int subTextureTall ) = 0;
-
-	// Draws a gradient filled rect where the colors may be different 
-	virtual void DrawTexturedSubRectGradient( int x0, int y0, int x1, int y1, float texs0, float text0, float texs1, float text1, Color colStart, Color colEnd, bool bHorizontal ) = 0;
-
-	// Sets texture RGBA with linear scaling (normally it's pointsampling on the DrawSetTextureRGBA call)
-	virtual void DrawSetTextureRGBALinear( int id, const unsigned char *rgba, int wide, int tall ) = 0;
 };
 
 

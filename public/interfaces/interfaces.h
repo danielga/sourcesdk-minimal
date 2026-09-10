@@ -222,7 +222,7 @@ DECLARE_TIER3_INTERFACE( IMeshSystem, g_pMeshSystem );
 DECLARE_TIER3_INTERFACE( IStudioRender, g_pStudioRender );
 DECLARE_TIER3_INTERFACE( IStudioRender, studiorender );
 
-#define MAT_SYSTEM_SURFACE_INTERFACE_VERSION	"MatSystemSurface006"
+#define MAT_SYSTEM_SURFACE_INTERFACE_VERSION	"MatSystemSurface008"
 DECLARE_TIER3_INTERFACE( IMatSystemSurface, g_pMatSystemSurface );
 
 #define RENDER_SYSTEM_SURFACE_INTERFACE_VERSION	"RenderSystemSurface001"

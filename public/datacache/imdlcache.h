@@ -187,6 +187,7 @@ public:
 	virtual studiohdr_t *GetStudioHdr( MDLHandle_t handle ) = 0;
 	virtual studiohwdata_t *GetHardwareData( MDLHandle_t handle ) = 0;
 	virtual vcollide_t *GetVCollide( MDLHandle_t handle ) = 0;
+	virtual vcollide_t *GetVCollide( MDLHandle_t handle, float flScale = 1.0f ) = 0;
 	virtual unsigned char *GetAnimBlock( MDLHandle_t handle, int nBlock ) = 0;
 	virtual virtualmodel_t *GetVirtualModel( MDLHandle_t handle ) = 0;
 	virtual int GetAutoplayList( MDLHandle_t handle, unsigned short **pOut ) = 0;
@@ -255,6 +256,10 @@ public:
 	virtual void ResetErrorModelStatus( MDLHandle_t handle ) = 0;
 
 	virtual void MarkFrame() = 0;
+
+	// GMod custom ones
+	virtual bool VerifyHeaders( const studiohdr_t *pStudioHdr ) = 0;
+	virtual void CacheVertexData( const studiohdr_t *pStudioHdr ) = 0;
 };
 
 

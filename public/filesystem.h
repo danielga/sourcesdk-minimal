@@ -21,12 +21,6 @@
 #include "tier1/checksum_md5.h"
 #include "tier1/refcount.h"
 
-#include "GarrysMod/Addon.h"
-#include "GarrysMod/GameDepot.h"
-#include "GarrysMod/Gamemode.h"
-#include "GarrysMod/Language.h"
-#include "GarrysMod/LegacyAddons.h"
-
 #ifdef _WIN32
 #pragma once
 #endif
@@ -40,8 +34,14 @@ class KeyValues;
 class IFileList;
 class IThreadPool;
 class CMemoryFileBacking;
+
+// GMOD
 class IGet;
-class CLanguage;
+class IAddonSystem;
+class IGamemodeSystem;
+class IGameDepotSystem;
+class ILegacyAddons;
+class IGModLanguage;
 
 typedef void * FileHandle_t;
 typedef void * FileCacheHandle_t;
@@ -265,11 +265,77 @@ enum FilesystemMountRetval_t
 	FILESYSTEM_MOUNT_FAILED,
 };
 
-enum SearchPathAdd_t
+// SearchPathAdd_t - RaphaelIT7: GMod doesn't use the enum due to their wacky PriorityGroup system
+using SearchPathAdd_t = unsigned int;
+
+// First path searched
+#define PATH_ADD_TO_HEAD 0
+// Last path searched
+#define PATH_ADD_TO_TAIL 1
+
+// GMod - RaphaelIT7:
+// We can mostly guess the IDs from https://github.com/RaphaelIT7/gmod-build-checker-results/blob/dev/searchpaths.json
+// ::NewSearchPath only accepts bits 1-7 BUT inside CSearchPath it's stored as an int. Fun!
+// Credits: This definition originally is from: https://github.com/danielga/sourcesdk-minimal/blob/master/public/filesystem_base.h#L50-L66
+enum CPathPriorityGroup_t
 {
-	PATH_ADD_TO_HEAD,		// First path searched
-	PATH_ADD_TO_TAIL,		// Last path searched
+	// RaphaelIT7:
+	// This one means it's an SearchPath created by the engine that was given no specific CPathPriorityGroup_t
+	// The engine will change the group to then be GN_ENGINECORE (which is the default)
+	// So GN_UNSET is simply a placeholder that actually never ends up stored in CSearchPath::m_PriorityGroupID
+	GN_UNSET = 0, // Named GN_DEFAULT in the sourcesdk-minimal & in GMOD yet it really isn't a default.
+	GN_ENGINECORE,
+	// Lua folders (mounted to lsv & lsc & LuaMenu)
+	GN_LUA,
+	// Map content (mounted to only GAME)
+	// This is only the current maps/somemap.bsp
+	GN_MAP,
+	// Legacy addons (mounted to GAME & thirdparty)
+	GN_ADDONCONTENT,
+	// Gamemode content (mounted to GAME & thirdparty)
+	GN_GMCONTENT,
+	// GMod Content
+	// -> workshop/ is a imaginary folder for the addonsystem (mounted to GAME, workshop & thirdparty)
+	// -> garrysmod.vpk (mounted to MOD, GAME, garrysmod)
+	// -> garrysmod/ (mounted to MOD, MOD_WRITE, DEFAULT_WRITE_PATH, GAME, GAME_WRITE, garrysmod)
+	// -> data/ (mounted to only DATA)
+	GN_GMODCORE,
+	GN_CURRENTGAME,
+	// sourceengine/ vpks that aren't content_ (mounted to only GAME)
+	GN_SOURCESDK,
+	// A Bad Legacy addons (mounted to GAME & thirdparty)
+	// An Legacy addon is considered bad if it contains one of the game scripts groups
+	// -> /scripts/game_sounds_manifest.txt
+	// -> /scripts/game_sounds_physics.txt
+	// -> /scripts/propdata.txt
+	// 
+	// -> /scripts/kb_act.lst
+	// -> /scripts/kb_def.lst
+	// -> /scripts/soundmixers.txt
+	// 
+	// -> /resource/loadingdialog.res
+	// -> /resource/clientscheme.res
+	// -> /resource/gamemenu.res
+	GN_BADDONCONTENT,
+	// content_[NAME].vpk like hl2 & cstrike (mounted to GAME & also [GameName/hl2/cstrike]
+	GN_GAMECONTENT,
+	// Any path mounted by the mount.cfg
+	GN_MOUNTCFG,
+	// download/ folder (mounted to GAME & DOWNLOAD)
+	GN_DOWNLOADS,
+	// Fallback vpks (garrysmod/fallbacks.vpk) (mounted to GAME & MOD)
+	GN_FALLBACKS,
+	// Workshop
+	GN_WORKSHOP,
 };
+
+// RaphaelIT7: We must shift it to the left by one to respect how GMod does it
+#define PRIORITY_GROUP_HEAD(group) ((int)group<<1)
+#define PRIORITY_GROUP_TAIL(group) (PATH_ADD_TO_TAIL | ((int)group<<1))
+#define PATH_ADD_MASK 0x1
+
+// RaphaelIT7: We only select bits 1-7, example: (CPathPriorityGroup_t)( ( addType & PATH_PRIORITY_MASK ) >> 1 )
+#define PATH_PRIORITY_MASK 0xFE
 
 enum FilesystemOpenExFlags_t
 {
@@ -517,7 +583,7 @@ public:
 	virtual void			Close( FileHandle_t file ) = 0;
 
 
-	virtual void				Seek( FileHandle_t file, long long pos, FileSystemSeek_t seekType ) = 0;
+	virtual void				Seek( FileHandle_t file, int64 pos, FileSystemSeek_t seekType ) = 0;
 	virtual unsigned int		Tell( FileHandle_t file ) = 0;
 	virtual unsigned int		Size( FileHandle_t file ) = 0;
 	virtual unsigned int		Size( const char *pFileName, const char *pPathID = 0 ) = 0;
@@ -927,18 +993,18 @@ public:
 	// Called when we unload a file, to remove that file's info for pure server purposes.
 	virtual void			NotifyFileUnloaded( const char *pszFilename, const char *pPathId ) = 0;
 
-	virtual void RemoveSearchPathsByGroup( int ) = 0;
-	virtual void SetGet( IGet * ) = 0;
-	virtual Addon::FileSystem *Addons( ) = 0;
-	virtual Gamemode::System *Gamemodes( ) = 0;
-	virtual GameDepot::System *Games( ) = 0;
-	virtual LegacyAddons::System *LegacyAddons( ) = 0;
-	virtual CLanguage *Language( ) = 0;
+	virtual void RemoveSearchPathsByGroup( int iPriorityGroup ) = 0;
+	virtual void SetGet( IGet *pGet ) = 0;
+	virtual IAddonSystem *Addons( ) = 0;
+	virtual IGamemodeSystem *Gamemodes( ) = 0;
+	virtual IGameDepotSystem *Games( ) = 0;
+	virtual ILegacyAddons *LegacyAddons( ) = 0;
+	virtual IGModLanguage *Language( ) = 0;
 	virtual void DoFilesystemRefresh( ) = 0;
 	virtual int LastFilesystemRefresh( ) = 0;
-	virtual void AddVPKFileFromPath( const char *, const char *, unsigned int ) = 0;
-	virtual void GMOD_SetupDefaultPaths( const char *, const char * ) = 0;
-	virtual void GMOD_FixPathCase( char *, size_t ) = 0;
+	virtual void AddVPKFileFromPath( const char *pPath, const char *pPathID, SearchPathAdd_t addType ) = 0;
+	virtual void GMOD_SetupDefaultPaths( const char *pszGamePath, const char *pszModPath ) = 0;
+	virtual void GMOD_FixPathCase( char *pszUnknown1, size_t nUnknown2 ) = 0;
 };
 
 //-----------------------------------------------------------------------------

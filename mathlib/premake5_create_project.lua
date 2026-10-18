@@ -42,11 +42,17 @@ group("SourceSDK")
 
 		filter("system:windows")
 			disablewarnings("4324")
-			defines("WIN32")
-			libdirs("../lib/public")
+			defines({"WIN32", "COMPILER_MSVC"})
 
 			filter({"system:windows", "configurations:Debug"})
 				linkoptions("/NODEFAULTLIB:\"libcmt\"")
+
+		filter({"system:windows", "platforms:x86"})
+			libdirs("../lib/public")
+
+		filter({"system:windows", "platforms:x86_64"})
+			defines({"COMPILER_MSVC64", "PLATFORM_64BITS", "WIN64"})
+			libdirs("../lib/public/x64")
 
 		filter("system:linux")
 			disablewarnings({

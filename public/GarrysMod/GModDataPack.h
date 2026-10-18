@@ -10,7 +10,7 @@ namespace GarrysMod::Lua
 	struct LuaFile; // RaphaelIT7: I'm guessing that GetFromDatatable & FindFileInDatatable return this struct(defined in garrysmod_common -> LuaShared.h) but I dind't verify it yet.
 }
 
-abstract_class GModDataPack
+abstract_class IGModDataPack
 {
 public:
 	virtual void* GetFromDatatable( const std::string& ) = 0;

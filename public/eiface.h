@@ -442,7 +442,7 @@ abstract_class IServerGameDLL
 {
 public:
 	// Why Garry's Mod, why?!! Not backwards compatible...
-	virtual void			PreInit( CreateInterfaceFn, IGet * ) = 0;
+	virtual bool			PreInit( CreateInterfaceFn, IGet * ) = 0;
 
 	// Initialize the game (one-time call when the DLL is first loaded )
 	// Return false if there is an error during startup.

@@ -91,6 +91,7 @@ public:
 	virtual void			WorldSpaceSurroundingBounds( Vector *pVecMins, Vector *pVecMaxs );
 	virtual bool			ShouldTouchTrigger( int triggerSolidFlags ) const;
 	virtual const matrix3x4_t *GetRootParentToWorldTransform() const;
+	virtual float			GetCollisionScale() const;
 
 public:
 	// Spatial partition management

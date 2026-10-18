@@ -394,7 +394,9 @@ private:
 
 	// Used internally by OneTimeInit to initialize.
 	virtual void				Init();
-	int GetFlags() { return m_pParent->m_nFlags; }
+
+	// RaphaelIT7: Important! This is used by the client for some important checks! You will crash without!
+	virtual int GetFlags() { return m_pParent->m_nFlags; }
 private:
 
 	// This either points to "this" or it points to the original declaration of a ConVar.

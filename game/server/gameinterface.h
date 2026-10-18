@@ -70,7 +70,7 @@ public:
 class CServerGameDLL : public IServerGameDLL
 {
 public:
-	virtual void			PreInit( CreateInterfaceFn, IGet * ) OVERRIDE;
+	virtual bool			PreInit( CreateInterfaceFn, IGet * ) OVERRIDE;
 	virtual bool			DLLInit( CreateInterfaceFn engineFactory, CreateInterfaceFn physicsFactory, 
 										CreateInterfaceFn fileSystemFactory, CGlobalVars *pGlobals ) OVERRIDE;
 	virtual void			DLLShutdown( void ) OVERRIDE;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tier1/interface.h"
-#include "GarrysMod/Addon.h"
+#include "IAddonSystem.h"
 
 #define INTERFACEVERSION_MENUSYSTEM			"MenuSystem002"
 

@@ -21,10 +21,14 @@ function IncludeSDKCommon()
 	filter("system:windows")
 		defines("WIN32")
 		disablewarnings("4324")
-		libdirs(current_dir .. "/../lib/public")
-
 		filter({"system:windows", "configurations:Debug"})
 			linkoptions("/NODEFAULTLIB:\"libcmt\"")
+
+	filter({"system:windows", "platforms:x86"})
+		libdirs(current_dir .. "/../lib/public")
+
+	filter({"system:windows", "platforms:x86_64"})
+		libdirs(current_dir .. "/../lib/public/x64")
 
 	filter("system:linux")
 		disablewarnings({
@@ -55,9 +59,11 @@ function IncludeSDKCommon()
 
 	filter({})
 
-	links("common")
-	if refcount == 1 then
-		dofile(current_dir .. "/premake5_create_project.lua")
+	if not EXCLUDE_COMMON_PROJECT then
+		links("common")
+		if refcount == 1 then
+			dofile(current_dir .. "/premake5_create_project.lua")
+		end
 	end
 
 	project(_project.name)

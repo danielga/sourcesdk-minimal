@@ -78,6 +78,12 @@ public:
 
 	// returns NULL unless this collideable has specified FSOLID_ROOT_PARENT_ALIGNED
 	virtual const matrix3x4_t	*GetRootParentToWorldTransform() const = 0;
+
+//#if defined( GMOD )
+	// RaphaelIT7: The engine uses ICollideable! So we must be in sync!
+	// BUG: If this is missing the engine instead falsely trigger DispatchNetworkStateChanged with a garbage pObj!
+	virtual float			GetCollisionScale() const = 0;
+//#endif
 };
 
 

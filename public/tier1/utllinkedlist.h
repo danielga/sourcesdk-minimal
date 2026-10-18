@@ -26,6 +26,10 @@
 #define FOR_EACH_LL( listName, iteratorName ) \
 	for( int iteratorName=(listName).Head(); (listName).IsUtlLinkedList && iteratorName != (listName).InvalidIndex(); iteratorName = (listName).Next( iteratorName ) )
 
+#define FOR_EACH_LL_( listName, iteratorName ) \
+	for( decltype(listName)::iterator iteratorName=(listName).begin(); iteratorName != (listName).end(); ++iteratorName )
+
+
 //-----------------------------------------------------------------------------
 // class CUtlLinkedList:
 // description:
@@ -227,6 +231,8 @@ public:
 		{
 			return (&**this);
 		}
+
+		operator const ElemType_t*() const & { return (&**this); }
 
 	protected:
 		// Use a pointer rather than a reference so that we can support

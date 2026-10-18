@@ -155,6 +155,10 @@ protected:
 
 	virtual ICVarIteratorInternal	*FactoryInternalIterator( void ) = 0;
 	friend class Iterator;
+
+public:
+	// GMod
+	virtual void RevertServerConVars( bool ) = 0;
 };
 
 inline ICvar::Iterator::Iterator(ICvar *icvar)

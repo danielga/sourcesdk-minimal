@@ -249,18 +249,18 @@ public:
 		{ m_pFileSystemPassThru->NotifyFileUnloaded( pszFilename, pPathId ); }
 
 
-	virtual void RemoveSearchPathsByGroup( int group ) OVERRIDE { m_pFileSystemPassThru->RemoveSearchPathsByGroup( group ); }
-	virtual void SetGet( IGet *get ) OVERRIDE { m_pFileSystemPassThru->SetGet( get ); }
-	virtual Addon::FileSystem *Addons( ) OVERRIDE { return m_pFileSystemPassThru->Addons( ); }
-	virtual Gamemode::System *Gamemodes( ) OVERRIDE { return m_pFileSystemPassThru->Gamemodes( ); }
-	virtual GameDepot::System *Games( ) OVERRIDE { return m_pFileSystemPassThru->Games( ); }
-	virtual LegacyAddons::System *LegacyAddons( ) OVERRIDE { return m_pFileSystemPassThru->LegacyAddons( ); }
-	virtual CLanguage *Language( ) OVERRIDE { return m_pFileSystemPassThru->Language( ); }
+	virtual void RemoveSearchPathsByGroup( int iPriorityGroup ) OVERRIDE { m_pFileSystemPassThru->RemoveSearchPathsByGroup( iPriorityGroup ); }
+	virtual void SetGet( IGet *pGet ) OVERRIDE { m_pFileSystemPassThru->SetGet( pGet ); }
+	virtual IAddonSystem *Addons( ) OVERRIDE { return m_pFileSystemPassThru->Addons( ); }
+	virtual IGamemodeSystem *Gamemodes( ) OVERRIDE { return m_pFileSystemPassThru->Gamemodes( ); }
+	virtual IGameDepotSystem *Games( ) OVERRIDE { return m_pFileSystemPassThru->Games( ); }
+	virtual ILegacyAddons *LegacyAddons( ) OVERRIDE { return m_pFileSystemPassThru->LegacyAddons( ); }
+	virtual IGModLanguage *Language( ) OVERRIDE { return m_pFileSystemPassThru->Language( ); }
 	virtual void DoFilesystemRefresh( ) OVERRIDE { m_pFileSystemPassThru->DoFilesystemRefresh( ); }
 	virtual int LastFilesystemRefresh( ) OVERRIDE { return m_pFileSystemPassThru->LastFilesystemRefresh( ); }
-	virtual void AddVPKFileFromPath( const char *a, const char *b, unsigned int c ) OVERRIDE { m_pFileSystemPassThru->AddVPKFileFromPath( a, b, c ); }
-	virtual void GMOD_SetupDefaultPaths( const char *a, const char *b ) OVERRIDE { m_pFileSystemPassThru->GMOD_SetupDefaultPaths( a, b ); }
-	virtual void GMOD_FixPathCase( char *a, size_t b ) OVERRIDE { m_pFileSystemPassThru->GMOD_FixPathCase( a, b ); }
+	virtual void AddVPKFileFromPath( const char* pPath, const char* pPathID, SearchPathAdd_t addType ) OVERRIDE { m_pFileSystemPassThru->AddVPKFileFromPath( pPath, pPathID, addType ); }
+	virtual void GMOD_SetupDefaultPaths( const char *pszGamePath, const char *pszModPath ) OVERRIDE { m_pFileSystemPassThru->GMOD_SetupDefaultPaths( pszGamePath, pszModPath ); }
+	virtual void GMOD_FixPathCase( char *pszUnknown1, size_t nUnknown2 ) OVERRIDE { m_pFileSystemPassThru->GMOD_FixPathCase( pszUnknown1, nUnknown2 ); }
 
 protected:
 	IFileSystem *m_pFileSystemPassThru;

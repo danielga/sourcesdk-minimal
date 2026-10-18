@@ -69,7 +69,7 @@ public: // IServer implementation
 	virtual int		GetClientCount() const { return m_Clients.Count(); } // for iteration;
 	virtual double	GetTime( void ) const;
 	virtual int		GetTick( void ) const { return m_nTickCount; }
-	virtual float	GetTickInterval( void ) const { return m_flTickInterval; }
+	virtual double	GetTickInterval( void ) const { return m_flTickInterval; }
 	virtual const char *GetName( void ) const;
 	virtual const char *GetMapName( void ) const { return m_szMapname; }
 	virtual int		GetSpawnCount( void ) const { return m_nSpawnCount; }
@@ -202,13 +202,13 @@ public:
 	int				m_nTickCount;	// current server tick
 	bool			m_bSimulatingTicks;		// whether or not the server is currently simulating ticks
 	char			m_szMapname[64];		// map name
-	char			m_szMapFilename[64];	// map filename, may bear no resemblance to map name
+	//char			m_szMapFilename[64];	// map filename, may bear no resemblance to map name. Gmod doesn't have this.
 	char			m_szSkyname[64];		// skybox name
 	char			m_Password[32];		// server password
 
 	MD5Value_t		worldmapMD5;		// For detecting that client has a hacked local copy of map, the client will be dropped if this occurs.
 	
-	CNetworkStringTableContainer *m_StringTables;	// newtork string table container
+	CNetworkStringTableContainer *m_StringTables;	// network string table container
 
 	INetworkStringTable *m_pInstanceBaselineTable; 
 	INetworkStringTable *m_pLightStyleTable;
@@ -237,7 +237,7 @@ public: // Gimme that access
 	int			m_nSpawnCount;			// Number of servers spawned since start,
 									// used to check late spawns (e.g., when d/l'ing lots of
 									// data)
-	float		m_flTickInterval;		// time for 1 tick in seconds
+	double		m_flTickInterval;		// time for 1 tick in seconds
 
 
 	CUtlVector<CBaseClient*>	m_Clients;		// array of up to [maxclients] client slots.
